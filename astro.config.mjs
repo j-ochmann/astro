@@ -1,6 +1,17 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import rehypeMermaid from 'rehype-mermaid';
+
+export default defineConfig({
+  markdown: {
+    syntaxHighlight: {
+      type: 'shiki',
+      excludeLangs: ['mermaid'], // Prevents Shiki from highlighting Mermaid syntax
+    },
+    rehypePlugins: [rehypeMermaid], // Renders blocks as diagrams
+  },
+});
 
 // https://astro.build/config
 export default defineConfig({
