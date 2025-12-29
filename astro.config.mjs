@@ -37,23 +37,27 @@ export default defineConfig({
         },
         {
           label: 'Design Patterns',
-          link: '/design_patterns/',
-          items: [
-            {
-              label: 'Creational',
-              autogenerate: { directory: 'design_patterns/creational/' },
-              collapsed: true,
-            },
-            { label: 'Structural',
-              autogenerate: { directory: 'design_patterns/structural/' },
-              collapsed: true,
-            },
-            { label: 'Behavioral',
-              autogenerate: { directory: 'design_patterns/behavioral' },
-              collapsed: true,
-            },
-          ],
+          autogenerate: { directory: 'design_patterns' },
         },
+        // {
+        //   label: 'Design Patterns',
+        //   link: '/design_patterns/',
+        //   items: [
+        //     {
+        //       label: 'Creational',
+        //       autogenerate: { directory: 'design_patterns/creational/' },
+        //       collapsed: true,
+        //     },
+        //     { label: 'Structural',
+        //       autogenerate: { directory: 'design_patterns/structural/' },
+        //       collapsed: true,
+        //     },
+        //     { label: 'Behavioral',
+        //       autogenerate: { directory: 'design_patterns/behavioral' },
+        //       collapsed: true,
+        //     },
+        //   ],
+        // },
         {
           label: 'External Resources',
           link: '/external_resources/',
