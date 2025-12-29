@@ -37,9 +37,9 @@ export default defineConfig({
         },
         {
           label: 'Design Patterns',
-          link: 'design_patterns',
           collapsed: true,
           items: [
+             { label: 'Overview', link: '/design_patterns/' },
              { label: 'Creational', link: '/design_patterns/creational/' },
              { label: 'Structural', link: '/design_patterns/structural/' },
              { label: 'Behavioral', link: '/design_patterns/behavioral/' },
