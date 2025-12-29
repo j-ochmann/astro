@@ -46,14 +46,21 @@ export default defineConfig({
           link: 'design_patterns',
           collapsed: true,
           items: [
-             { label: 'C++', slug: 'lang/cpp/quick_reference' },
+             { label: 'Creational', slug: 'design_patterns/creational' },
+             { label: 'Structural', slug: 'design_patterns/structural' },
+             { label: 'Behavioral', slug: 'design_patterns/behavioral' },
           ],
         },
         {
-          label: 'Design Patterns',
-          autogenerate: { directory: 'design_patterns' },
+          label: 'External Resources',
+          autogenerate: { directory: 'external' },
           collapsed: true
         },
+        // {
+        //   label: 'Design Patterns',
+        //   autogenerate: { directory: 'design_patterns' },
+        //   collapsed: true
+        // },
       ],
     }),
   ],
