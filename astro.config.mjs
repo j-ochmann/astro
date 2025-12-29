@@ -13,13 +13,11 @@ export default defineConfig({
       excludeLangs: ['mermaid'],
     },
     rehypePlugins: [
-      [  rehypeMermaid,
-        {
-          // Tímto vynutíte světlé téma pro všechny diagramy
+      [rehypeMermaid, {
+          strategy: 'img-svg',
           mermaidConfig: {
             theme: 'default', 
           },
-          // Pokud chcete, aby pozadí SVG bylo vždy bílé (ne průhledné)
           dark: false 
         }
       ],
@@ -35,22 +33,22 @@ export default defineConfig({
         {
           label: 'Quick Reference',
           autogenerate: { directory: 'quick_reference' },
-          collapsed: true
+          collapsed: true,
         },
         {
           label: 'Design Patterns',
           link: 'design_patterns',
           collapsed: true,
           items: [
-             { label: 'Creational', slug: 'design_patterns/creational' },
-             { label: 'Structural', slug: 'design_patterns/structural' },
-             { label: 'Behavioral', slug: 'design_patterns/behavioral' },
+             { label: 'Creational', link: '/design_patterns/creational/' },
+             { label: 'Structural', link: '/design_patterns/structural/' },
+             { label: 'Behavioral', link: '/design_patterns/behavioral/' },
           ],
         },
         {
           label: 'External Resources',
           autogenerate: { directory: 'external' },
-          collapsed: true
+          collapsed: true,
         },
       ],
     }),
