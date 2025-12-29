@@ -4,16 +4,16 @@ title: "Object Creational: Abstract Factory"
 sidebar:
   label: Abstract Factory
   order: 1
-  # badge: Novinka
 category: Creational
 goF: 1
 tags: ["cpp", "java", "python"]
 ---
-<!--# Object Creational: Abstract Factory-->
 ## Intent
+
 Provide an interface for creating families of related or dependent objects without specifying their concrete classes.
 
 ## Also Known As
+
 Kit
 
 ## Motivation
@@ -92,11 +92,13 @@ There is a concrete subclass of WidgetFactory for each look-and-feel standard. E
 A WidgetFactory also enforces dependencies between the concrete widget classes. A Motif scroll bar should be used with a Motif button and a Motif text editor, and that constraint is enforced automatically as a consequence of using a MotifWidgetFactory.
 
 ## Applicability
+
 Use the Abstract Factory pattern when
-+ a system should be independent of how its products are created, composed, and represented.
-+ a system should be configured with one of multiple families of products.
-+ a family of related product objects is designed to be used together, and you need to enforce this constraint.
-+ you want to provide a class library of products, and you want to reveal just their interfaces, not their implementations.
+
+- a system should be independent of how its products are created, composed, and represented.
+- a system should be configured with one of multiple families of products.
+- a family of related product objects is designed to be used together, and you need to enforce this constraint.
+- you want to provide a class library of products, and you want to reveal just their interfaces, not their implementations.
 
 ## Structure
 
@@ -155,24 +157,28 @@ classDiagram
 ```
 
 ## Participants
-+ **AbstractFactory** (WidgetFactory)
-    - declares an interface for operations that create abstract product objects.
-+ **ConcreteFactory** (MotifWidgetFactory, PMWidgetFactory)
-    - implements the operations to create concrete product objects.
-+ **AbstractProduct** (Window, ScrollBar)
-    - declares an interface for a type of product object.
-+ **ConcreteProduct** (MotifWindow, MotifScrollBar)
-    - defines a product object to be created by the corresponding concrete factory.
-    - implements the AbstractProduct interface.
-+ **Client**
-    - uses only interfaces declared by AbstractFactory and AbstractProduct classes.
+
+- **AbstractFactory** (WidgetFactory)
+  - declares an interface for operations that create abstract product objects.
+- **ConcreteFactory** (MotifWidgetFactory, PMWidgetFactory)
+  - implements the operations to create concrete product objects.
+- **AbstractProduct** (Window, ScrollBar)
+  - declares an interface for a type of product object.
+- **ConcreteProduct** (MotifWindow, MotifScrollBar)
+  - defines a product object to be created by the corresponding concrete factory.
+  - implements the AbstractProduct interface.
+- **Client**
+  - uses only interfaces declared by AbstractFactory and AbstractProduct classes.
 
 ## Collaborations
-+ Normally a single instance of a ConcreteFactory class is created at run-time. This concrete factory creates product objects having a particular implementation. To create different product objects, clients should use a different concrete factory.
-+ AbstractFactory defers creation of product objects to its ConcreteFactory subclass.
+
+- Normally a single instance of a ConcreteFactory class is created at run-time. This concrete factory creates product objects having a particular implementation. To create different product objects, clients should use a different concrete factory.
+- AbstractFactory defers creation of product objects to its ConcreteFactory subclass.
 
 ## Consequences
+
 The Abstract Factory pattern has the following benefits and liabilities:
+
 1. *It isolates concrete classes.* The Abstract Factory pattern helps you control the classes of objects that an application creates. Because a factory encapsulates the responsibility and the process of creating product objects, it isolates clients from implementation classes. Clients manipulate instances through their abstract interfaces. Product class names are isolated in the implementation of the concrete factory; they do not appear in client code.
 2. *It makes exchanging product families easy.* The class of a concrete factory appears only once in an application—that is, where it’s instantiated. This makes it easy to change the concrete factory an application uses. It can use different product configurations simply by changing the concrete factory. Because an abstract factory creates a complete family of products, the whole product family changes at once. In our user interface example, we can switch from Motif widgets to Presentation Manager widgets simply by switching the corresponding factory objects and recreating the interface.
 3. *It promotes consistency among products.* When product objects in a family are designed to work together, it’s important that an application use objects from only one family at a time. AbstractFactory makes this easy to enforce.
@@ -181,39 +187,40 @@ The Abstract Factory pattern has the following benefits and liabilities:
 ## Implementation
 
 Here are some useful techniques for implementing the Abstract Factory pattern.
+
 1. *Factories as singletons.* An application typically needs only one instance of a ConcreteFactory per product family. So it’s usually best implemented as a Singleton (127).
 2. *Creating the products.* AbstractFactory only declares an interface for creating products. It’s up to ConcreteProduct subclasses to actually create them. The most common way to do this is to define a factory method (see Factory Method (107)) for each product. A concrete factory will specify its products by overriding the factory method for each. While this implementation is simple, it requires a new concrete factory subclass for each product family, even if the product families differ only slightly.
 
-If many product families are possible, the concrete factory can be implemented using the Prototype (117) pattern. The concrete factory is initialized with a prototypical instance of each product in the family, and it creates a new product by cloning its prototype. The Prototype-based approach eliminates the need for a new concrete factory class for each new product family.
+    If many product families are possible, the concrete factory can be implemented using the Prototype (117) pattern. The concrete factory is initialized with a prototypical instance of each product in the family, and it creates a new product by cloning its prototype. The Prototype-based approach eliminates the need for a new concrete factory class for each new product family.
 
-Here’s a way to implement a Prototype-based factory in Smalltalk. The concrete factory stores the prototypes to be cloned in a dictionary called partCatalog. The method make: retrieves the prototype and clones it:
+    Here’s a way to implement a Prototype-based factory in Smalltalk. The concrete factory stores the prototypes to be cloned in a dictionary called partCatalog. The method make: retrieves the prototype and clones it:
 
-```smalltalk
-make: partName
-    ^ (partCatalog at: partName) copy
-```
+    ```smalltalk
+    make: partName
+        ^ (partCatalog at: partName) copy
+    ```
 
-The concrete factory has a method for adding parts to the catalog.
+    The concrete factory has a method for adding parts to the catalog.
 
-```smalltalk
-addPart: partTemplate named: partName
-    partCatalog at: partName put: partTemplate
-```
+    ```smalltalk
+    addPart: partTemplate named: partName
+        partCatalog at: partName put: partTemplate
+    ```
 
-Prototypes are added to the factory by identifying them with a symbol:
+    Prototypes are added to the factory by identifying them with a symbol:
 
-```smalltalk
-aFactory addPart: aPrototype named: #ACMEWidget
-```
+    ```smalltalk
+    aFactory addPart: aPrototype named: #ACMEWidget
+    ```
 
-A variation on the Prototype-based approach is possible in languages that treat classes as first-class objects (Smalltalk and Objective C, for example). You can think of a class in these languages as a degenerate factory that creates only one kind of product. You can store classes inside a concrete factory that create the various concrete products in variables, much like prototypes. These classes create new instances on behalf of the concrete factory. You define a new factory by initializing an instance of a concrete factory with classes of products rather than by subclassing. This approach takes advantage of language characteristics, whereas the pure Prototype-based approach is language-independent.
+    A variation on the Prototype-based approach is possible in languages that treat classes as first-class objects (Smalltalk and Objective C, for example). You can think of a class in these languages as a degenerate factory that creates only one kind of product. You can store classes inside a concrete factory that create the various concrete products in variables, much like prototypes. These classes create new instances on behalf of the concrete factory. You define a new factory by initializing an instance of a concrete factory with classes of products rather than by subclassing. This approach takes advantage of language characteristics, whereas the pure Prototype-based approach is language-independent.
 
-Like the Prototype-based factory in Smalltalk just discussed, the class-based version will have a single instance variable partCatalog, which is a dictionary whose key is the name of the part. Instead of storing prototypes to be cloned, partCatalog stores the classes of the products. The method make: now looks like this:
+    Like the Prototype-based factory in Smalltalk just discussed, the class-based version will have a single instance variable partCatalog, which is a dictionary whose key is the name of the part. Instead of storing prototypes to be cloned, partCatalog stores the classes of the products. The method make: now looks like this:
 
-```smalltalk
-make: partName
-    ^ (partCatalog at: partName) new
-```
+    ```smalltalk
+    make: partName
+        ^ (partCatalog at: partName) new
+    ```
 
 3. *Defining extensible factories.* AbstractFactory usually defines a different operation for each kind of product it can produce. The kinds of products are encoded in the operation signatures. Adding a new kind of product requires changing the AbstractFactory interface and all the classes that depend on it.
 
@@ -244,7 +251,7 @@ public:
         { return new Door(r1, r2); }
 };
  ```
- 
+
 Recall that the member function `CreateMaze ()` builds a small maze consisting of two rooms with a door between them. CreateMaze hard-codes the class names, making it difficult to create mazes with different components.
 
 Here’s a version of CreateMaze that remedies that shortcoming by taking a MazeFactory as a parameter:
@@ -326,7 +333,7 @@ CreateMaze can take an instance of `EnchantedMazeFactory` just as well to build 
 
 Notice that the MazeFactory is just a collection of factory methods. This is the most common way to implement the Abstract Factory pattern. Also note that MazeFactory is not an abstract class; thus it acts as both the AbstractFactory and the ConcreteFactory. This is another common implementation for simple applications of the Abstract Factory pattern. Because the MazeFactory is a concrete class consisting entirely of factory methods, it’s easy to make a new MazeFactory by making a subclass and overriding the operations that need to change.
 
-CreateMaze used the SetSide operation on rooms to specify their sides. If it creates rooms with a BombedMazeFactory, then the maze will be made up of RoomWithABomb objects with BombedWall sides. If RoomWithABomb had to access a subclass-specific member of BombedWall, then it would have to cast a reference to its walls from Wall* to BombedWall*. This downcasting is safe as long as the argument is in fact a BombedWall, which is guaranteed to be true if walls are built solely with a BombedMazeFactory.
+CreateMaze used the SetSide operation on rooms to specify their sides. If it creates rooms with a BombedMazeFactory, then the maze will be made up of RoomWithABomb objects with BombedWall sides. If RoomWithABomb had to access a subclass-specific member of BombedWall, then it would have to cast a reference to its walls from Wall\* to BombedWall\*. This downcasting is safe as long as the argument is in fact a BombedWall, which is guaranteed to be true if walls are built solely with a BombedMazeFactory.
 
 Dynamically typed languages such as Smalltalk don’t require downcasting, of course, but they might produce run-time errors if they encounter a Wall where they expect a subclass of Wall. Using Abstract Factory to build walls helps prevent these run-time errors by ensuring that only certain kinds of walls can be created.
 

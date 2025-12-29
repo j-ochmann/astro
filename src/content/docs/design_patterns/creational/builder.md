@@ -1,14 +1,13 @@
 ---
 id: builder
-title: Builder
+title: "Object Creational: Builder"
 sidebar:
+  label: Builder
   order: 2
 category: Creational
 goF: 2
 tags: ["cpp", "java", "python"]
 ---
-# Object Creational: Builder (VS Code!!!)
-
 ## Intent
 
 Separate the construction of a complex object from its representation so that the same construction process can create different representations.
@@ -30,7 +29,9 @@ Each kind of converter class takes the mechanism for creating and assembling a c
 The Builder pattern captures all these relationships. Each converter class is called a builder in the pattern, and the reader is called the director. Applied to this example, the Builder pattern separates the algorithm for interpreting a textual format (that is, the parser for RTF documents) from how a converted format gets created and represented. This lets us reuse the RTFReader’s parsing algorithm to create different text representations from RTF documents—just configure the RTFReader with different subclasses of TextConverter.
 
 ## Applicability
+
 Use the Builder pattern when
+
 - the algorithm for creating a complex object should be independent of the parts that make up the object and how they’re assembled.
 - the construction process must allow different representations for the object that’s constructed.
 
@@ -41,19 +42,21 @@ class Director
 ```
 
 ## Participants
-+ Builder (TextConverter)
-    - specifies an abstract interface for creating parts of a Product object.
-+ ConcreteBuilder (ASCIIConverter, TeXConverter, TextWidgetConverter)
-    - constructs and assembles parts of the product by implementing the Builder interface.
-    - defines and keeps track of the representation it creates.
-    - provides an interface for retrieving the product (e.g., GetASCIIText, Get-Text Widget).
-+ Director (RTFReader)
-    - constructs an object using the Builder interface.
-+ Product (ASCIIText, TeXText, TextWidget)
-    - represents the complex object under construction. ConcreteBuilder builds the product’s internal representation and defines the process by which it’s assembled.
-    - includes classes that define the constituent parts, including interfaces for assembling the parts into the final result.
+
+- Builder (TextConverter)
+  - specifies an abstract interface for creating parts of a Product object.
+- ConcreteBuilder (ASCIIConverter, TeXConverter, TextWidgetConverter)
+  - constructs and assembles parts of the product by implementing the Builder interface.
+  - defines and keeps track of the representation it creates.
+  - provides an interface for retrieving the product (e.g., GetASCIIText, Get-Text Widget).
+- Director (RTFReader)
+  - constructs an object using the Builder interface.
+- Product (ASCIIText, TeXText, TextWidget)
+  - represents the complex object under construction. ConcreteBuilder builds the product’s internal representation and defines the process by which it’s assembled.
+  - includes classes that define the constituent parts, including interfaces for assembling the parts into the final result.
 
 ## Collaborations
+
 - The client creates the Director object and configures it with the desired Builder object.
 - Director notifies the builder whenever a part of the product should be built.
 - Builder handles requests from the director and adds parts to the product.
@@ -193,6 +196,7 @@ Maze* StandardMazeBuilder::GetMaze () {
 ```
 
 The BuildRoom operation creates a room and builds the walls around it:
+
 ```cpp
 void StandardMazeBuilder::BuildRoom (int n) {
     if (!_currentMaze->RoomNo(n)) {
@@ -206,7 +210,9 @@ void StandardMazeBuilder::BuildRoom (int n) {
     }
 } 
 ```
+
 To build a door between two rooms, StandardMazeBuilder looks up both rooms in the maze and finds their adjoining wall:
+
 ```cpp
 void StandardMazeBuilder::BuildDoor (int n1, int n2) {
     Room* r1 = _currentMaze->RoomNo(n1);
@@ -217,7 +223,9 @@ void StandardMazeBuilder::BuildDoor (int n1, int n2) {
     r2->SetSide(CommonWall(r2,r1), d); 
 }
 ```
+
 Clients can now use CreateMaze in conjunction with StandardMazeBuilder to create a maze:
+
 ```cpp
 Maze* maze;
 MazeGame game;
@@ -226,9 +234,11 @@ StandardMazeBuilder builder;
 game.CreateMaze(builder);
 maze = builder.GetMaze(); 
 ```
+
 We could have put all the StandardMazeBuilder operations in Maze and let each Maze build itself. But making Maze smaller makes it easier to understand and modify, and StandardMazeBuilder is easy to separate from Maze. Most importantly, separating the two lets you have a variety of MazeBuilders, each using different classes for rooms, walls, and doors.
 
 A more exotic MazeBuilder is CountingMazeBuilder. This builder doesn’t create a maze at all; it just counts the different kinds of components that would have been created.
+
 ```cpp
 class CountingMazeBuilder : public MazeBuilder {
 public:
@@ -245,7 +255,9 @@ public:
     int _rooms;
 }; 
 ```
+
 The constructor initializes the counters, and the overridden MazeBuilder operations increment them accordingly.
+
 ```cpp
 CountingMazeBuilder::CountingMazeBuilder () {
     _rooms = _door
@@ -266,7 +278,9 @@ void CountingMazeBuilder::GetCounts (
     doors = _doors;
 }
 ```
+
 Here’s how a client might use a CountingMazeBuilder:
+
 ```cpp
 int rooms, doors;
 MazeGame game;
@@ -279,11 +293,13 @@ cout << "The maze has "
     << rooms << " rooms and "
     << doors << " doors" << endl; 
 ```
+
 ## Known Uses
 
 The RTF converter application is from ET++ [WGM88]. Its text building block uses a builder to process text stored in the RTF format.
 
 Builder is a common pattern in Smalltalk-80 [Par90]:
+
 - The Parser class in the compiler subsystem is a Director that takes a ProgramNodeBuilder object as an argument. A Parser object notifies its ProgramNodeBuilder object each time it recognizes a syntactic construct. When the parser is done, it asks the builder for the parse tree it built and returns it to the client.
 - ClassBuilder is a builder that Classes use to create subclasses for themselves. In this case a Class is both the Director and the Product.
 - ByteCodeStream is a builder that creates a compiled method as a byte array. ByteCodeStream is a nonstandard use of the Builder pattern, because the complex object it builds is encoded as a byte array, not as a normal Smalltalk object. But the interface to ByteCodeStream is typical of a builder, and it would be easy to replace ByteCodeStream with a different class that represented programs as a composite object.
