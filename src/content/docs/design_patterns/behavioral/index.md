@@ -1,9 +1,11 @@
 ---
-id: "behavioral_patterns"
+id: "behavioral"
 title: "Behavioral Patterns"
-category: "Behavioral Patterns"
 sidebar:
+  label: Behavioral
   order: 5
+  badge: Novinka
+category: "Design Patterns"
 ---
 # Chapter 5. Behavioral Patterns
 

@@ -7,7 +7,6 @@ tags: ["cpp", "java", "python"]
 sidebar:
   order: 1
 ---
-
 # Object Creational: Abstract Factory
 
 ## Intent

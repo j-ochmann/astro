@@ -1,6 +1,9 @@
 ---
 id: "bridge"
 title: "Object Structural: Bridge"
+sidebar:
+  label: Bridge
+  order: 7
 category: "Structural"
 goF: 7
 tags: ["cpp", "java", "python"]

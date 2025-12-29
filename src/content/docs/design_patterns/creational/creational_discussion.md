@@ -1,7 +1,10 @@
 ---
-id: "creational_discussion"
+id: "discussion"
 title: "Discussion of Creational Patterns"
-category: "Discussion of Creational Patterns"
+category: "Creational Patterns"
+sidebar:
+  label: Discussion
+  order: 6
 ---
 # Discussion of Creational Patterns
 
