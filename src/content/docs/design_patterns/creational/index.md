@@ -4,7 +4,7 @@ title: "Creational Patterns"
 category: "Creational Patterns"
 sidebar:
   label: Creational
-  order: 3
+  order: 0
 category: "Design Patterns"
 ---
 # Chapter 3. Creational Patterns
