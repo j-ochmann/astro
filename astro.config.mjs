@@ -34,12 +34,8 @@ export default defineConfig({
       sidebar: [
         {
           label: 'Quick Reference',
-          //link: '/lang/quick_reference',
-          autogenerate: { directory: '/quick_reference' },
+          autogenerate: { directory: 'quick_reference' },
           collapsed: true
-          // items: [
-          //   { label: 'C++', slug: 'lang/cpp/quick_reference' },
-          // ],
         },
         {
           label: 'Design Patterns',
@@ -56,11 +52,6 @@ export default defineConfig({
           autogenerate: { directory: 'external' },
           collapsed: true
         },
-        // {
-        //   label: 'Design Patterns',
-        //   autogenerate: { directory: 'design_patterns' },
-        //   collapsed: true
-        // },
       ],
     }),
   ],
