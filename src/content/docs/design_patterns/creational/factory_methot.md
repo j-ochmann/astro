@@ -4,7 +4,6 @@ title: "Class Creational: Factory Method"
 sidebar:
   label: Factory Method
   order: 3
-  badge: Novinka
 category: Creational
 goF: 3
 tags: ["cpp", "java", "python"]

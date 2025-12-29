@@ -8,8 +8,6 @@ category: "Structural"
 goF: 6
 tags: ["cpp", "java", "python"]
 ---
-# Class, Object Structural: Adapter
-
 ## Intent
 
 Convert the interface of a class into another interface clients expect. Adapter lets classes work together that couldn’t otherwise because of incompatible interfaces.
@@ -43,9 +41,10 @@ Manipulator is an abstract class for objects that know how to animate a Shape in
 ## Applicability
 
 Use the Adapter pattern when
-+ you want to use an existing class, and its interface does not match the one you need.
-+ you want to create a reusable class that cooperates with unrelated or unforeseen classes, that is, classes that don’t necessarily have compatible interfaces.
-+ (object adapter only) you need to use several existing subclasses, but it’s impractical to adapt their interface by subclassing every one. An object adapter can adapt the interface of its parent class.
+
+- you want to use an existing class, and its interface does not match the one you need.
+- you want to create a reusable class that cooperates with unrelated or unforeseen classes, that is, classes that don’t necessarily have compatible interfaces.
+- (object adapter only) you need to use several existing subclasses, but it’s impractical to adapt their interface by subclassing every one. An object adapter can adapt the interface of its parent class.
 
 ## Structure
 
@@ -62,28 +61,32 @@ An object adapter relies on object composition:
 ```
 
 ## Participants
-+ **Target** (Shape)
-    - defines the domain-specific interface that Client uses.
-+ **Client** (DrawingEditor)
-    - collaborates with objects conforming to the Target interface.
-+ **Adaptee** (TextView)
-    - defines an existing interface that needs adapting.
-+ **Adapter** (TextShape)
-    - adapts the interface of Adaptee to the Target interface.
+
+- **Target** (Shape)
+  - defines the domain-specific interface that Client uses.
+- **Client** (DrawingEditor)
+  - collaborates with objects conforming to the Target interface.
+- **Adaptee** (TextView)
+  - defines an existing interface that needs adapting.
+- **Adapter** (TextShape)
+  - adapts the interface of Adaptee to the Target interface.
 
 ## Collaborations
-+ Clients call operations on an Adapter instance. In turn, the adapter calls Adaptee operations that carry out the request.
+
+- Clients call operations on an Adapter instance. In turn, the adapter calls Adaptee operations that carry out the request.
 
 ## Consequences
 
 Class and object adapters have different trade-offs. A class adapter
-+ adapts Adaptee to Target by committing to a concrete Adaptee class. As a consequence, a class adapter won’t work when we want to adapt a class and all its subclasses.
-+ lets Adapter override some of Adaptee’s behavior, since Adapter is a subclass of Adaptee.
-+ introduces only one object, and no additional pointer indirection is needed to get to the adaptee.
+
+- adapts Adaptee to Target by committing to a concrete Adaptee class. As a consequence, a class adapter won’t work when we want to adapt a class and all its subclasses.
+- lets Adapter override some of Adaptee’s behavior, since Adapter is a subclass of Adaptee.
+- introduces only one object, and no additional pointer indirection is needed to get to the adaptee.
 
 An object adapter
-+ lets a single Adapter work with many Adaptees—that is, the Adaptee itself and all of its subclasses (if any). The Adapter can also add functionality to all Adaptees at once.
-+ makes it harder to override Adaptee behavior. It will require subclassing Adaptee and making Adapter refer to the subclass rather than the Adaptee itself.
+
+- lets a single Adapter work with many Adaptees—that is, the Adaptee itself and all of its subclasses (if any). The Adapter can also add functionality to all Adaptees at once.
+- makes it harder to override Adaptee behavior. It will require subclassing Adaptee and making Adapter refer to the subclass rather than the Adaptee itself.
 
 Here are other issues to consider when using the Adapter pattern:
 
@@ -91,11 +94,11 @@ Here are other issues to consider when using the Adapter pattern:
 
 2. *Pluggable adapters.* A class is more reusable when you minimize the assumptions other classes must make to use it. By building interface adaptation into a class, you eliminate the assumption that other classes see the same interface. Put another way, interface adaptation lets us incorporate our class into existing systems that might expect different interfaces to the class. Object-Works\Smalltalk [Par90] uses the term **pluggable adapter** to describe classes with built-in interface adaptation.
 
-Consider a TreeDisplay widget that can display tree structures graphically. If this were a special-purpose widget for use in just one application, then we might require the objects that it displays to have a specific interface; that is, all must descend from a Tree abstract class. But if we wanted to make TreeDisplay more reusable (say we wanted to make it part of a toolkit of useful widgets), then that requirement would be unreasonable. Applications will define their own classes for tree structures. They shouldn’t be forced to use our Tree abstract class. Different tree structures will have different interfaces.
+    Consider a TreeDisplay widget that can display tree structures graphically. If this were a special-purpose widget for use in just one application, then we might require the objects that it displays to have a specific interface; that is, all must descend from a Tree abstract class. But if we wanted to make TreeDisplay more reusable (say we wanted to make it part of a toolkit of useful widgets), then that requirement would be unreasonable. Applications will define their own classes for tree structures. They shouldn’t be forced to use our Tree abstract class. Different tree structures will have different interfaces.
 
-In a directory hierarchy, for example, children might be accessed with a GetSubdirectories operation, whereas in an inheritance hierarchy, the corresponding operation might be called GetSubclasses. A reusable TreeDisplay widget must be able to display both kinds of hierarchies even if they use different interfaces. In other words, the TreeDisplay should have interface adaptation built into it.
+    In a directory hierarchy, for example, children might be accessed with a GetSubdirectories operation, whereas in an inheritance hierarchy, the corresponding operation might be called GetSubclasses. A reusable TreeDisplay widget must be able to display both kinds of hierarchies even if they use different interfaces. In other words, the TreeDisplay should have interface adaptation built into it.
 
-We’ll look at different ways to build interface adaptation into classes in the Implementation section.
+    We’ll look at different ways to build interface adaptation into classes in the Implementation section.
 
 3. *Using two-way adapters to provide transparency.* A potential problem with adapters is that they aren’t transparent to all clients. An adapted object no longer conforms to the Adaptee interface, so it can’t be used as is wherever an Adaptee object can. **Two-way adapters** can provide such transparency. Specifically, they’re useful when two different clients need to view an object differently.
 
