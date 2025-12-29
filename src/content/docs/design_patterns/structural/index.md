@@ -2,6 +2,8 @@
 id: "structural_patterns"
 title: "Structural Patterns"
 category: "Structural Patterns"
+sidebar:
+  order: 4
 ---
 # Chapter 4. Structural Patterns
 

@@ -1,9 +1,11 @@
 ---
 id: "factory_method"
-title: "Object Creational: Factory Method"
+title: "Factory Method"
 category: "Creational"
 goF: 3
 tags: ["cpp", "java", "python"]
+sidebar:
+  order: 3
 ---
 # Class Creational: Factory Method
 

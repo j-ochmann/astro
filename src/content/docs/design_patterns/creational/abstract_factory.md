@@ -1,9 +1,11 @@
 ---
 id: "abstract_factory"
-title: "Object Creational: Abstract Factory"
+title: "Abstract Factory"
 category: "Creational"
 goF: 1
 tags: ["cpp", "java", "python"]
+sidebar:
+  order: 1
 ---
 
 # Object Creational: Abstract Factory

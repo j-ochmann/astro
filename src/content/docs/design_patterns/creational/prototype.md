@@ -1,9 +1,11 @@
 ---
 id: "prototype"
-title: "Object Creational: Prototype"
+title: "Prototype"
 category: "Creational"
 goF: 4
 tags: ["cpp", "java", "python"]
+sidebar:
+  order: 4
 ---
 # Object Creational: Prototype
 

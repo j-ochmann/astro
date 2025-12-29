@@ -2,6 +2,8 @@
 id: "creational"
 title: "Creational Patterns"
 category: "Creational Patterns"
+sidebar:
+  order: 3
 ---
 # Chapter 3. Creational Patterns
 

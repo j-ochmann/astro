@@ -2,6 +2,8 @@
 id: "behavioral_patterns"
 title: "Behavioral Patterns"
 category: "Behavioral Patterns"
+sidebar:
+  order: 5
 ---
 # Chapter 5. Behavioral Patterns
 
