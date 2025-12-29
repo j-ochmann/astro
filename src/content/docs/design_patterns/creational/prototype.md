@@ -1,6 +1,6 @@
 ---
 id: prototype
-title: "Class Creational: Prototype"
+title: "Object Creational: Prototype"
 sidebar:
   label: Prototype
   order: 4
@@ -8,8 +8,6 @@ category: Creational
 goF: 4
 tags: ["cpp", "java", "python"]
 ---
-# Object Creational: Prototype
-
 ## Intent
 
 Specify the kinds of objects to create using a prototypical instance, and create new objects by copying this prototype.
@@ -29,35 +27,35 @@ So in our music editor, each tool for creating a music object is an instance of 
 ```mermaid
 
 ```
- 
+
 We can use the Prototype pattern to reduce the number of classes even further. We have separate classes for whole notes and half notes, but that’s probably unnecessary. Instead they could be instances of the same class initialized with different bitmaps and durations. A tool for creating whole notes becomes just a GraphicTool whose prototype is a MusicalNote initialized to be a whole note. This can reduce the number of classes in the system dramatically. It also makes it easier to add a new kind of note to the music editor.
 
 ## Applicability
 
 Use the Prototype pattern when a system should be independent of how its products are created, composed, and represented; and
-+ when the classes to instantiate are specified at run-time, for example, by dynamic loading; or
-+ to avoid building a class hierarchy of factories that parallels the class hierarchy of products; or
-+ when instances of a class can have one of only a few different combinations of state. It may be more convenient to install a corresponding number of prototypes and clone them rather than instantiating the class manually, each time with the appropriate state.
+
+- when the classes to instantiate are specified at run-time, for example, by dynamic loading; or
+- to avoid building a class hierarchy of factories that parallels the class hierarchy of products; or
+- when instances of a class can have one of only a few different combinations of state. It may be more convenient to install a corresponding number of prototypes and clone them rather than instantiating the class manually, each time with the appropriate state.
 
 ## Structure
 
 ```mermaid
 
 ```
- 
+
 ## Participants
-+ Prototype (Graphic)
 
-- declares an interface for cloning itself.
-+ ConcretePrototype (Staff, WholeNote, HalfNote)
-
-- implements an operation for cloning itself.
-+ Client (GraphicTool)
-
-- creates a new object by asking a prototype to clone itself.
+- **Prototype** (Graphic)
+  - declares an interface for cloning itself.
+- **ConcretePrototype** (Staff, WholeNote, HalfNote)
+  - implements an operation for cloning itself.
+- **Client** (GraphicTool)
+  - creates a new object by asking a prototype to clone itself.
 
 ## Collaborations
-+ A client asks a prototype to clone itself.
+
+- A client asks a prototype to clone itself.
 
 ## Consequences
 
@@ -69,11 +67,11 @@ Additional benefits of the Prototype pattern are listed below.
 
 2. Specifying new objects by varying values. Highly dynamic systems let you define new behavior through object composition—by specifying values for an object’s variables, for example—and not by defining new classes. You effectively define new kinds of objects by instantiating existing classes and registering the instances as prototypes of client objects. A client can exhibit new behavior by delegating responsibility to the prototype.
 
-This kind of design lets users define new “classes” without programming. In fact, cloning a prototype is similar to instantiating a class. The Prototype pattern can greatly reduce the number of classes a system needs. In our music editor, one GraphicTool class can create a limitless variety of music objects.
+    This kind of design lets users define new “classes” without programming. In fact, cloning a prototype is similar to instantiating a class. The Prototype pattern can greatly reduce the number of classes a system needs. In our music editor, one GraphicTool class can create a limitless variety of music objects.
 
 3. Specifying new objects by varying structure. Many applications build objects from parts and subparts. Editors for circuit design, for example, build circuits out of subcircuits.1 For convenience, such applications often let you instantiate complex, user-defined structures, say, to use a specific subcircuit again and again.
 
-The Prototype pattern supports this as well. We simply add this subcircuit as a prototype to the palette of available circuit elements. As long as the composite circuit object implements Clone as a deep copy, circuits with different structures can be prototypes.
+    The Prototype pattern supports this as well. We simply add this subcircuit as a prototype to the palette of available circuit elements. As long as the composite circuit object implements Clone as a deep copy, circuits with different structures can be prototypes.
 
 4. Reduced subclassing. Factory Method (107) often produces a hierarchy of Creator classes that parallels the product class hierarchy. The Prototype pattern lets you clone a prototype instead of asking a factory method to make a new object. Hence you don’t need a Creator class hierarchy at all. This benefit applies primarily to languages like C++ that don’t treat classes as first-class objects. Languages that do, like Smalltalk and Objective C, derive less benefit, since you can always use a class object as a creator. Class objects already act like prototypes in these languages.
 
@@ -135,7 +133,7 @@ private:
     Door* _prototypeDoor;
 };
 ```
- 
+
 The new constructor simply initializes its prototypes:
 
 ```mermaid
@@ -148,7 +146,7 @@ MazePrototypeFactory::MazePrototypeFactory (
    _prototypeDoor = d;
 }
 ```
- 
+
 The member functions for creating walls, rooms, and doors are similar: Each clones a prototype and then initializes it. Here are the definitions of MakeWall and MakeDoor:
 
 ```mermaid
@@ -162,7 +160,7 @@ Door* MazePrototypeFactory::MakeDoor (Room* r1, Room *r2) const {
     return door;
 }
 ```
- 
+
 We can use MazePrototypeFactory to create a prototypical or default maze just by initializing it with prototypes of basic maze components:
 
 ```mermaid
@@ -177,7 +175,7 @@ MazePrototypeFactory simpleMazeFactory(
 
 Maze* maze = game.CreateMaze(simpleMazeFactory);
 ```
- 
+
 To change the type of maze, we initialize MazePrototypeFactory with a different set of prototypes. The following call creates a maze with a BombedDoor and a RoomWithABomb:
 
 ```mermaid
@@ -190,7 +188,7 @@ MazePrototypeFactory bombedMazeFactory(
     new RoomWithABomb, new Door
 );
 ```
- 
+
 An object that can be used as a prototype, such as an instance of Wall, must support the Clone operation. It must also have a copy constructor for cloning. It may also need a separate operation for reinitializing internal state. We’ll add the Initialize operation to Door to let clients initialize the clone’s rooms.
 
 Compare the following definition of Door to the one on page 83:
@@ -234,7 +232,7 @@ Door* Door::Clone () const {
     return new Door(*this);
 }
 ```
- 
+
 The BombedWall subclass must override Clone and implement a corresponding copy constructor.
 
 ```mermaid
@@ -260,7 +258,7 @@ Wall* BombedWall::Clone () const {
 ```cpp
 #endif
 ```
- 
+
 Although BombedWall::Clone returns a Wall*, its implementation returns a pointer to a new instance of a subclass, that is, a BombedWall*. We define Clone like this in the base class to ensure that clients that clone the prototype don’t have to know about their concrete subclasses. Clients should never need to downcast the return value of Clone to the desired type.
 
 In Smalltalk, you can reuse the standard copy method inherited from Object to clone any MapSite. You can use MazeFactory to produce the prototypes you’ll need; for example, you can create a room by supplying the name #room. The MazeFactory has a dictionary that maps names to prototypes. Its make: method looks like this:
@@ -269,7 +267,7 @@ In Smalltalk, you can reuse the standard copy method inherited from Object to cl
 make: partName
 ^ (partCatalog at: partName) copy
 ```
- 
+
 Given appropriate methods for initializing the MazeFactory with prototypes, you could create a simple maze with the following code:
 
 ```smalltalk
@@ -281,7 +279,7 @@ CreateMaze
         with: Room new named: #room;
         yourself)
 ```
- 
+
 where the definition of the on: class method for CreateMaze would be
 
 ```smalltalk
@@ -305,7 +303,7 @@ on: aFactory
         addRoom: room2;
         yourself
 ```
- 
+
 ## Known Uses
 
 Perhaps the first example of the Prototype pattern was in Ivan Sutherland’s Sketchpad system [Sut63]. The first widely known application of the pattern in an object-oriented language was in ThingLab, where users could form a composite object and then promote it to a prototype by installing it in a library of reusable objects [Bor81]. Goldberg and Robson mention prototypes as a pattern [GR83], but Coplien [Cop92] gives a much more complete description. He describes idioms related to the Prototype pattern for C++ and gives many examples and variations.

@@ -8,8 +8,6 @@ category: Creational
 goF: 5
 tags: ["cpp", "java", "python"]
 ---
-# Object Creational: Singleton
-
 ## Intent
 
 Ensure a class only has one instance, and provide a global point of access to it.
@@ -26,25 +24,25 @@ A better solution is to make the class itself responsible for keeping track of i
 
 Use the Singleton pattern when
 
-+ there must be exactly one instance of a class, and it must be accessible to clients from a well-known access point.
+- there must be exactly one instance of a class, and it must be accessible to clients from a well-known access point.
 
-+ when the sole instance should be extensible by subclassing, and clients should be able to use an extended instance without modifying their code.
+- when the sole instance should be extensible by subclassing, and clients should be able to use an extended instance without modifying their code.
 
 ## Structure
 
 ```txt
 
 ```
- 
+
 ## Participants
 
-+ **Singleton**
-    - defines an Instance operation that lets clients access its unique instance. Instance is a class operation (that is, a class method in Smalltalk and a static member function in C++).
-    - may be responsible for creating its own unique instance.
+- **Singleton**
+  - defines an Instance operation that lets clients access its unique instance. Instance is a class operation (that is, a class method in Smalltalk and a static member function in C++).
+  - may be responsible for creating its own unique instance.
 
 ## Collaborations
 
-+ Clients access a Singleton instance solely through Singleton’s Instance operation.
+- Clients access a Singleton instance solely through Singleton’s Instance operation.
 
 ## Consequences
 
@@ -84,7 +82,7 @@ Here are implementation issues to consider when using the Singleton pattern:
         static Singleton* _instance;
     };
     ```
- 
+
     The corresponding implementation is
 
     ```cpp
@@ -101,7 +99,7 @@ Here are implementation issues to consider when using the Singleton pattern:
     ```cpp
     #endif
     ```
- 
+
     Clients access the singleton exclusively through the Instance member function. The variable _instance is initialized to 0, and the static member function Instance returns its value, initializing it with the unique instance if it is 0. Instance uses lazy initialization; the value it returns isn’t created and stored until it’s first accessed.
 
     Notice that the constructor is protected. A client that tries to instantiate Singleton directly will get an error at compile-time. This ensures that only one instance can ever get created.
@@ -110,24 +108,24 @@ Here are implementation issues to consider when using the Singleton pattern:
 
     There’s another thing to note about the C++ implementation. It isn’t enough to define the singleton as a global or static object and then rely on automatic initialization. There are three reasons for this:
 
-        1. We can’t guarantee that only one instance of a static object will ever be declared.
+    1. We can’t guarantee that only one instance of a static object will ever be declared.
 
-        2. We might not have enough information to instantiate every singleton at static initialization time. A singleton might require values that are computed later in the program’s execution.
+    2. We might not have enough information to instantiate every singleton at static initialization time. A singleton might require values that are computed later in the program’s execution.
 
-        3. C++ doesn’t define the order in which constructors for global objects are called across translation units [ES90]. This means that no dependencies can exist between singletons; if any do, then errors are inevitable.
+    3. C++ doesn’t define the order in which constructors for global objects are called across translation units [ES90]. This means that no dependencies can exist between singletons; if any do, then errors are inevitable.
 
     An added (albeit small) liability of the global/static object approach is that it forces all singletons to be created whether they are used or not. Using a static member function avoids all of these problems.
 
     In Smalltalk, the function that returns the unique instance is implemented as a class method on the Singleton class. To ensure that only one instance is created, override the new operation. The resulting Singleton class might have the following two class methods, where Solelnstance is a class variable that is not used anywhere else:
 
-```smalltalk
-new
-    self error: 'cannot create new object'
-default
-    SoleInstance isNil ifTrue: [SoleInstance := super new].
-    ^ SoleInstance
-```
- 
+    ```smalltalk
+    new
+        self error: 'cannot create new object'
+    default
+        SoleInstance isNil ifTrue: [SoleInstance := super new].
+        ^ SoleInstance
+    ```
+
 2. *Subclassing the Singleton class.* The main issue is not so much defining the subclass but installing its unique instance so that clients will be able to use it. In essence, the variable that refers to the singleton instance must get initialized with an instance of the subclass. The simplest technique is to determine which singleton you want to use in the Singleton’s Instance operation. An example in the Sample Code shows how to implement this technique with environment variables.
 
     Another way to choose the subclass of Singleton is to take the implementation of Instance out of the parent class (e.g., MazeFactory) and put it in the subclass. That lets a C++ programmer decide the class of singleton at link-time (e.g., by linking in an object file containing a different implementation) but keeps it hidden from the clients of the singleton.
@@ -157,7 +155,7 @@ private:
     static List<NameSingletonPair>* _registry;
 };
 ```
- 
+
 `Register` registers the Singleton instance under the given name. To keep the registry simple, we’ll have it store a list of NameSingletonPair objects. Each NameSingletonPair maps a name to a singleton. The Lookup operation finds a singleton given its name. We’ll assume that an environment variable specifies the name of the singleton desired.
 
 ```cpp
@@ -172,7 +170,7 @@ Singleton* Singleton::Instance () {
     return _instance;
 }
 ```
- 
+
 Where do Singleton classes register themselves? One possibility is in their constructor. For example, a MySingleton subclass could do the following:
 
 ```cpp
@@ -188,7 +186,7 @@ MySingleton::MySingleton() {
     Singleton::Register("MySingleton", this);
 }
 ```
- 
+
 Of course, the constructor won’t get called unless someone instantiates the class, which echoes the problem the Singleton pattern is trying to solve! We can get around this problem in C++ by defining a static instance of MySingleton. For example, we can define
 
 ```cpp
@@ -227,7 +225,7 @@ private:
     static MazeFactory* _instance;
 };
 ```
- 
+
 The corresponding implementation is
 
 ```cpp
@@ -240,7 +238,7 @@ MazeFactory* MazeFactory::Instance () {
     return _instance;
 }
 ```
- 
+
 ```cpp
 #else
 //MazeFactory* MazeFactory::_instance = 0;
@@ -278,7 +276,7 @@ MazeFactory* MazeFactory::Instance () {
 ```cpp
 #endif
 ```
- 
+
 Note that Instance must be modified whenever you define a new subclass of MazeFactory. That might not be a problem in this application, but it might be for abstract factories defined in a framework.
 
 A possible solution would be to use the registry approach described in the Implementation section. Dynamic linking could be useful here as well—it would keep the application from having to load all the subclasses that are not used.
