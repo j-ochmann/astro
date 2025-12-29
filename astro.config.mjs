@@ -36,20 +36,22 @@ export default defineConfig({
           collapsed: true,
         },
         {
-          type: 'group',
           label: 'Design Patterns',
-          collapsed: true,
           link: '/design_patterns/',
           items: [
-            /*{ label: 'Design Patterns', link: '/design_patterns/' },*/
             {
-              type: 'group',
               label: 'Creational',
+              autogenerate: { directory: 'design_patterns/creational/' },
               collapsed: true,
-              autogenerate: { directory: 'design_patterns/creational' },
             },
-            { label: 'Structural', link: '/design_patterns/structural/' },
-            { label: 'Behavioral', link: '/design_patterns/behavioral/' },
+            { label: 'Structural',
+              autogenerate: { directory: 'design_patterns/structural/' },
+              collapsed: true,
+            },
+            { label: 'Behavioral',
+              autogenerate: { directory: 'design_patterns/behavioral' },
+              collapsed: true,
+            },
           ],
         },
         {
