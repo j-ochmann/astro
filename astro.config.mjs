@@ -38,13 +38,13 @@ export default defineConfig({
         {
           label: 'Design Patterns',
           collapsed: true,
+          link: '/design_patterns/',
           items: [
-            { label: 'Design Patterns', link: '/design_patterns/' },
+            /*{ label: 'Design Patterns', link: '/design_patterns/' },*/
             {
               label: 'Creational',
-              //link: '/design_patterns/creational/',
-              autogenerate: { directory: 'design_patterns/creational' },
               collapsed: true,
+              autogenerate: { directory: 'design_patterns/creational' },
             },
             { label: 'Structural', link: '/design_patterns/structural/' },
             { label: 'Behavioral', link: '/design_patterns/behavioral/' },
