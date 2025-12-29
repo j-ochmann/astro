@@ -32,7 +32,7 @@ Use the Singleton pattern when
 
 ## Structure
 
-```mermaid
+```txt
 
 ```
  

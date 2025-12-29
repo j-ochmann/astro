@@ -30,7 +30,7 @@ How can existing and unrelated classes like TextView work in an application that
 
 Instead, we could define TextShape so that it adapts the TextView interface to Shape’s. We can do this in one of two ways: (1) by inheriting Shape’s interface and TextView’s implementation or (2) by composing a TextView instance within a TextShape and implementing TextShape in terms of TextView’s interface. These two approaches correspond to the class and object versions of the Adapter pattern. We call TextShape an adapter.
 
-```mermaid
+```txt
 
 ```
 
@@ -51,13 +51,13 @@ Use the Adapter pattern when
 
 A class adapter uses multiple inheritance to adapt one interface to another:
 
-```mermaid
+```txt
 
 ```
 
 An object adapter relies on object composition:
 
-```mermaid
+```txt
 
 ```
 
@@ -101,7 +101,7 @@ We’ll look at different ways to build interface adaptation into classes in the
 
 Consider the two-way adapter that integrates Unidraw, a graphical editor framework [VL90], and QOCA, a constraint-solving toolkit [HHMV92]. Both systems have classes that represent variables explicitly: Unidraw has State Variable, and QOCA has ConstraintVariable. To make Unidraw work with QOCA, ConstraintVariable must be adapted to State Variable; to let QOCA propagate solutions to Unidraw, State Variable must be adapted to ConstraintVariable.
 
-```mermaid
+```txt
 
 ```
 
@@ -121,7 +121,7 @@ Although the implementation of Adapter is usually straightforward, here are some
 
     1. *Using abstract operations.* Define corresponding abstract operations for the narrow Adaptee interface in the TreeDisplay class. Subclasses must implement the abstract operations and adapt the hierarchically structured object. For example, a DirectoryTreeDisplay subclass will implement these operations by accessing the directory structure.
 
-        ```mermaid
+        ```txt
 
         ```
 
@@ -133,7 +133,7 @@ Although the implementation of Adapter is usually straightforward, here are some
 
         Statically typed languages like C++ require an explicit interface definition for the delegate. We can specify such an interface by putting the narrow interface that TreeDisplay requires into an abstract TreeAccessorDelegate class. Then we can mix this interface into the delegate of our choice—DirectoryBrowser in this case—using inheritance. We use single inheritance if the DirectoryBrowser has no existing parent class, multiple inheritance if it does. Mixing classes together like this is easier than introducing a new TreeDisplay subclass and implementing its operations individually.
 
-        ```mermaid
+        ```txt
 
         ```
 
@@ -316,7 +316,7 @@ Pluggable adapters are common in ObjectWorks\Smalltalk [Par90]. Standard Smallta
 
 Instead, ObjectWorks\Smalltalk includes a subclass of ValueModel called PluggableAdaptor. A PluggableAdaptor object adapts other objects to the ValueModel interface (value, value:). It can be parameterized with blocks for getting and setting the desired value. PluggableAdaptor uses these blocks internally to implement the value, value: interface. PluggableAdaptor also lets you pass in the selector names (e.g., width, width:) directly for syntactic convenience. It converts these selectors into the corresponding blocks automatically.
 
-```mermaid
+```txt
 
 ```
 
