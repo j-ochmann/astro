@@ -1,12 +1,10 @@
 ---
-id: "observer"
+id: observer
 title: "Object Behavioral: Observer"
-category: "Behavioral"
+category: Behavioral
 goF: 19
 tags: ["cpp", "java", "python"]
 ---
-# Object Behavioral: Observer
-
 ## Intent
 
 Define a one-to-many dependency between objects so that when one object changes state, all its dependents are notified and updated automatically.
@@ -31,20 +29,21 @@ The Observer pattern describes how to establish these relationships. The key obj
 
 This kind of interaction is also known as publish-subscribe. The subject is the publisher of notifications. It sends out these notifications without having to know who its observers are. Any number of observers can subscribe to receive notifications.
 
-Applicability
+## Applicability
 
 Use the Observer pattern in any of the following situations:
 + When an abstraction has two aspects, one dependent on the other. Encapsulating these aspects in separate objects lets you vary and reuse them independently.
 + When a change to one object requires changing others, and you don’t know how many objects need to be changed.
 + When an object should be able to notify other objects without making assumptions about who these objects are. In other words, you don’t want these objects tightly coupled.
 
-Structure
+## Structure
 
 ```cpp
 
 ```
 
-Participants
+## Participants
+
 + Subject
 - knows its observers. Any number of Observer objects may observe a subject.
 - provides an interface for attaching and detaching Observer objects.
@@ -58,7 +57,8 @@ Participants
 - stores state that should stay consistent with the subject’s.
 - implements the Observer updating interface to keep its state consistent with the subject’s.
 
-Collaborations
+## Collaborations
+
 + ConcreteSubject notifies its observers whenever a change occurs that could make its observers’ state inconsistent with its own.
 + After being informed of a change in the concrete subject, a ConcreteObserver object may query the subject for information. ConcreteObserver uses this information to reconcile its state with that of the subject.
 
@@ -70,7 +70,7 @@ The following interaction diagram illustrates the collaborations between a subje
 
 Note how the Observer object that initiates the change request postpones its update until it gets a notification from the subject. Notify is not always called by the subject. It can be called by an observer or by another kind of object entirely. The Implementation section discusses some common variations.
 
-Consequences
+## Consequences
 
 The Observer pattern lets you vary subjects and observers independently. You can reuse subjects without reusing their observers, and vice versa. It lets you add observers without modifying the subject or other observers.
 
@@ -86,7 +86,7 @@ Because Subject and Observer aren’t tightly coupled, they can belong to differ
 
 This problem is aggravated by the fact that the simple update protocol provides no details on what changed in the subject. Without additional protocol to help observers discover what changed, they may be forced to work hard to deduce the changes.
 
-Implementation
+## Implementation
 
 Several issues related to the implementation of the dependency mechanism are discussed in this section.
 
@@ -156,7 +156,7 @@ ChangeManager is an instance of the Mediator (273) pattern. In general there is 
 
 9. Combining the Subject and Observer classes. Class libraries written in languages that lack multiple inheritance (like Smalltalk) generally don’t define separate Subject and Observer classes but combine their interfaces in one class. That lets you define an object that acts as both a subject and an observer without multiple inheritance. In Smalltalk, for example, the Subject and Observer interfaces are defined in the root class Object, making them available to all classes.
 
-Sample Code
+## Sample Code
 
 An abstract class defines the Observer interface:
 
@@ -210,13 +210,13 @@ The following code creates an AnalogClock and a DigitalClock that always show th
 
 Whenever the timer ticks, the two clocks will be updated and will redisplay themselves appropriately.
 
-Known Uses
+## Known Uses
 
 The first and perhaps best-known example of the Observer pattern appears in Smalltalk Model/View/Controller (MVC), the user interface framework in the Smalltalk environment [KP88]. MVC’s Model class plays the role of Subject, while View is the base class for observers. Smalltalk, ET++ [WGM88], and the THINK class library [Sym93b] provide a general dependency mechanism by putting Subject and Observer interfaces in the parent class for all other classes in the system.
 
 Other user interface toolkits that employ this pattern are Interviews [LVC89], the Andrew Toolkit [P+88], and Unidraw [VL90]. Interviews defines Observer and Observable (for subjects) classes explicitly. Andrew calls them “view” and “data object,” respectively. Unidraw splits graphical editor objects into View (for observers) and Subject parts.
 
-Related Patterns
+## Related Patterns
 
 Mediator (273): By encapsulating complex update semantics, the ChangeManager acts as mediator between subjects and observers.
 

@@ -1,12 +1,10 @@
 ---
-id: "command"
+id: command
 title: "Object Behavioral: Command"
-category: "Behavioral"
+category: Behavioral
 goF: 14
 tags: ["cpp", "java", "python"]
 ---
-# Object Behavioral: Command
-
 ## Intent
 
 Encapsulate a request as an object, thereby letting you parameterize clients with different requests, queue or log requests, and support undoable operations.
@@ -51,7 +49,7 @@ MacroCommand is a concrete Command subclass that simply executes a sequence of C
 
 In each of these examples, notice how the Command pattern decouples the object that invokes the operation from the one having the knowledge to perform it. This gives us a lot of flexibility in designing our user interface. An application can provide both a menu and a push button interface to a feature just by making the menu and the push button share an instance of the same concrete Command subclass. We can replace commands dynamically, which would be useful for implementing context-sensitive menus. We can also support command scripting by composing commands into larger ones. All of this is possible because the object that issues a request only needs to know how to issue it; it doesn’t need to know how the request will be carried out.
 
-Applicability
+## Applicability
 
 Use the Command pattern when you want to
 + parameterize objects by an action to perform, as Menultem objects did above. You can express such parameterization in a procedural language with a callback function, that is, a function that’s registered somewhere to be called at a later point. Commands are an object-oriented replacement for callbacks.
@@ -60,7 +58,7 @@ Use the Command pattern when you want to
 + support logging changes so that they can be reapplied in case of a system crash. By augmenting the Command interface with load and store operations, you can keep a persistent log of changes. Recovering from a crash involves reloading logged commands from disk and reexecuting them with the Execute operation.
 + structure a system around high-level operations built on primitives operations. Such a structure is common in information systems that support transactions. A transaction encapsulates a set of changes to data. The Command pattern offers a way to model transactions. Commands have a common interface, letting you invoke all transactions the same way. The pattern also makes it easy to extend the system with new transactions.
 
-Structure
+## Structure
 
 ```cpp
 
@@ -79,7 +77,7 @@ Participants
 + Receiver (Document, Application)
 - knows how to perform the operations associated with carrying out a request. Any class may serve as a Receiver.
 
-Collaborations
+## Collaborations
 + The client creates a ConcreteCommand object and specifies its receiver.
 + An Invoker object stores the ConcreteCommand object.
 + The invoker issues a request by calling Execute on the command. When commands are undoable, ConcreteCommand stores state for undoing the command prior to invoking Execute.
@@ -91,7 +89,7 @@ The following diagram shows the interactions between these objects. It illustrat
 
 ```
 
-Consequences
+## Consequences
 
 The Command pattern has the following consequences:
 
@@ -103,7 +101,7 @@ The Command pattern has the following consequences:
 
 4. It’s easy to add new Commands, because you don’t have to change existing classes.
 
-Implementation
+## Implementation
 
 Consider the following issues when implementing the Command pattern:
 
@@ -124,7 +122,7 @@ For example, a DeleteCommand that deletes selected objects must store different 
 
 4. Using C++ templates. For commands that (1) aren’t undoable and (2) don’t require arguments, we can use C++ templates to avoid creating a Command subclass for every kind of action and receiver. We show how to do this in the Sample Code section.
 
-Sample Code
+## Sample Code
 
 The C++ code shown here sketches the implementation of the Command classes in the Motivation section. We’ll define OpenCommand, PasteCommand, and MacroCommand. First the abstract Command class:
 
@@ -184,7 +182,7 @@ Finally, MacroCommand must provide operations to manage its subcommands. The Mac
 
 ```
 
-Known Uses
+## Known Uses
 
 Perhaps the first example of the Command pattern appears in a paper by Lieberman [Lie85]. MacApp [App89] popularized the notion of commands for implementing undoable operations. ET++ [WGM88], Interviews [LCI+92], and Unidraw [VL90] also define classes that follow the Command pattern. Interviews defines an Action abstract class that provides command functionality. It also defines an ActionCallback template, parameterized by action method, that can instantiate command subclasses automatically.
 
@@ -194,12 +192,10 @@ Unidraw’s command objects are unique in that they can behave like messages. A 
 
 Coplien describes how to implement functors, objects that are functions, in C++ [Cop92]. He achieves a degree of transparency in their use by overloading the function call operator (operator()). The Command pattern is different; its focus is on maintaining a binding between a receiver and a function (i.e., action), not just maintaining a function.
 
-Related Patterns
+## Related Patterns
 
 A Composite (163) can be used to implement MacroCommands.
 
 A Memento (283) can keep state the command requires to undo its effect.
 
 A command that must be copied before being placed on the history list acts as a Prototype (117).
-
-

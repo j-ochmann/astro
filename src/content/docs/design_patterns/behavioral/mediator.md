@@ -1,12 +1,10 @@
 ---
-id: "mediator"
+id: mediator
 title: "Object Behavioral: Mediator"
-category: "Behavioral"
+category: Behavioral
 goF: 17
 tags: ["cpp", "java", "python"]
 ---
-# Object Behavioral: Mediator
-
 ## Intent
 
 Define an object that encapsulates how a set of objects interact. Mediator promotes loose coupling by keeping objects from referring to each other explicitly, and it lets you vary their interaction independently.
@@ -61,14 +59,14 @@ Here’s how the FontDialogDirector abstraction can be integrated into a class l
 
 DialogDirector is an abstract class that defines the overall behavior of a dialog. Clients call the ShowDialog operation to display the dialog on the screen. CreateWidgets is an abstract operation for creating the widgets of a dialog. WidgetChanged is another abstract operation; widgets call it to inform their director that they have changed. DialogDirector subclasses override CreateWidgets to create the proper widgets, and they override WidgetChanged to handle the changes.
 
-Applicability
+## Applicability
 
 Use the Mediator pattern when
 + a set of objects communicate in well-defined but complex ways. The resulting interdependencies are unstructured and difficult to understand.
 + reusing an object is difficult because it refers to and communicates with many other objects.
 + a behavior that’s distributed between several classes should be customizable without a lot of subclassing.
 
-Structure
+## Structure
 
 ```cpp
 
@@ -80,7 +78,8 @@ A typical object structure might look like this:
 
 ```
 
-Participants
+## Participants
+
 + Mediator (DialogDirector)
 - defines an interface for communicating with Colleague objects.
 + ConcreteMediator (FontDialogDirector)
@@ -90,10 +89,10 @@ Participants
 - each Colleague class knows its Mediator object.
 - each colleague communicates with its mediator whenever it would have otherwise communicated with another colleague.
 
-Collaborations
+## Collaborations
 + Colleagues send and receive requests from a Mediator object. The mediator implements the cooperative behavior by routing requests between the appropriate colleague(s).
 
-Consequences
+## Consequences
 
 The Mediator pattern has the following benefits and drawbacks:
 
@@ -107,7 +106,7 @@ The Mediator pattern has the following benefits and drawbacks:
 
 5. It centralizes control. The Mediator pattern trades complexity of interaction for complexity in the mediator. Because a mediator encapsulates protocols, it can become more complex than any individual colleague. This can make the mediator itself a monolith that’s hard to maintain.
 
-Implementation
+## Implementation
 
 The following implementation issues are relevant to the Mediator pattern:
 
@@ -117,7 +116,7 @@ The following implementation issues are relevant to the Mediator pattern:
 
 Another approach defines a specialized notification interface in Mediator that lets colleagues be more direct in their communication. Smalltalk/V for Windows uses a form of delegation: When communicating with the mediator, a colleague passes itself as an argument, allowing the mediator to identify the sender. The Sample Code uses this approach, and the Smalltalk/V implementation is discussed further in the Known Uses.
 
-Sample Code
+## Sample Code
 
 We’ll use a DialogDirector to implement the font dialog box shown in the Motivation. The abstract class DialogDirector defines the interface for directors.
 
@@ -171,7 +170,7 @@ WidgetChanged ensures that the widgets work together properly:
 
 The complexity of WidgetChanged increases proportionally with the complexity of the dialog. Large dialogs are undesirable for other reasons, of course, but mediator complexity might mitigate the pattern’s benefits in other applications.
 
-Known Uses
+## Known Uses
 
 Both ET++ [WGM88] and the THINK C class library [Sym93b] use director-like objects in dialogs as mediators between widgets.
 
@@ -195,7 +194,7 @@ Another application of the Mediator pattern is in coordinating complex updates. 
 
 A similar application appears in the Unidraw drawing framework [VL90] and uses a class called CSolver to enforce connectivity constraints between “connectors.” Objects in graphical editors can appear to stick to one another in different ways. Connectors are useful in applications that maintain connectivity automatically, like diagram editors and circuit design systems. CSolver is a mediator between connectors. It solves the connectivity constraints and updates the connectors’ positions to reflect them.
 
-Related Patterns
+## Related Patterns
 
 Facade (185) differs from Mediator in that it abstracts a subsystem of objects to provide a more convenient interface. Its protocol is unidirectional; that is, Facade objects make requests of the subsystem classes but not vice versa. In contrast, Mediator enables cooperative behavior that colleague objects don’t or can’t provide, and the protocol is multidirectional.
 

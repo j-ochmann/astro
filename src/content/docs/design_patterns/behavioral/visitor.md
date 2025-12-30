@@ -1,12 +1,10 @@
 ---
-id: "visitor"
+id: visitor
 title: "Object Behavioral: Visitor"
-category: "Behavioral"
+category: Behavioral
 goF: 23
 tags: ["cpp", "java", "python"]
 ---
-# Object Behavioral: Visitor
-
 ## Intent
 
 Represent an operation to be performed on the elements of an object structure. Visitor lets you define a new operation without changing the classes of the elements on which it operates.
@@ -39,20 +37,22 @@ To make visitors work for more than just type-checking, we need an abstract pare
 
 With the Visitor pattern, you define two class hierarchies: one for the elements being operated on (the Node hierarchy) and one for the visitors that define operations on the elements (the NodeVisitor hierarchy). You create a new operation by adding a new subclass to the visitor class hierarchy. As long as the grammar that the compiler accepts doesn’t change (that is, we don’t have to add new Node subclasses), we can add new functionality simply by defining new NodeVisitor subclasses.
 
-Applicability
+## Applicability
 
 Use the Visitor pattern when
+
 + an object structure contains many classes of objects with differing interfaces, and you want to perform operations on these objects that depend on their concrete classes.
 + many distinct and unrelated operations need to be performed on objects in an object structure, and you want to avoid “polluting” their classes with these operations. Visitor lets you keep related operations together by defining them in one class. When the object structure is shared by many applications, use Visitor to put operations in just those applications that need them.
 + the classes defining the object structure rarely change, but you often want to define new operations over the structure. Changing the object structure classes requires redefining the interface to all visitors, which is potentially costly. If the object structure classes change often, then it’s probably better to define the operations in those classes.
 
-Structure
+## Structure
 
 ```cpp
 
 ```
 
-Participants
+## Participants
+
 + Visitor (NodeVisitor)
 - declares a Visit operation for each class of ConcreteElement in the object structure. The operation’s name and signature identifies the class that sends the Visit request to the visitor. That lets the visitor determine the concrete class of the element being visited. Then the visitor can access the element directly through its particular interface.
 + Concrete Visitor (TypeCheckingVisitor)
@@ -66,7 +66,8 @@ Participants
 - may provide a high-level interface to allow the visitor to visit its elements.
 - may either be a composite (see Composite (163)) or a collection such as a list or a set.
 
-Collaborations
+## Collaborations
+
 + A client that uses the Visitor pattern must create a ConcreteVisitor object and then traverse the object structure, visiting each element with the visitor.
 + When an element is visited, it calls the Visitor operation that corresponds to its class. The element supplies itself as an argument to this operation to let the visitor access its state, if necessary.
 
@@ -76,7 +77,7 @@ The following interaction diagram illustrates the collaborations between an obje
 
 ```
 
-Consequences
+## Consequences
 
 Some of the benefits and liabilities of the Visitor pattern are as follows:
 
@@ -108,7 +109,7 @@ MyType and YourType do not have to be related through inheritance at all.
 
 6. Breaking encapsulation. Visitor’s approach assumes that the ConcreteElement interface is powerful enough to let visitors do their job. As a result, the pattern often forces you to provide public operations that access an element’s internal state, which may compromise its encapsulation.
 
-Implementation
+## Implementation
 
 Each object structure will have an associated Visitor class. This abstract visitor class declares a VisitConcreteElement operation for each class of ConcreteElement defining the object structure. Each Visit operation on the Visitor declares its argument to be a particular ConcreteElement, allowing the Visitor to access the interface of the ConcreteElement directly. Concrete Visitor classes override each Visit operation to implement visitor-specific behavior for the corresponding ConcreteElement class.
 
@@ -154,7 +155,7 @@ Another solution is to use an iterator to visit the elements. In C++, you could 
 
 You could even put the traversal algorithm in the visitor, although you’ll end up duplicating the traversal code in each ConcreteVisitor for each aggregate ConcreteElement. The main reason to put the traversal strategy in the visitor is to implement a particularly complex traversal, one that depends on the results of the operations on the object structure. We’ll give an example of such a case in the Sample Code.
 
-Sample Code
+## Sample Code
 
 Because visitors are usually associated with composites, we’ll use the Equipment classes defined in the Sample Code of Composite (163) to illustrate the Visitor pattern. We will use Visitor to define operations for computing the inventory of materials and the total cost for a piece of equipment. The Equipment classes are so simple that using Visitor isn’t really necessary, but they make it easy to see what’s involved in implementing the pattern.
 
@@ -228,7 +229,7 @@ The ConcreteVisitor class is REMatchingVisitor. It is responsible for the traver
 
 ```
 
-Known Uses
+## Known Uses
 
 The Smalltalk-80 compiler has a Visitor class called ProgramNodeEnumerator. It’s used primarily for algorithms that analyze source code. It isn’t used for code generation or pretty-printing, although it could be.
 
@@ -238,10 +239,8 @@ To make adding new nodes easier, Inventor implements a double-dispatch scheme fo
 
 Mark Linton coined the term “Visitor” in the X Consortium’s Fresco Application Toolkit specification [LP93].
 
-Related Patterns
+## Related Patterns
 
 Composite (163): Visitors can be used to apply an operation over an object structure defined by the Composite pattern.
 
 Interpreter (243): Visitor may be applied to do the interpretation.
-
-

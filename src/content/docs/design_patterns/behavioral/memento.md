@@ -1,12 +1,10 @@
 ---
-id: "memento"
+id: memento
 title: "Object Behavioral: Memento"
-category: "Behavioral"
+category: Behavioral
 goF: 18
 tags: ["cpp", "java", "python"]
 ---
-# Object Behavioral: Memento
-
 ## Intent
 
 Without violating encapsulation, capture and externalize an object’s internal state so that the object can be restored to this state later.
@@ -49,19 +47,20 @@ In the graphical editor example just discussed, the ConstraintSolver can act as 
 
 This arrangement lets the ConstraintSolver entrust other objects with the information it needs to revert to a previous state without exposing its internal structure and representations.
 
-Applicability
+## Applicability
 
 Use the Memento pattern when
 + a snapshot of (some portion of) an object’s state must be saved so that it can be restored to that state later, and
 + a direct interface to obtaining the state would expose implementation details and break the object’s encapsulation.
 
-Structure
+## Structure
 
 ```cpp
 
 ```
 
-Participants
+## Participants
+
 + Memento (SolverState)
 - stores internal state of the Originator object. The memento may store as much or as little of the originator’s internal state as necessary at its originator’s discretion.
 - protects against access by objects other than the originator. Mementos have effectively two interfaces. Caretaker sees a narrow interface to the Memento—it can only pass the memento to other objects. Originator, in contrast, sees a wide interface, one that lets it access all the data necessary to restore itself to its previous state. Ideally, only the originator that produced the memento would be permitted to access the memento’s internal state.
@@ -72,7 +71,8 @@ Participants
 - is responsible for the memento’s safekeeping.
 - never operates on or examines the contents of a memento.
 
-Collaborations
+## Collaborations
+
 + A caretaker requests a memento from an originator, holds it for a time, and passes it back to the originator, as the following interaction diagram illustrates:
 
 ```cpp
@@ -82,7 +82,7 @@ Collaborations
 Sometimes the caretaker won’t pass the memento back to the originator, because the originator might never need to revert to an earlier state.
 + Mementos are passive. Only the originator that created a memento will assign or retrieve its state.
 
-Consequences
+## Consequences
 
 The Memento pattern has several consequences:
 
@@ -96,7 +96,7 @@ The Memento pattern has several consequences:
 
 5. Hidden costs in caring for mementos. A caretaker is responsible for deleting the mementos it cares for. However, the caretaker has no idea how much state is in the memento. Hence an otherwise lightweight caretaker might incur large storage costs when it stores mementos.
 
-Implementation
+## Implementation
 
 Here are two issues to consider when implementing the Memento pattern:
 
@@ -110,7 +110,7 @@ Here are two issues to consider when implementing the Memento pattern:
 
 For example, undoable commands in a history list can use mementos to ensure that commands are restored to their exact state when they’re undone (see Command (233)). The history list defines a specific order in which commands can be undone and redone. That means mementos can store just the incremental change that a command makes rather than the full state of every object they affect. In the Motivation example given earlier, the constraint solver can store only those internal structures that change to keep the line connecting the rectangles, as opposed to storing the absolute positions of these objects.
 
-Sample Code
+## Sample Code
 
 The C++ code given here illustrates the ConstraintSolver example discussed earlier. We use MoveCommand objects (see Command (233)) to (un)do the translation of a graphical object from one position to another. The graphical editor calls the command’s Execute operation to move a graphical object and Unexecute to undo the move. The command stores its target, the distance moved, and an instance of ConstraintSolverMemento, a memento containing state from the constraint solver.
 
@@ -132,7 +132,7 @@ Given these interfaces, we can implement MoveCommand members Execute and Unexecu
 
 Execute acquires a ConstraintSolverMemento memento before it moves the graphic. Unexecute moves the graphic back, sets the constraint solver’s state to the previous state, and finally tells the constraint solver to solve the constraints.
 
-Known Uses
+## Known Uses
 
 The preceding sample code is based on Unidraw’s support for connectivity through its CSolver class [VL90].
 
@@ -158,10 +158,8 @@ The memento-based iteration interface has two interesting benefits:
 
 The QOCA constraint-solving toolkit stores incremental information in mementos [HHMV92]. Clients can obtain a memento that characterizes the current solution to a system of constraints. The memento contains only those constraint variables that have changed since the last solution. Usually only a small subset of the solver’s variables changes for each new solution. This subset is enough to return the solver to the preceding solution; reverting to earlier solutions requires restoring mementos from the intervening solutions. Hence you can’t set mementos in any order; QOCA relies on a history mechanism to revert to earlier solutions.
 
-Related Patterns
+## Related Patterns
 
 Command (233): Commands can use mementos to maintain state for undoable operations.
 
 Iterator (257): Mementos can be used for iteration as described earlier.
-
-

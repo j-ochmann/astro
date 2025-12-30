@@ -1,12 +1,10 @@
 ---
-id: "template_method"
+id: template_method
 title: "Object Behavioral: Template Method"
-category: "Behavioral"
+category: Behavioral
 goF: 22
 tags: ["cpp", "java", "python"]
 ---
-# Class Behavioral: Template Method
-
 ## Intent
 
 Define the skeleton of an algorithm in an operation, deferring some steps to subclasses. Template Method lets subclasses redefine certain steps of an algorithm without changing the algorithm’s structure.
@@ -33,30 +31,32 @@ We call OpenDocument a template method. A template method defines an algorithm i
 
 By defining some of the steps of an algorithm using abstract operations, the template method fixes their ordering, but it lets Application and Document subclasses vary those steps to suit their needs.
 
-Applicability
+## Applicability
 
 The Template Method pattern should be used
 + to implement the invariant parts of an algorithm once and leave it up to subclasses to implement the behavior that can vary.
 + when common behavior among subclasses should be factored and localized in a common class to avoid code duplication. This is a good example of “refactoring to generalize” as described by Opdyke and Johnson [OJ93]. You first identify the differences in the existing code and then separate the differences into new operations. Finally, you replace the differing code with a template method that calls one of these new operations.
 + to control subclasses extensions. You can define a template method that calls “hook” operations (see Consequences) at specific points, thereby permitting extensions only at those points.
 
-Structure
+## Structure
 
 ```cpp
 
 ```
 
-Participants
+## Participants
+
 + AbstractClass (Application)
 - defines abstract primitive operations that concrete subclasses define to implement steps of an algorithm.
 - implements a template method defining the skeleton of an algorithm. The template method calls primitive operations as well as operations defined in AbstractClass or those of other objects.
 + ConcreteClass (MyApplication)
 - implements the primitive operations to carry out subclass-specific steps of the algorithm.
 
-Collaborations
-+ ConcreteClass relies on AbstractClass to implement the invariant steps of the algorithm.
+## Collaborations
 
-Consequences
+- ConcreteClass relies on AbstractClass to implement the invariant steps of the algorithm.
+
+## Consequences
 
 Template methods are a fundamental technique for code reuse. They are particularly important in class libraries, because they are the means for factoring out common behavior in library classes.
 
@@ -95,7 +95,7 @@ Subclasses override HookOperation to extend its behavior:
 
 ```
 
-Implementation
+## Implementation
 
 Three implementation issues are worth noting:
 
@@ -105,7 +105,7 @@ Three implementation issues are worth noting:
 
 3. Naming conventions. You can identify the operations that should be overridden by adding a prefix to their names. For example, the MacApp framework for Macintosh applications [App89] prefixes template method names with “Do-”: “DoCreateDocument”, “DoRead”, and so forth.
 
-Sample Code
+## Sample Code
 
 The following C++ example shows how a parent class can enforce an invariant for its subclasses. The example comes from NeXT’s AppKit [Add94]. Consider a class View that supports drawing on the screen. View enforces the invariant that its subclasses can draw into a view only after it becomes the “focus,” which requires certain drawing state (for example, colors and fonts) to be set up properly.
 
@@ -127,14 +127,12 @@ Subclasses override it to add their specific drawing behavior:
 
 ```
 
-Known Uses
+## Known Uses
 
 Template methods are so fundamental that they can be found in almost every abstract class. Wirfs-Brock et al. [WBWW90, WBJ90] provide a good overview and discussion of template methods.
 
-Related Patterns
+## Related Patterns
 
 Factory Methods (107) are often called by template methods. In the Motivation example, the factory method DoCreateDocument is called by the template method OpenDocument.
 
 Strategy (315): Template methods use inheritance to vary part of an algorithm. Strategies use delegation to vary the entire algorithm.
-
-

@@ -1,12 +1,10 @@
 ---
-id: "interpreter"
+id: interpreter
 title: "Object Behavioral: Interpreter"
-category: "Behavioral"
+category: Behavioral
 goF: 15
 tags: ["cpp", "java", "python"]
 ---
-# Class Behavioral: Interpreter
-
 ## Intent
 
 Given a language, define a represention for its grammar along with an interpreter that uses the representation to interpret sentences in the language.
@@ -50,13 +48,13 @@ We can create an interpreter for these regular expressions by defining the Inter
 
 and so on.
 
-Applicability
+## Applicability
 
 Use the Interpreter pattern when there is a language to interpret, and you can represent statements in the language as abstract syntax trees. The Interpreter pattern works best when
 + the grammar is simple. For complex grammars, the class hierarchy for the grammar becomes large and unmanageable. Tools such as parser generators are a better alternative in such cases. They can interpret expressions without building abstract syntax trees, which can save space and possibly time.
 + efficiency is not a critical concern. The most efficient interpreters are usually not implemented by interpreting parse trees directly but by first translating them into another form. For example, regular expressions are often transformed into state machines. But even then, the translator can be implemented by the Interpreter pattern, so the pattern is still applicable.
 
-Structure
+## Structure
 
 ```cpp
 
@@ -78,12 +76,12 @@ Participants
 - builds (or is given) an abstract syntax tree representing a particular sentence in the language that the grammar defines. The abstract syntax tree is assembled from instances of the NonterminalExpression and TerminalExpression classes.
 - invokes the Interpret operation.
 
-Collaborations
+## Collaborations
 + The client builds (or is given) the sentence as an abstract syntax tree of NonterminalExpression and TerminalExpression instances. Then the client initializes the context and invokes the Interpret operation.
 + Each NonterminalExpression node defines Interpret in terms of Interpret on each subexpression. The Interpret operation of each TerminalExpression defines the base case in the recursion.
 + The Interpret operations at each node use the context to store and access the state of the interpreter.
 
-Consequences
+## Consequences
 
 The Interpreter pattern has the following benefits and liabilities:
 
@@ -109,7 +107,7 @@ Terminal nodes generally don’t store information about their position in the a
 
 For example, each instance of LiteralExpression for dog receives a context containing the substring matched so far. And every such LiteralExpression does the same thing in its Interpret operation—it checks whether the next part of the input contains a dog—no matter where the instance appears in the tree.
 
-Sample Code
+## Sample Code
 
 Here are two examples. The first is a complete example in Smalltalk for checking whether a sequence matches a regular expression. The second is a C++ program for evaluating Boolean expressions.
 
@@ -283,13 +281,13 @@ However, Replace can be viewed as an interpreter as well. It’s an interpreter 
 
 The Interpreter pattern is more than just an operation distributed over a class hierarchy that uses the Composite (163) pattern. We consider Evaluate an interpreter because we think of the BooleanExp class hierarchy as representing a language. Given a similar class hierarchy for representing automotive part assemblies, it’s unlikely we’d consider operations like Weight and Copy as interpreters even though they are distributed over a class hierarchy that uses the Composite pattern—we just don’t think of automotive parts as a language. It’s a matter of perspective; if we started publishing grammars of automotive parts, then we could consider operations on those parts to be ways of interpreting the language.
 
-Known Uses
+## Known Uses
 
 The Interpreter pattern is widely used in compilers implemented with object-oriented languages, as the Smalltalk compilers are. SPECTalk uses the pattern to interpret descriptions of input file formats [Sza92]. The QOCA constraint-solving toolkit uses it to evaluate constraints [HHMV92].
 
 Considered in its most general form (i.e., an operation distributed over a class hierarchy based on the Composite pattern), nearly every use of the Composite pattern will also contain the Interpreter pattern. But the Interpreter pattern should be reserved for those cases in which you want to think of the class hierarchy as defining a language.
 
-Related Patterns
+## Related Patterns
 
 Composite (163): The abstract syntax tree is an instance of the Composite pattern.
 
@@ -298,5 +296,3 @@ Flyweight (195) shows how to share terminal symbols within the abstract syntax t
 Iterator (257): The interpreter can use an Iterator to traverse the structure.
 
 Visitor (331) can be used to maintain the behavior in each node in the abstract syntax tree in one class.
-
-

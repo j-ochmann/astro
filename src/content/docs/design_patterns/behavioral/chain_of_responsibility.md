@@ -1,12 +1,13 @@
 ---
-id: "chain_of_responsibility"
+id: chain_of_responsibility
 title: "Object Behavioral: Chain of Responsibility"
-category: "Behavioral"
+sidebar:
+  label: Chain of Responsibility
+  order: 13
+category: Behavioral
 goF: 13
 tags: ["cpp", "java", "python"]
 ---
-# Object Behavioral: Chain of Responsibility
-
 ## Intent
 
 Avoid coupling the sender of a request to its receiver by giving more than one object a chance to handle the request. Chain the receiving objects and pass the request along the chain until an object handles it.
@@ -43,14 +44,15 @@ To forward the request along the chain, and to ensure receivers remain implicit,
 
 The Button, Dialog, and Application classes use HelpHandler operations to handle help requests. HelpHandler’s HandleHelp operation forwards the request to the successor by default. Subclasses can override this operation to provide help under the right circumstances; otherwise they can use the default implementation to forward the request.
 
-Applicability
+## Applicability
 
 Use Chain of Responsibility when
-+ more than one object may handle a request, and the handler isn’t known a priori. The handler should be ascertained automatically.
-+ you want to issue a request to one of several objects without specifying the receiver explicitly.
-+ the set of objects that can handle a request should be specified dynamically.
 
-Structure
+- more than one object may handle a request, and the handler isn’t known a priori. The handler should be ascertained automatically.
+- you want to issue a request to one of several objects without specifying the receiver explicitly.
+- the set of objects that can handle a request should be specified dynamically.
+
+## Structure
 
 ```cpp
 
@@ -62,21 +64,23 @@ A typical object structure might look like this:
 
 ```
 
-Participants
-+ Handler (HelpHandler)
+## Participants
+
+- Handler (HelpHandler)
 - defines an interface for handling requests.
 - (optional) implements the successor link.
-+ ConcreteHandler (PrintButton, PrintDialog)
+- ConcreteHandler (PrintButton, PrintDialog)
 - handles requests it is responsible for.
 - can access its successor.
 - if the ConcreteHandler can handle the request, it does so; otherwise it forwards the request to its successor.
-+ Client
+- Client
 - initiates the request to a ConcreteHandler object on the chain.
 
-Collaborations
-+ When a client issues a request, the request propagates along the chain until a ConcreteHandler object takes responsibility for handling it.
+## Collaborations
 
-Consequences
+- When a client issues a request, the request propagates along the chain until a ConcreteHandler object takes responsibility for handling it.
+
+## Consequences
 
 Chain of Responsibility has the following benefits and liabilities:
 
@@ -88,7 +92,7 @@ As a result, Chain of Responsibility can simplify object interconnections. Inste
 
 3. Receipt isn’t guaranteed. Since a request has no explicit receiver, there’s no guarantee it’ll be handled—the request can fall off the end of the chain without ever being handled. A request can also go unhandled when the chain is not configured properly.
 
-Implementation
+## Implementation
 
 Here are implementation issues to consider in Chain of Responsibility:
 
@@ -134,7 +138,7 @@ Subclasses can extend the dispatch by overriding HandleRequest. The subclass han
 
 4. Automatic forwarding in Smalltalk. You can use the doesNotUnderstand mechanism in Smalltalk to forward requests. Messages that have no corresponding methods are trapped in the implementation of doesNotUnderstand, which can be overridden to forward the message to an object’s successor. Thus it isn’t necessary to implement forwarding manually; the class handles only the request in which it’s interested, and it relies on doesNotUnderstand to forward all others.
 
-Sample Code
+## Sample Code
 
 The following example illustrates how a chain of responsibility can handle requests for an on-line help system like the one described earlier. The help request is an explicit operation. We’ll use existing parent references in the widget hierarchy to propagate requests between widgets in the chain, and we’ll define a reference in the Handler class to propagate help requests between nonwidgets in the chain.
 
@@ -186,7 +190,7 @@ button->HandleHelp();
 
 In this case, the button will handle the request immediately. Note that any HelpHandler class could be made the successor of Dialog. Moreover, its successor could be changed dynamically. So no matter where a dialog is used, you’ll get the proper context-dependent help information for it.
 
-Known Uses
+## Known Uses
 
 Several class libraries use the Chain of Responsibility pattern to handle user events. They use different names for the Handler class, but the idea is the same: When the user clicks the mouse or presses a key, an event gets generated and passed along the chain. MacApp [App89] and ET++ [WGM88] call it “Event-Handler,” Symantec’s TCL library [Sym93b] calls it “Bureaucrat,” and NeXT’s AppKit [Add94] uses the name “Responder.”
 
@@ -194,8 +198,6 @@ The Unidraw framework for graphical editors defines Command objects that encapsu
 
 ET++ uses Chain of Responsibility to handle graphical update. A graphical object calls the InvalidateRect operation whenever it must update a part of its appearance. A graphical object can’t handle InvalidateRect by itself, because it doesn’t know enough about its context. For example, a graphical object can be enclosed in objects like Scrollers or Zoomers that transform its coordinate system. That means the object might be scrolled or zoomed so that it’s partially out of view. Therefore the default implementation of InvalidateRect forwards the request to the enclosing container object. The last object in the forwarding chain is a Window instance. By the time Window receives the request, the invalidation rectangle is guaranteed to be transformed properly. The Window handles InvalidateRect by notifying the window system interface and requesting an update.
 
-Related Patterns
+## Related Patterns
 
 Chain of Responsibility is often applied in conjunction with Composite (163). There, a component’s parent can act as its successor.
-
-

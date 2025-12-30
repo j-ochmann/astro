@@ -1,12 +1,10 @@
 ---
-id: "state"
+id: state
 title: "Object Behavioral: State"
-category: "Behavioral"
+category: Behavioral
 goF: 20
 tags: ["cpp", "java", "python"]
 ---
-# Object Behavioral: State
-
 ## Intent
 
 Allow an object to alter its behavior when its internal state changes. The object will appear to change its class.
@@ -29,19 +27,21 @@ The class TCPConnection maintains a state object (an instance of a subclass of T
 
 Whenever the connection changes state, the TCPConnection object changes the state object it uses. When the connection goes from established to closed, for example, TCPConnection will replace its TCPEstablished instance with a TCPClosed instance.
 
-Applicability
+## Applicability
 
 Use the State pattern in either of the following cases:
+
 + An object’s behavior depends on its state, and it must change its behavior at run-time depending on that state.
 + Operations have large, multipart conditional statements that depend on the object’s state. This state is usually represented by one or more enumerated constants. Often, several operations will contain this same conditional structure. The State pattern puts each branch of the conditional in a separate class. This lets you treat the object’s state as an object in its own right that can vary independently from other objects.
 
-Structure
+## Structure
 
 ```cpp
 
 ```
 
-Participants
+## Participants
+
 + Context (TCPConnection)
 - defines the interface of interest to clients.
 - maintains an instance of a ConcreteState subclass that defines the current state.
@@ -50,13 +50,14 @@ Participants
 + ConcreteState subclasses (TCPEstablished, TCPListen, TCPClosed)
 - each subclass implements a behavior associated with a state of the Context.
 
-Collaborations
+## Collaborations
+
 + Context delegates state-specific requests to the current ConcreteState object.
 + A context may pass itself as an argument to the State object handling the request. This lets the State object access the context if necessary.
 + Context is the primary interface for clients. Clients can configure a context with State objects. Once a context is configured, its clients don’t have to deal with the State objects directly.
 + Either Context or the ConcreteState subclasses can decide which state succeeds another and under what circumstances.
 
-Consequences
+## Consequences
 
 The State pattern has the following consequences:
 
@@ -74,7 +75,7 @@ Also, State objects can protect the Context from inconsistent internal states, b
 
 3. State objects can be shared. If State objects have no instance variables—that is, the state they represent is encoded entirely in their type—then contexts can share a State object. When states are shared in this way, they are essentially flyweights (see Flyweight (195)) with no intrinsic state, only behavior.
 
-Implementation
+## Implementation
 
 The State pattern raises a variety of implementation issues:
 
@@ -97,7 +98,7 @@ The first choice is preferable when the states that will be entered aren’t kno
 
 4. Using dynamic inheritance. Changing the behavior for a particular request could be accomplished by changing the object’s class at run-time, but this is not possible in most object-oriented programming languages. Exceptions include Self [US87] and other delegation-based languages that provide such a mechanism and hence support the State pattern directly. Objects in Self can delegate operations to other objects to achieve a form of dynamic inheritance. Changing the delegation target at run-time effectively changes the inheritance structure. This mechanism lets objects change their behavior and amounts to changing their class.
 
-Sample Code
+## Sample Code
 
 The following example gives the C++ code for the TCP connection example described in the Motivation section. This example is a simplified version of the TCP protocol; it doesn’t describe the complete protocol or all the states of TCP connections.8
 
@@ -141,7 +142,7 @@ Each TCPState subclass implements state-specific behavior for valid requests in 
 
 After performing state-specific work, these operations call the ChangeState operation to change the state of the TCPConnection. TCPConnection itself doesn’t know a thing about the TCP connection protocol; it’s the TCPState subclasses that define each state transition and action in TCP.
 
-Known Uses
+## Known Uses
 
 Johnson and Zweig [JZ91] characterize the State pattern and its application to TCP connection protocols.
 
@@ -157,7 +158,7 @@ This technique is used in both the HotDraw [Joh92] and Unidraw [VL90] drawing ed
 
 Coplien’s Envelope-Letter idiom [Cop92] is related to State. Envelope-Letter is a technique for changing an object’s class at run-time. The State pattern is more specific, focusing on how to deal with an object whose behavior depends on its state.
 
-Related Patterns
+## Related Patterns
 
 The Flyweight (195) pattern explains when and how State objects can be shared.
 

@@ -1,12 +1,10 @@
 ---
-id: "iterator"
+id: iterator
 title: "Object Behavioral: Iterator"
-category: "Behavioral"
+category: Behavioral
 goF: 16
 tags: ["cpp", "java", "python"]
 ---
-# Object Behavioral: Iterator
-
 ## Intent
 
 Provide a way to access the elements of an aggregate object sequentially without exposing its underlying representation.
@@ -45,20 +43,21 @@ The remaining problem is how to create the iterator. Since we want to write code
 
 CreateIterator is an example of a factory method (see Factory Method (107)). We use it here to let a client ask a list object for the appropriate iterator. The Factory Method approach give rise to two class hierarchies, one for lists and another for iterators. The CreateIterator factory method “connects” the two hierarchies.
 
-Applicability
+## Applicability
 
 Use the Iterator pattern
 + to access an aggregate object’s contents without exposing its internal representation.
 + to support multiple traversals of aggregate objects.
 + to provide a uniform interface for traversing different aggregate structures (that is, to support polymorphic iteration).
 
-Structure
+## Structure
 
 ```cpp
 
 ```
 
-Participants
+## Participants
+
 + Iterator
 - defines an interface for accessing and traversing elements.
 + ConcreteIterator
@@ -69,10 +68,11 @@ Participants
 + ConcreteAggregate
 - implements the Iterator creation interface to return an instance of the proper ConcreteIterator.
 
-Collaborations
+## Collaborations
+
 + A ConcreteIterator keeps track of the current object in the aggregate and can compute the succeeding object in the traversal.
 
-Consequences
+## Consequences
 
 The Iterator pattern has three important consequences:
 
@@ -82,7 +82,7 @@ The Iterator pattern has three important consequences:
 
 3. More than one traversal can be pending on an aggregate. An iterator keeps track of its own traversal state. Therefore you can have more than one traversal in progress at once.
 
-Implementation
+## Implementation
 
 Iterator has many implementation variants and alternatives. Some important ones follow. The trade-offs often depend on the control structures your language provides. Some languages (CLU [LG86], for example) even support this pattern directly.
 
@@ -122,7 +122,7 @@ Composites often need to be traversed in more than one way. Preorder, postorder,
 
 NullIterator can make traversing tree-structured aggregates (like Composites) easier. At each point in the traversal, we ask the current element for an iterator for its children. Aggregate elements return a concrete iterator as usual. But leaf elements return an instance of NullIterator. That lets us implement traversal over the entire structure in a uniform way.
 
-Sample Code
+## Sample Code
 
 We’ll look at the implementation of a simple List class, which is part of our foundation library (Appendix C). We’ll show two Iterator implementations, one for traversing the List in front-to-back order, and another for traversing back-to-front (the foundation library supports only the first one). Then we show how to use these iterators and how to avoid committing to a particular implementation. After that, we change the design to make sure iterators get deleted properly. The last example illustrates an internal iterator and compares it to its external counterpart.
 
@@ -282,7 +282,7 @@ Traverse decides to continue the traversal based on the outcome of the test:
 
 A variant of this class could define Traverse to return if at least one item satisfies the test.6
 
-Known Uses
+## Known Uses
 
 Iterators are common in object-oriented systems. Most collection class libraries offer iterators in one form or another.
 
@@ -294,7 +294,7 @@ Polymorphic iterators and the cleanup Proxy described earlier are provided by th
 
 ObjectWindows 2.0 [Bor94] provides a class hierarchy of iterators for containers. You can iterate over different container types in the same way. The ObjectWindow iteration syntax relies on overloading the postincrement operator ++ to advance the iteration.
 
-Related Patterns
+## Related Patterns
 
 Composite (163): Iterators are often applied to recursive structures such as Composites.
 

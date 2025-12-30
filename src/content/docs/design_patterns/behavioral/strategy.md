@@ -1,12 +1,10 @@
 ---
-id: "strategy"
+id: strategy
 title: "Object Behavioral: Strategy"
-category: "Behavioral"
+category: Behavioral
 goF: 21
 tags: ["cpp", "java", "python"]
 ---
-# Object Behavioral: Strategy
-
 ## Intent
 
 Define a family of algorithms, encapsulate each one, and make them interchangeable. Strategy lets the algorithm vary independently from clients that use it.
@@ -35,7 +33,7 @@ Suppose a Composition class is responsible for maintaining and updating the line
 
 A Composition maintains a reference to a Compositor object. Whenever a Composition reformats its text, it forwards this responsibility to its Compositor object. The client of Composition specifies which Compositor should be used by installing the Compositor it desires into the Composition.
 
-Applicability
+## Applicability
 
 Use the Strategy pattern when
 + many related classes differ only in their behavior. Strategies provide a way to configure a class with one of many behaviors.
@@ -43,7 +41,7 @@ Use the Strategy pattern when
 + an algorithm uses data that clients shouldn’t know about. Use the Strategy pattern to avoid exposing complex, algorithm-specific data structures.
 + a class defines many behaviors, and these appear as multiple conditional statements in its operations. Instead of many conditionals, move related conditional branches into their own Strategy class.
 
-Structure
+## Structure
 
 ```cpp
 
@@ -59,11 +57,12 @@ Participants
 - maintains a reference to a Strategy object.
 - may define an interface that lets Strategy access its data.
 
-Collaborations
+## Collaborations
+
 + Strategy and Context interact to implement the chosen algorithm. A context may pass all data required by the algorithm to the strategy when the algorithm is called. Alternatively, the context can pass itself as an argument to Strategy operations. That lets the strategy call back on the context as required.
 + A context forwards requests from its clients to its strategy. Clients usually create and pass a ConcreteStrategy object to the context; thereafter, clients interact with the context exclusively. There is often a family of ConcreteStrategy classes for a client to choose from.
 
-Consequences
+## Consequences
 
 The Strategy pattern has the following benefits and drawbacks:
 
@@ -95,7 +94,7 @@ Code containing many conditional statements often indicates the need to apply th
 
 7. Increased number of objects. Strategies increase the number of objects in an application. Sometimes you can reduce this overhead by implementing strategies as stateless objects that contexts can share. Any residual state is maintained by the context, which passes it in each request to the Strategy object. Shared strategies should not maintain state across invocations. The Flyweight (195) pattern describes this approach in more detail.
 
-Implementation
+## Implementation
 
 Consider the following implementation issues:
 
@@ -123,7 +122,7 @@ With templates, there’s no need to define an abstract class that defines the i
 
 3. Making Strategy objects optional. The Context class may be simplified if it’s meaningful not to have a Strategy object. Context checks to see if it has a Strategy object before accessing it. If there is one, then Context uses it normally. If there isn’t a strategy, then Context carries out default behavior. The benefit of this approach is that clients don’t have to deal with Strategy objects at all unless they don’t like the default behavior.
 
-Sample Code
+## Sample Code
 
 We’ll give the high-level code for the Motivation example, which is based on the implementation of Composition and Compositor classes in Interviews [LCI+92].
 
@@ -177,7 +176,7 @@ To instantiate Composition, you pass it the compositor you want to use:
 
 Compositor’s interface is carefully designed to support all layout algorithms that subclasses might implement. You don’t want to have to change this interface with every new subclass, because that will require changing existing subclasses. In general, the Strategy and Context interfaces determine how well the pattern achieves its intent.
 
-Known Uses
+## Known Uses
 
 Both ET++ [WGM88] and Interviews use strategies to encapsulate different line-breaking algorithms as we’ve described.
 
@@ -193,8 +192,6 @@ Borland’s ObjectWindows [Bor94] uses strategies in dialogs boxes to ensure tha
 
 ObjectWindows uses Validator objects to encapsulate validation strategies. Validators are examples of Strategy objects. Data entry fields delegate the validation strategy to an optional Validator object. The client attaches a validator to a field if validation is required (an example of an optional strategy). When the dialog is closed, the entry fields ask their validators to validate the data. The class library provides validators for common cases, such as a Range Validator for numbers. New client-specific validation strategies can be defined easily by subclassing the Validator class.
 
-Related Patterns
+## Related Patterns
 
 Flyweight (195): Strategy objects often make good flyweights.
-
-
