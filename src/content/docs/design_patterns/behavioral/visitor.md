@@ -72,18 +72,18 @@ classDiagram
 
 ## Participants
 
-- Visitor (NodeVisitor)
-- declares a Visit operation for each class of ConcreteElement in the object structure. The operation’s name and signature identifies the class that sends the Visit request to the visitor. That lets the visitor determine the concrete class of the element being visited. Then the visitor can access the element directly through its particular interface.
-- Concrete Visitor (TypeCheckingVisitor)
-- implements each operation declared by Visitor. Each operation implements a fragment of the algorithm defined for the corresponding class of object in the structure. ConcreteVisitor provides the context for the algorithm and stores its local state. This state often accumulates results during the traversal of the structure.
-- Element (Node)
-- defines an Accept operation that takes a visitor as an argument.
-- ConcreteElement (AssignmentNode, VariableRefNode)
-- implements an Accept operation that takes a visitor as an argument.
-- ObjectStructure (Program)
-- can enumerate its elements.
-- may provide a high-level interface to allow the visitor to visit its elements.
-- may either be a composite (see Composite (163)) or a collection such as a list or a set.
+- **Visitor** (NodeVisitor)
+  - declares a Visit operation for each class of ConcreteElement in the object structure. The operation’s name and signature identifies the class that sends the Visit request to the visitor. That lets the visitor determine the concrete class of the element being visited. Then the visitor can access the element directly through its particular interface.
+- **Concrete Visitor** (TypeCheckingVisitor)
+  - implements each operation declared by Visitor. Each operation implements a fragment of the algorithm defined for the corresponding class of object in the structure. ConcreteVisitor provides the context for the algorithm and stores its local state. This state often accumulates results during the traversal of the structure.
+- **Element** (Node)
+  - defines an Accept operation that takes a visitor as an argument.
+- **ConcreteElement** (AssignmentNode, VariableRefNode)
+  - implements an Accept operation that takes a visitor as an argument.
+- **ObjectStructure** (Program)
+  - can enumerate its elements.
+  - may provide a high-level interface to allow the visitor to visit its elements.
+  - may either be a composite (see Composite (163)) or a collection such as a list or a set.
 
 ## Collaborations
 
@@ -111,7 +111,6 @@ Some of the benefits and liabilities of the Visitor pattern are as follows:
 3. Adding new ConcreteElement classes is hard. The Visitor pattern makes it hard to add new subclasses of Element. Each new ConcreteElement gives rise to a new abstract operation on Visitor and a corresponding implementation in every ConcreteVisitor class. Sometimes a default implementation can be provided in Visitor that can be inherited by most of the ConcreteVisitors, but this is the exception rather than the rule.
 
 So the key consideration in applying the Visitor pattern is whether you are mostly likely to change the algorithm applied over an object structure or the classes of objects that make up the structure. The Visitor class hierarchy can be difficult to maintain when new ConcreteElement classes are added frequently. In such cases, it’s probably easier just to define operations on the classes that make up the structure. If the Element class hierarchy is stable, but you are continually adding operations or changing algorithms, then the Visitor pattern will help you manage the changes.
-
 4. Visiting across class hierarchies. An iterator (see Iterator (257)) can visit the objects in a structure as it traverses them by calling their operations. But an iterator can’t work across object structures with different types of elements. For example, the Iterator interface defined on page 263 can access only objects of type Item:
 
 ```cpp
@@ -127,9 +126,7 @@ Visitor does not have this restriction. It can visit objects that don’t have a
 ```
 
 MyType and YourType do not have to be related through inheritance at all.
-
 5. Accumulating state. Visitors can accumulate state as they visit each element in the object structure. Without a visitor, this state would be passed as extra arguments to the operations that perform the traversal, or they might appear as global variables.
-
 6. Breaking encapsulation. Visitor’s approach assumes that the ConcreteElement interface is powerful enough to let visitors do their job. As a result, the pattern often forces you to provide public operations that access an element’s internal state, which may compromise its encapsulation.
 
 ## Implementation
@@ -169,7 +166,6 @@ In single-dispatch languages, two criteria determine which operation will fulfil
 “Double-dispatch” simply means the operation that gets executed depends on the kind of request and the types of two receivers. Accept is a double-dispatch operation. Its meaning depends on two types: the Visitor’s and the Element’s. Double-dispatching lets visitors request different operations on each class of element.11
 
 This is the key to the Visitor pattern: The operation that gets executed depends on both the type of Visitor and the type of Element it visits. Instead of binding operations statically into the Element interface, you can consolidate the operations in a Visitor and use Accept to do the binding at run-time. Extending the Element interface amounts to defining one new Visitor subclass rather than many new Element subclasses.
-
 2. Who is responsible for traversing the object structure? A visitor must visit each element of the object structure. The question is, how does it get there? We can put responsibility for traversal in any of three places: in the object structure, in the visitor, or in a separate iterator object (see Iterator (257)).
 
 Often the object structure is responsible for iteration. A collection will simply iterate over its elements, calling the Accept operation on each. A composite will commonly traverse itself by having each Accept operation traverse the element’s children and call Accept on each of them recursively.
