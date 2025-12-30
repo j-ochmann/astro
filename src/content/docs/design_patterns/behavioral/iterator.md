@@ -1,6 +1,9 @@
 ---
 id: iterator
 title: "Object Behavioral: Iterator"
+sidebar:
+  label: Iterator
+  order: 16
 category: Behavioral
 goF: 16
 tags: ["cpp", "java", "python"]
@@ -21,8 +24,12 @@ The Iterator pattern lets you do all this. The key idea in this pattern is to ta
 
 For example, a List class would call for a ListIterator with the following relationship between them:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 Before you can instantiate ListIterator, you must supply the List to traverse. Once you have the ListIterator instance, you can access the list’s elements sequentially. The CurrentItem operation returns the current element in the list, First initializes the current element to the first element, Next advances the current element to the next element, and IsDone tests whether we’ve advanced beyond the last element—that is, we’re finished with the traversal.
@@ -35,8 +42,12 @@ As an example, let’s assume that we also have a SkipList implementation of a l
 
 We define an AbstractList class that provides a common interface for manipulating lists. Similarly, we need an abstract Iterator class that defines a common iteration interface. Then we can define concrete Iterator subclasses for the different list implementations. As a result, the iteration mechanism becomes independent of concrete aggregate classes.
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 The remaining problem is how to create the iterator. Since we want to write code that’s independent of the concrete List subclasses, we cannot simply instantiate a specific class. Instead, we make the list objects responsible for creating their corresponding iterator. This requires an operation like CreateIterator through which clients request an iterator object.
@@ -46,31 +57,35 @@ CreateIterator is an example of a factory method (see Factory Method (107)). We 
 ## Applicability
 
 Use the Iterator pattern
-+ to access an aggregate object’s contents without exposing its internal representation.
-+ to support multiple traversals of aggregate objects.
-+ to provide a uniform interface for traversing different aggregate structures (that is, to support polymorphic iteration).
+- to access an aggregate object’s contents without exposing its internal representation.
+- to support multiple traversals of aggregate objects.
+- to provide a uniform interface for traversing different aggregate structures (that is, to support polymorphic iteration).
 
 ## Structure
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 ## Participants
 
-+ Iterator
+- Iterator
 - defines an interface for accessing and traversing elements.
-+ ConcreteIterator
+- ConcreteIterator
 - implements the Iterator interface.
 - keeps track of the current position in the traversal of the aggregate.
-+ Aggregate
+- Aggregate
 - defines an interface for creating an Iterator object.
-+ ConcreteAggregate
+- ConcreteAggregate
 - implements the Iterator creation interface to return an instance of the proper ConcreteIterator.
 
 ## Collaborations
 
-+ A ConcreteIterator keeps track of the current object in the aggregate and can compute the succeeding object in the traversal.
+- A ConcreteIterator keeps track of the current object in the aggregate and can compute the succeeding object in the traversal.
 
 ## Consequences
 

@@ -1,6 +1,9 @@
 ---
 id: memento
 title: "Object Behavioral: Memento"
+sidebar:
+  label: Memento
+  order: 18
 category: Behavioral
 goF: 18
 tags: ["cpp", "java", "python"]
@@ -19,16 +22,24 @@ Sometimes it’s necessary to record the internal state of an object. This is re
 
 Consider for example a graphical editor that supports connectivity between objects. A user can connect two rectangles with a line, and the rectangles stay connected when the user moves either of them. The editor ensures that the line stretches to maintain the connection.
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 A well-known way to maintain connectivity relationships between objects is with a constraint-solving system. We can encapsulate this functionality in a ConstraintSolver object. ConstraintSolver records connections as they are made and generates mathematical equations that describe them. It solves these equations whenever the user makes a connection or otherwise modifies the diagram. Constraint-Solver uses the results of its calculations to rearrange the graphics so that they maintain the proper connections.
 
 Supporting undo in this application isn’t as easy as it may seem. An obvious way to undo a move operation is to store the original distance moved and move the object back an equivalent distance. However, this does not guarantee all objects will appear where they did before. Suppose there is some slack in the connection. In that case, simply moving the rectangle back to its original location won’t necessarily achieve the desired effect.
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 In general, the ConstraintSolver’s public interface might be insufficient to allow precise reversal of its effects on other objects. The undo mechanism must work more closely with ConstraintSolver to reestablish previous state, but we should also avoid exposing the ConstraintSolver’s internals to the undo mechanism.
@@ -50,37 +61,45 @@ This arrangement lets the ConstraintSolver entrust other objects with the inform
 ## Applicability
 
 Use the Memento pattern when
-+ a snapshot of (some portion of) an object’s state must be saved so that it can be restored to that state later, and
-+ a direct interface to obtaining the state would expose implementation details and break the object’s encapsulation.
+- a snapshot of (some portion of) an object’s state must be saved so that it can be restored to that state later, and
+- a direct interface to obtaining the state would expose implementation details and break the object’s encapsulation.
 
 ## Structure
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 ## Participants
 
-+ Memento (SolverState)
+- Memento (SolverState)
 - stores internal state of the Originator object. The memento may store as much or as little of the originator’s internal state as necessary at its originator’s discretion.
 - protects against access by objects other than the originator. Mementos have effectively two interfaces. Caretaker sees a narrow interface to the Memento—it can only pass the memento to other objects. Originator, in contrast, sees a wide interface, one that lets it access all the data necessary to restore itself to its previous state. Ideally, only the originator that produced the memento would be permitted to access the memento’s internal state.
-+ Originator (ConstraintSolver)
+- Originator (ConstraintSolver)
 - creates a memento containing a snapshot of its current internal state.
 - uses the memento to restore its internal state.
-+ Caretaker (undo mechanism)
+- Caretaker (undo mechanism)
 - is responsible for the memento’s safekeeping.
 - never operates on or examines the contents of a memento.
 
 ## Collaborations
 
-+ A caretaker requests a memento from an originator, holds it for a time, and passes it back to the originator, as the following interaction diagram illustrates:
+- A caretaker requests a memento from an originator, holds it for a time, and passes it back to the originator, as the following interaction diagram illustrates:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 Sometimes the caretaker won’t pass the memento back to the originator, because the originator might never need to revert to an earlier state.
-+ Mementos are passive. Only the originator that created a memento will assign or retrieve its state.
+- Mementos are passive. Only the originator that created a memento will assign or retrieve its state.
 
 ## Consequences
 

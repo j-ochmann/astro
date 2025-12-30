@@ -1,6 +1,9 @@
 ---
 id: template_method
 title: "Object Behavioral: Template Method"
+sidebar:
+  label: Template Method
+  order: 22
 category: Behavioral
 goF: 22
 tags: ["cpp", "java", "python"]
@@ -15,14 +18,22 @@ Consider an application framework that provides Application and Document classes
 
 Applications built with the framework can subclass Application and Document to suit specific needs. For example, a drawing application defines Draw Application and DrawDocument subclasses; a spreadsheet application defines Spreadsheet-Application and SpreadsheetDocument subclasses.
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 The abstract Application class defines the algorithm for opening and reading a document in its OpenDocument operation:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 OpenDocument defines each step for opening a document. It checks if the document can be opened, creates the application-specific Document object, adds it to its set of documents, and reads the Document from a file.

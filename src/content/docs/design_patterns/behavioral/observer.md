@@ -1,6 +1,9 @@
 ---
 id: observer
 title: "Object Behavioral: Observer"
+sidebar:
+  label: Observer
+  order: 19
 category: Behavioral
 goF: 19
 tags: ["cpp", "java", "python"]
@@ -19,8 +22,12 @@ A common side-effect of partitioning a system into a collection of cooperating c
 
 For example, many graphical user interface toolkits separate the presentational aspects of the user interface from the underlying application data [KP88, LVC89, P+88, WGM88]. Classes defining application data and presentations can be reused independently. They can work together, too. Both a spreadsheet object and bar chart object can depict information in the same application data object using different presentations. The spreadsheet and the bar chart don’t know about each other, thereby letting you reuse only the one you need. But they behave as though they do. When the user changes the information in the spreadsheet, the bar chart reflects the changes immediately, and vice versa.
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 This behavior implies that the spreadsheet and bar chart are dependent on the data object and therefore should be notified of any change in its state. And there’s no reason to limit the number of dependent objects to two; there may be any number of different user interfaces to the same data.
@@ -32,40 +39,48 @@ This kind of interaction is also known as publish-subscribe. The subject is the 
 ## Applicability
 
 Use the Observer pattern in any of the following situations:
-+ When an abstraction has two aspects, one dependent on the other. Encapsulating these aspects in separate objects lets you vary and reuse them independently.
-+ When a change to one object requires changing others, and you don’t know how many objects need to be changed.
-+ When an object should be able to notify other objects without making assumptions about who these objects are. In other words, you don’t want these objects tightly coupled.
+- When an abstraction has two aspects, one dependent on the other. Encapsulating these aspects in separate objects lets you vary and reuse them independently.
+- When a change to one object requires changing others, and you don’t know how many objects need to be changed.
+- When an object should be able to notify other objects without making assumptions about who these objects are. In other words, you don’t want these objects tightly coupled.
 
 ## Structure
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 ## Participants
 
-+ Subject
+- Subject
 - knows its observers. Any number of Observer objects may observe a subject.
 - provides an interface for attaching and detaching Observer objects.
-+ Observer
+- Observer
 - defines an updating interface for objects that should be notified of changes in a subject.
-+ ConcreteSubject
+- ConcreteSubject
 - stores state of interest to ConcreteObserver objects.
 - sends a notification to its observers when its state changes.
-+ ConcreteObserver
+- ConcreteObserver
 - maintains a reference to a ConcreteSubject object.
 - stores state that should stay consistent with the subject’s.
 - implements the Observer updating interface to keep its state consistent with the subject’s.
 
 ## Collaborations
 
-+ ConcreteSubject notifies its observers whenever a change occurs that could make its observers’ state inconsistent with its own.
-+ After being informed of a change in the concrete subject, a ConcreteObserver object may query the subject for information. ConcreteObserver uses this information to reconcile its state with that of the subject.
+- ConcreteSubject notifies its observers whenever a change occurs that could make its observers’ state inconsistent with its own.
+- After being informed of a change in the concrete subject, a ConcreteObserver object may query the subject for information. ConcreteObserver uses this information to reconcile its state with that of the subject.
 
 The following interaction diagram illustrates the collaborations between a subject and two observers:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 Note how the Observer object that initiates the change request postpones its update until it gets a notification from the subject. Notify is not always called by the subject. It can be called by an observer or by another kind of object entirely. The Implementation section discusses some common variations.

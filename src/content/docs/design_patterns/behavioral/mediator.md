@@ -1,6 +1,9 @@
 ---
 id: mediator
 title: "Object Behavioral: Mediator"
+sidebar:
+  label: Mediator
+  order: 17
 category: Behavioral
 goF: 17
 tags: ["cpp", "java", "python"]
@@ -17,8 +20,12 @@ Though partitioning a system into many objects generally enhances reusability, p
 
 As an example, consider the implementation of dialog boxes in a graphical user interface. A dialog box uses a window to present a collection of widgets such as buttons, menus, and entry fields, as shown here:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 Often there are dependencies between the widgets in the dialog. For example, a button gets disabled when a certain entry field is empty. Selecting an entry in a list of choices called a list box might change the contents of an entry field. Conversely, typing text into the entry field might automatically select one or more corresponding entries in the list box. Once text appears in the entry field, other buttons may become enabled that let the user do something with the text, such as changing or deleting the thing to which it refers.
@@ -29,14 +36,22 @@ You can avoid these problems by encapsulating collective behavior in a separate 
 
 For example, FontDialogDirector can be the mediator between the widgets in a dialog box. A FontDialogDirector object knows the widgets in a dialog and coordinates their interaction. It acts as a hub of communication for widgets:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 The following interaction diagram illustrates how the objects cooperate to handle a change in a list box’s selection:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 Here’s the succession of events by which a list box’s selection passes to an entry field:
@@ -53,8 +68,12 @@ Note how the director mediates between the list box and the entry field. Widgets
 
 Here’s how the FontDialogDirector abstraction can be integrated into a class library:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 DialogDirector is an abstract class that defines the overall behavior of a dialog. Clients call the ShowDialog operation to display the dialog on the screen. CreateWidgets is an abstract operation for creating the widgets of a dialog. WidgetChanged is another abstract operation; widgets call it to inform their director that they have changed. DialogDirector subclasses override CreateWidgets to create the proper widgets, and they override WidgetChanged to handle the changes.
@@ -62,35 +81,43 @@ DialogDirector is an abstract class that defines the overall behavior of a dialo
 ## Applicability
 
 Use the Mediator pattern when
-+ a set of objects communicate in well-defined but complex ways. The resulting interdependencies are unstructured and difficult to understand.
-+ reusing an object is difficult because it refers to and communicates with many other objects.
-+ a behavior that’s distributed between several classes should be customizable without a lot of subclassing.
+- a set of objects communicate in well-defined but complex ways. The resulting interdependencies are unstructured and difficult to understand.
+- reusing an object is difficult because it refers to and communicates with many other objects.
+- a behavior that’s distributed between several classes should be customizable without a lot of subclassing.
 
 ## Structure
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 A typical object structure might look like this:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 ## Participants
 
-+ Mediator (DialogDirector)
+- Mediator (DialogDirector)
 - defines an interface for communicating with Colleague objects.
-+ ConcreteMediator (FontDialogDirector)
+- ConcreteMediator (FontDialogDirector)
 - implements cooperative behavior by coordinating Colleague objects.
 - knows and maintains its colleagues.
-+ Colleague classes (ListBox, EntryField)
+- Colleague classes (ListBox, EntryField)
 - each Colleague class knows its Mediator object.
 - each colleague communicates with its mediator whenever it would have otherwise communicated with another colleague.
 
 ## Collaborations
-+ Colleagues send and receive requests from a Mediator object. The mediator implements the cooperative behavior by routing requests between the appropriate colleague(s).
+- Colleagues send and receive requests from a Mediator object. The mediator implements the cooperative behavior by routing requests between the appropriate colleague(s).
 
 ## Consequences
 
