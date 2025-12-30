@@ -46,11 +46,12 @@ export default defineConfig({
           items: [
             { 
               label: 'Overview',
-              link: '/design_patterns/' },
+              link: '/design_patterns/',
+            },
             {
               label: 'Creational',
               autogenerate: { directory: 'design_patterns/creational/' },
-              collapsed: true,
+              collapsed: true, 
             },
             { label: 'Structural',
               autogenerate: { directory: 'design_patterns/structural/' },
