@@ -1,6 +1,9 @@
 ---
 id: "flyweight"
 title: "Object Structural: Flyweight"
+sidebar:
+  label:
+  order: 
 category: "Structural"
 goF: 11
 tags: ["cpp", "java", "python"]

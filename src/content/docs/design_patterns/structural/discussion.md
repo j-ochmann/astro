@@ -1,6 +1,9 @@
 ---
 id: "structural_discussion"
 title: "Discussion of Structural Patterns"
+sidebar:
+  label:
+  order: 
 category: "Discussion of Structural Patterns"
 ---
 # Discussion of Structural Patterns

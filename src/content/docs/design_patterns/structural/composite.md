@@ -1,7 +1,10 @@
 ---
 id: "composite"
 title: "Object Structural: Composite"
-category: "Structural"
+sidebar:
+  label: Composite
+  order: 8
+category: Structural
 goF: 8
 tags: ["cpp", "java", "python"]
 ---

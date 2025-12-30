@@ -1,6 +1,9 @@
 ---
 id: "proxy"
 title: "Object Structural: Proxy"
+sidebar:
+  label:
+  order: 
 category: "Structural"
 goF: 12
 tags: ["cpp", "java", "python"]

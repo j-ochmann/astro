@@ -1,10 +1,10 @@
 ---
 id: discussion
 title: Discussion of Creational Patterns
-category: Creational Patterns
 sidebar:
   label: Discussion
-  order: 6
+  order: 6 
+category: Creational
 ---
 There are two common ways to parameterize a system by the classes of objects it creates. One way is to subclass the class that creates the objects; this corresponds to using the Factory Method (107) pattern. The main drawback of this approach is that it can require creating a new subclass just to change the class of the product. Such changes can cascade. For example, when the product creator is itself created by a factory method, then you have to override its creator as well.
 
