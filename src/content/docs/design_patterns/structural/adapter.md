@@ -1,10 +1,10 @@
 ---
-id: "adapter"
+id: adapter
 title: "Class, Object Structural: Adapter"
 sidebar:
   label: Adapter
   order: 6
-category: "Structural"
+category: Structural
 goF: 6
 tags: ["cpp", "java", "python"]
 ---

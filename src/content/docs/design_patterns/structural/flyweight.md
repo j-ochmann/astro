@@ -1,15 +1,13 @@
 ---
-id: "flyweight"
+id: flyweight
 title: "Object Structural: Flyweight"
 sidebar:
-  label:
-  order: 
-category: "Structural"
+  label: Flyweight
+  order: 11
+category: Structural
 goF: 11
 tags: ["cpp", "java", "python"]
 ---
-# Object Structural: Flyweight
-
 ## Intent
 
 Use sharing to support large numbers of fine-grained objects efficiently.

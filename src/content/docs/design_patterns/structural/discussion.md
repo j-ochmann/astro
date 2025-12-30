@@ -1,16 +1,13 @@
 ---
-id: "structural_discussion"
-title: "Discussion of Structural Patterns"
+title: Discussion of Structural Patterns
 sidebar:
-  label:
+  label: Discussion
   order: 
-category: "Discussion of Structural Patterns"
+category: Structural
 ---
-# Discussion of Structural Patterns
-
 You may have noticed similarities between the structural patterns, especially in their participants and collaborations. This is so probably because structural patterns rely on the same small set of language mechanisms for structuring code and objects: single and multiple inheritance for class-based patterns, and object composition for object patterns. But the similarities belie the different intents among these patterns. In this section we compare and contrast groups of structural patterns to give you a feel for their relative merits.
 
-Adapter versus Bridge
+## Adapter versus Bridge
 
 The Adapter (139) and Bridge (151) patterns have some common attributes. Both promote flexibility by providing a level of indirection to another object. Both involve forwarding requests to this object from an interface other than its own.
 
@@ -20,7 +17,7 @@ As a result of these differences, Adapter and Bridge are often used at different
 
 You might think of a facade (see Facade (185)) as an adapter to a set of other objects. But that interpretation overlooks the fact that a facade defines a new interface, whereas an adapter reuses an old interface. Remember that an adapter makes two existing interfaces work together as opposed to defining an entirely new one.
 
-Composite versus Decorator versus Proxy
+## Composite versus Decorator versus Proxy
 
 Composite (163) and Decorator (175) have similar structure diagrams, reflecting the fact that both rely on recursive composition to organize an open-ended number of objects. This commonality might tempt you to think of a decorator object as a degenerate composite, but that misses the point of the Decorator pattern. The similarity ends at recursive composition, again because of differing intents.
 

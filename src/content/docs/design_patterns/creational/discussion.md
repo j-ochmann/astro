@@ -1,5 +1,4 @@
 ---
-id: discussion
 title: Discussion of Creational Patterns
 sidebar:
   label: Discussion
