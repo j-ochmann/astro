@@ -1,21 +1,18 @@
 ---
-id: "behavioral_discussion"
 title: "Discussion of Behavioral Patterns"
-category: "Discussion of Behavioral Patterns"
+sidebar:
+  label: Discussion
+  order: 24
+category: "Behavioral"
 ---
-# Discussion of Behavioral Patterns
-
-Encapsulating Variation
+## Encapsulating Variation
 
 Encapsulating variation is a theme of many behavioral patterns. When an aspect of a program changes frequently, these patterns define an object that encapsulates that aspect. Then other parts of the program can collaborate with the object whenever they depend on that aspect. The patterns usually define an abstract class that describes the encapsulating object, and the pattern derives its name from that object.12 For example,
 
-+ a Strategy object encapsulates an algorithm (Strategy (315)),
-
-+ a State object encapsulates a state-dependent behavior (State (305)),
-
-+ a Mediator object encapsulates the protocol between objects (Mediator (273)), and
-
-+ an Iterator object encapsulates the way you access and traverse the components of an aggregate object (Iterator (257)).
+- a Strategy object encapsulates an algorithm (Strategy (315)),
+- a State object encapsulates a state-dependent behavior (State (305)),
+- a Mediator object encapsulates the protocol between objects (Mediator (273)), and
+- an Iterator object encapsulates the way you access and traverse the components of an aggregate object (Iterator (257)).
 
 These patterns describe aspects of a program that are likely to change. Most patterns have two kinds of objects: the new object(s) that encapsulate the aspect, and the existing object(s) that use the new ones. Usually the functionality of new objects would be an integral part of the existing objects were it not for the pattern. For example, code for a Strategy would probably be wired into the strategy’s Context, and code for a State would be implemented directly in the state’s Context.
 
@@ -23,13 +20,13 @@ But not all object behavioral patterns partition functionality like this. For ex
 
 Chain of Responsibility illustrates another difference in behavioral patterns: Not all define static communication relationships between classes. Chain of Responsibility prescribes communication between an open-ended number of objects. Other patterns involve objects that are passed around as arguments.
 
-Objects as Arguments
+## Objects as Arguments
 
 Several patterns introduce an object that’s always used as an argument. One of these is Visitor (331). A Visitor object is the argument to a polymorphic Accept operation on the objects it visits. The visitor is never considered a part of those objects, even though the conventional alternative to the pattern is to distribute Visitor code across the object structure classes.
 
 Other patterns define objects that act as magic tokens to be passed around and invoked at a later time. Both Command (233) and Memento (283) fall into this category. In Command, the token represents a request; in Memento, it represents the internal state of an object at a particular time. In both cases, the token can have a complex internal representation, but the client is never aware of it. But even here there are differences. Polymorphism is important in the Command pattern, because executing the Command object is a polymorphic operation. In contrast, the Memento interface is so narrow that a memento can only be passed as a value. So it’s likely to present no polymorphic operations at all to its clients.
 
-Should Communication be Encapsulated or Distributed?
+## Should Communication be Encapsulated or Distributed?
 
 Mediator (273) and Observer (293) are competing patterns. The difference between them is that Observer distributes communication by introducing Observer and Subject objects, whereas a Mediator object encapsulates the communication between other objects.
 
@@ -41,7 +38,7 @@ On the other hand, it’s easier to understand the flow of communication in Medi
 
 Observers in Smalltalk can be parameterized with messages to access the Subject state, and so they are even more reusable than they are in C++. This makes Observer more attractive than Mediator in Smalltalk. Thus a Smalltalk programmer will often use Observer where a C++ programmer would use Mediator.
 
-Decoupling Senders and Receivers
+## Decoupling Senders and Receivers
 
 When collaborating objects refer to each other directly, they become dependent on each other, and that can have an adverse impact on the layering and reusability of a system. Command, Observer, Mediator, and Chain of Responsibility address how you can decouple senders and receivers, but with different trade-offs.
 

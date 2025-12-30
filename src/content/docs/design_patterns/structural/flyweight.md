@@ -24,114 +24,168 @@ For example, most document editor implementations have text formatting and editi
 
 The drawback of such a design is its cost. Even moderate-sized documents may require hundreds of thousands of character objects, which will consume lots of memory and may incur unacceptable run-time overhead. The Flyweight pattern describes how to share objects to allow their use at fine granularities without prohibitive cost.
 
-A flyweight is a shared object that can be used in multiple contexts simultaneously. The flyweight acts as an independent object in each context—it’s indistinguishable from an instance of the object that’s not shared. Flyweights cannot make assumptions about the context in which they operate. The key concept here is the distinction between intrinsic and extrinsic state. Intrinsic state is stored in the flyweight; it consists of information that’s independent of the flyweight’s context, thereby making it sharable. Extrinsic state depends on and varies with the flyweight’s context and therefore can’t be shared. Client objects are responsible for passing extrinsic state to the flyweight when it needs it.
+A **flyweight** is a shared object that can be used in multiple contexts simultaneously. The flyweight acts as an independent object in each context—it’s indistinguishable from an instance of the object that’s not shared. Flyweights cannot make assumptions about the context in which they operate. The key concept here is the distinction between **intrinsic** and **extrinsic** state. Intrinsic state is stored in the flyweight; it consists of information that’s independent of the flyweight’s context, thereby making it sharable. Extrinsic state depends on and varies with the flyweight’s context and therefore can’t be shared. Client objects are responsible for passing extrinsic state to the flyweight when it needs it.
 
 Flyweights model concepts or entities that are normally too plentiful to represent with objects. For example, a document editor can create a flyweight for each letter of the alphabet. Each flyweight stores a character code, but its coordinate position in the document and its typographic style can be determined from the text layout algorithms and formatting commands in effect wherever the character appears. The character code is intrinsic state, while the other information is extrinsic.
 
 Logically there is an object for every occurrence of a given character in the document:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 Physically, however, there is one shared flyweight object per character, and it appears in different contexts in the document structure. Each occurrence of a particular character object refers to the same instance in the shared pool of flyweight objects:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 The class structure for these objects is shown next. Glyph is the abstract class for graphical objects, some of which may be flyweights. Operations that may depend on extrinsic state have it passed to them as a parameter. For example, Draw and Intersects must know which context the glyph is in before they can do their job.
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 A flyweight representing the letter “a” only stores the corresponding character code; it doesn’t need to store its location or font. Clients supply the context-dependent information that the flyweight needs to draw itself. For example, a Row glyph knows where its children should draw themselves so that they are tiled horizontally. Thus it can pass each child its location in the draw request.
 
 Because the number of different character objects is far less than the number of characters in the document, the total number of objects is substantially less than what a naive implementation would use. A document in which all characters appear in the same font and color will allocate on the order of 100 character objects (roughly the size of the ASCII character set) regardless of the document’s length. And since most documents use no more than 10 different font-color combinations, this number won’t grow appreciably in practice. An object abstraction thus becomes practical for individual characters.
 
-Applicability
+## Applicability
 
 The Flyweight pattern’s effectiveness depends heavily on how and where it’s used. Apply the Flyweight pattern when all of the following are true:
-+ An application uses a large number of objects.
-+ Storage costs are high because of the sheer quantity of objects.
-+ Most object state can be made extrinsic.
-+ Many groups of objects may be replaced by relatively few shared objects once extrinsic state is removed.
-+ The application doesn’t depend on object identity. Since flyweight objects may be shared, identity tests will return true for conceptually distinct objects.
 
-Structure
+- An application uses a large number of objects.
+- Storage costs are high because of the sheer quantity of objects.
+- Most object state can be made extrinsic.
+- Many groups of objects may be replaced by relatively few shared objects once extrinsic state is removed.
+- The application doesn’t depend on object identity. Since flyweight objects may be shared, identity tests will return true for conceptually distinct objects.
 
-```cpp
+## Structure
 
+```mermaid
+classDiagram
+    direction TD
+
+    class Dummy {
+    }
 ```
 
 The following object diagram shows how flyweights are shared:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
-Participants
-+ Flyweight (Glyph)
-- declares an interface through which flyweights can receive and act on extrinsic state.
-+ ConcreteFlyweight (Character)
-- implements the Flyweight interface and adds storage for intrinsic state, if any. A ConcreteFlyweight object must be sharable. Any state it stores must be intrinsic; that is, it must be independent of the ConcreteFlyweight object’s context.
-+ UnsharedConcreteFlyweight (Row, Column)
-- not all Flyweight subclasses need to be shared. The Flyweight interface enables sharing; it doesn’t enforce it. It’s common for UnsharedConcreteFlyweight objects to have ConcreteFlyweight objects as children at some level in the flyweight object structure (as the Row and Column classes have).
-+ FlyweightFactory
-- creates and manages flyweight objects.
-- ensures that flyweights are shared properly. When a client requests a flyweight, the FlyweightFactory object supplies an existing instance or creates one, if none exists.
-+ Client
-- maintains a reference to flyweight(s).
-- computes or stores the extrinsic state of flyweight(s).
+## Participants
 
-Collaborations
-+ State that a flyweight needs to function must be characterized as either intrinsic or extrinsic. Intrinsic state is stored in the ConcreteFlyweight object; extrinsic state is stored or computed by Client objects. Clients pass this state to the flyweight when they invoke its operations.
-+ Clients should not instantiate ConcreteFlyweights directly. Clients must obtain ConcreteFlyweight objects exclusively from the FlyweightFactory object to ensure they are shared properly.
+- **Flyweight** (Glyph)
+  - declares an interface through which flyweights can receive and act on extrinsic state.
+- **ConcreteFlyweight** (Character)
+  - implements the Flyweight interface and adds storage for intrinsic state, if any. A ConcreteFlyweight object must be sharable. Any state it stores must be intrinsic; that is, it must be independent of the ConcreteFlyweight object’s context.
+- **UnsharedConcreteFlyweight** (Row, Column)
+  - not all Flyweight subclasses need to be shared. The Flyweight interface enables sharing; it doesn’t enforce it. It’s common for UnsharedConcreteFlyweight objects to have ConcreteFlyweight objects as children at some level in the flyweight object structure (as the Row and Column classes have).
+- **FlyweightFactory**
+  - creates and manages flyweight objects.
+  - ensures that flyweights are shared properly. When a client requests a flyweight, the FlyweightFactory object supplies an existing instance or creates one, if none exists.
+- **Client**
+  - maintains a reference to flyweight(s).
+  - computes or stores the extrinsic state of flyweight(s).
 
-Consequences
+## Collaborations
+
+- State that a flyweight needs to function must be characterized as either intrinsic or extrinsic. Intrinsic state is stored in the ConcreteFlyweight object; extrinsic state is stored or computed by Client objects. Clients pass this state to the flyweight when they invoke its operations.
+- Clients should not instantiate ConcreteFlyweights directly. Clients must obtain ConcreteFlyweight objects exclusively from the FlyweightFactory object to ensure they are shared properly.
+
+## Consequences
 
 Flyweights may introduce run-time costs associated with transferring, finding, and/or computing extrinsic state, especially if it was formerly stored as intrinsic state. However, such costs are offset by space savings, which increase as more flyweights are shared.
 
 Storage savings are a function of several factors:
-+ the reduction in the total number of instances that comes from sharing
-+ the amount of intrinsic state per object
-+ whether extrinsic state is computed or stored.
+
+- the reduction in the total number of instances that comes from sharing
+- the amount of intrinsic state per object
+- whether extrinsic state is computed or stored.
 
 The more flyweights are shared, the greater the storage savings. The savings increase with the amount of shared state. The greatest savings occur when the objects use substantial quantities of both intrinsic and extrinsic state, and the extrinsic state can be computed rather than stored. Then you save on storage in two ways: Sharing reduces the cost of intrinsic state, and you trade extrinsic state for computation time.
 
 The Flyweight pattern is often combined with the Composite (163) pattern to represent a hierarchical structure as a graph with shared leaf nodes. A consequence of sharing is that flyweight leaf nodes cannot store a pointer to their parent. Rather, the parent pointer is passed to the flyweight as part of its extrinsic state. This has a major impact on how the objects in the hierarchy communicate with each other.
 
-Implementation
+## Implementation
 
 Consider the following issues when implementing the Flyweight pattern:
 
-1. Removing extrinsic state. The pattern’s applicability is determined largely by how easy it is to identify extrinsic state and remove it from shared objects. Removing extrinsic state won’t help reduce storage costs if there are as many different kinds of extrinsic state as there are objects before sharing. Ideally, extrinsic state can be computed from a separate object structure, one with far smaller storage requirements.
+1. *Removing extrinsic state.* The pattern’s applicability is determined largely by how easy it is to identify extrinsic state and remove it from shared objects. Removing extrinsic state won’t help reduce storage costs if there are as many different kinds of extrinsic state as there are objects before sharing. Ideally, extrinsic state can be computed from a separate object structure, one with far smaller storage requirements.
 
 In our document editor, for example, we can store a map of typographic information in a separate structure rather than store the font and type style with each character object. The map keeps track of runs of characters with the same typographic attributes. When a character draws itself, it receives its typographic attributes as a side-effect of the draw traversal. Because documents normally use just a few different fonts and styles, storing this information externally to each character object is far more efficient than storing it internally.
-
-2. Managing shared objects. Because objects are shared, clients shouldn’t instantiate them directly. FlyweightFactory lets clients locate a particular flyweight. FlyweightFactory objects often use an associative store to let clients look up flyweights of interest. For example, the flyweight factory in the document editor example can keep a table of flyweights indexed by character codes. The manager returns the proper flyweight given its code, creating the flyweight if it does not already exist.
+2. *Managing shared objects.* Because objects are shared, clients shouldn’t instantiate them directly. FlyweightFactory lets clients locate a particular flyweight. FlyweightFactory objects often use an associative store to let clients look up flyweights of interest. For example, the flyweight factory in the document editor example can keep a table of flyweights indexed by character codes. The manager returns the proper flyweight given its code, creating the flyweight if it does not already exist.
 
 Sharability also implies some form of reference counting or garbage collection to reclaim a flyweight’s storage when it’s no longer needed. However, neither is necessary if the number of flyweights is fixed and small (e.g., flyweights for the ASCII character set). In that case, the flyweights are worth keeping around permanently.
 
-Sample Code
+## Sample Code
 
 Returning to our document formatter example, we can define a Glyph base class for flyweight graphical objects. Logically, glyphs are Composites (see Composite (163)) that have graphical attributes and can draw themselves. Here we focus on just the font attribute, but the same approach can be used for any other graphical attributes a glyph might have.
 
 ```cpp
-
+class Glyph {
+public:
+    virtual ~Glyph();
+    virtual void Draw(Window*, GlyphContext&);
+    virtual void SetFont(Font*, GlyphContext&);
+    virtual Font* GetFont(GlyphContext&);
+    virtual void First(GlyphContext&);
+    virtual void Next(GlyphContext&);
+    virtual bool IsDone(GlyphContext&);
+    virtual Glyph* Current(GlyphContext&);
+    virtual void Insert(Glyph*, GlyphContext&);
+    virtual void Remove(GlyphContext&);
+protected:
+    Glyph();
+};
 ```
 
 The Character subclass just stores a character code:
 
 ```cpp
-
+class Character : public Glyph {
+public:
+    Character(char);
+    virtual void Draw(Window*, GlyphContext&);
+private:
+    char _charcode;
+};
 ```
 
 To keep from allocating space for a font attribute in every glyph, we’ll store the attribute extrinsically in a GlyphContext object. GlyphContext acts as a repository of extrinsic state. It maintains a compact mapping between a glyph and its font (and any other graphical attributes it might have) in different contexts. Any operation that needs to know the glyph’s font in a given context will have a GlyphContext instance passed to it as a parameter. The operation can then query the GlyphContext for the font in that context. The context depends on the glyph’s location in the glyph structure. Therefore Glyph’s child iteration and manipulation operations must update the GlyphContext whenever they’re used.
 
 ```cpp
-
+class GlyphContext {
+public:
+    GlyphContext();
+    virtual ~GlyphContext();
+    virtual void Next(int step = 1);
+    virtual void Insert(int quantity = 1);
+    virtual Font* GetFont();
+    virtual void SetFont(Font*, int span = 1);
+private:
+    int _index;
+    BTree* _fonts;
+};
 ```
 
 GlyphContext must be kept informed of the current position in the glyph structure during traversal. GlyphContext::Next increments _index as the traversal proceeds. Glyph subclasses that have children (e.g., Row and Column) must implement Next so that it calls GlyphContext::Next at each point in the traversal.
@@ -140,38 +194,62 @@ GlyphContext::GetFont uses the index as a key into a BTree structure that stores
 
 Consider the following excerpt from a glyph composition:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 The BTree structure for font information might look like
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 Interior nodes define ranges of glyph indices. BTree is updated in response to font changes and whenever glyphs are added to or removed from the glyph structure. For example, assuming we’re at index 102 in the traversal, the following code sets the font of each character in the word “expect” to that of the surrounding text (that is, times12, an instance of Font for 12-point Times Roman):
 
 ```cpp
-
+GlyphContext gc;
+Font* times12 = new Font("Times-Roman-12");
+Font* timesItalic12 = new Font("Times-Italic-12");
+// ...
+gc.SetFont(times12, 6);
 ```
 
 The new BTree structure (with changes shown in black) looks like
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 Suppose we add the word “don’t” (including a trailing space) in 12-point Times Italic before “expect.” The following code informs the gc of this event, assuming it is still at index 102:
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 The BTree structure becomes
 
-```cpp
+```mermaid
+classDiagram
+    direction TD
 
+    class Dummy {
+    }
 ```
 
 When the GlyphContext is queried for the font of the current glyph, it descends the BTree, adding up indices as it goes until it finds the font for the current index. Because the frequency of font changes is relatively low, the tree stays small relative to the size of the glyph structure. This keeps storage costs down without an inordinate increase in look-up time.3
@@ -179,30 +257,52 @@ When the GlyphContext is queried for the font of the current glyph, it descends 
 The last object we need is a FlyweightFactory that creates glyphs and ensures they’re shared properly. Class GlyphFactory instantiates Character and other kinds of glyphs. We only share Character objects; composite glyphs are far less plentiful, and their important state (i.e., their children) is intrinsic anyway.
 
 ```cpp
-
+const int NCHARCODES = 128;
+class GlyphFactory {
+public:
+    GlyphFactory();
+    virtual ~GlyphFactory();
+    virtual Character* CreateCharacter(char);
+    virtual Row* CreateRow();
+    virtual Column* CreateColumn();
+    // ...
+private:
+    Character* _character[NCHARCODES];
+};
 ```
 
-The _character array contains pointers to Character glyphs indexed by character code. The array is initialized to zero in the constructor.
+The `_character array` contains pointers to Character glyphs indexed by character code. The array is initialized to zero in the constructor.
 
 ```cpp
-
+GlyphFactory::GlyphFactory () {
+    for (int i = 0; i 
 ```
 
-CreateCharacter looks up a character in the character glyph in the array, and it returns the corresponding glyph if it exists. If it doesn’t, then CreateCharacter creates the glyph, puts it in the array, and returns it:
+`CreateCharacter` looks up a character in the character glyph in the array, and it returns the corresponding glyph if it exists. If it doesn’t, then CreateCharacter creates the glyph, puts it in the array, and returns it:
 
 ```cpp
-
+Character* GlyphFactory::CreateCharacter (char c) {
+    if (!_character[c]) {
+        _character[c] = new Character(c);
+    }
+    return _character[c];
+}
 ```
 
 The other operations simply instantiate a new object each time they’re called, since noncharacter glyphs won’t be shared:
 
 ```cpp
-
+Row* GlyphFactory::CreateRow () {
+    return new Row;
+}
+Column* GlyphFactory::CreateColumn () {
+    return new Column;
+}
 ```
 
 We could omit these operations and let clients instantiate unshared glyphs directly. However, if we decide to make these glyphs sharable later, we’ll have to change client code that creates them.
 
-Known Uses
+## Known Uses
 
 The concept of flyweight objects was first described and explored as a design technique in Interviews 3.0 [CL90]. Its developers built a powerful document editor called Doc as a proof of concept [CL92]. Doc uses glyph objects to represent each character in the document. The editor builds one Glyph instance for each character in a particular style (which defines its graphical attributes); hence a character’s intrinsic state consists of the character code and its style information (an index into a style table).4 That means only position is extrinsic, making Doc fast. Documents are represented by a class Document, which also acts as the FlyweightFactory. Measurements on Doc have shown that sharing flyweight characters is quite effective. In a typical case, a document containing 180,000 characters required allocation of only 480 character objects.
 
@@ -214,10 +314,8 @@ The Layout objects are created and managed by Look objects. The Look class is an
 
 By the way, Layout objects are essentially strategies (see Strategy (315)). They are an example of a strategy object implemented as a flyweight.
 
-Related Patterns
+## Related Patterns
 
 The Flyweight pattern is often combined with the Composite (163) pattern to implement a logically hierarchical structure in terms of a directed-acyclic graph with shared leaf nodes.
 
 It’s often best to implement State (305) and Strategy (315) objects as flyweights.
-
-

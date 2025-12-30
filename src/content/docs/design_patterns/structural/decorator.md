@@ -152,7 +152,7 @@ private:
 };
 ```
 
-Decorator decorates the VisualComponent referenced by the _component instance variable, which is initialized in the constructor. For each operation in VisualComponent’s interface, Decorator defines a default implementation that passes the request on to _component:
+Decorator decorates the VisualComponent referenced by the _component instance variable, which is initialized in the constructor. For each operation in VisualComponent’s interface, Decorator defines a default implementation that passes the request on to \_component:
 
 ```cpp
 void Decorator::Draw () {
