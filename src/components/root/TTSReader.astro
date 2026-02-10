@@ -1,0 +1,60 @@
+---
+const target = Astro.props.target ?? '.sl-markdown-content';
+---
+
+<button
+  id="tts-btn"
+  type="button"
+  data-target={target}
+  aria-label="Přečíst obsah stránky"
+>
+  🔊 Přečíst stránku
+</button>
+
+<script>
+  const btn = document.getElementById('tts-btn');
+
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const selector = btn.dataset.target;
+      if (!selector) return;
+
+      const root = document.querySelector(selector);
+
+      if (!root) {
+        alert('Text ke čtení nebyl nalezen.');
+        return;
+      }
+
+      // zastavit případné předchozí čtení
+      speechSynthesis.cancel();
+
+      // vyber jen „čitelné“ elementy
+      const nodes = root.querySelectorAll(
+        'h1, h2, h3, h4, h5, h6, p, li, blockquote'
+      );
+
+      const text = Array.from(nodes)
+        .map((n) => {
+          if (n instanceof HTMLElement) {
+            return n.innerText.trim();
+          }
+          return '';
+        })
+        .filter(Boolean)
+        .join('\n\n');
+
+      if (!text) {
+        alert('Nebyl nalezen žádný čitelný text.');
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = document.documentElement.lang || 'cs-CZ';
+      utterance.rate = 1;
+      utterance.pitch = 1;
+
+      speechSynthesis.speak(utterance);
+    });
+  }
+</script>
