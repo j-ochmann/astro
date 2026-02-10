@@ -16,10 +16,13 @@ const target = Astro.props.target ?? '.sl-markdown-content';
 
   if (btn) {
     btn.addEventListener('click', () => {
+      console.log('[TTS] click');
       const selector = btn.dataset.target;
       if (!selector) return;
 
       const root = document.querySelector(selector);
+      console.log('[TTS] selector:', selector);
+      console.log('[TTS] root:', root);
 
       if (!root) {
         alert('Text ke čtení nebyl nalezen.');
@@ -33,6 +36,8 @@ const target = Astro.props.target ?? '.sl-markdown-content';
       const nodes = root.querySelectorAll(
         'h1, h2, h3, h4, h5, h6, p, li, blockquote'
       );
+
+      console.log('[TTS] nodes count:', nodes.length);
 
       const text = Array.from(nodes)
         .map((n) => {
@@ -49,10 +54,15 @@ const target = Astro.props.target ?? '.sl-markdown-content';
         return;
       }
 
+      console.log('[TTS] text length:', text.length);
+      console.log('[TTS] text preview:', text.slice(0, 200));
+
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = document.documentElement.lang || 'cs-CZ';
+      utterance.lang = document.documentElement.lang || 'en-US';
       utterance.rate = 1;
       utterance.pitch = 1;
+
+      console.log('[TTS] speechSynthesis:', window.speechSynthesis);
 
       speechSynthesis.speak(utterance);
     });
