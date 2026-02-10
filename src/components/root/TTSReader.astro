@@ -11,60 +11,87 @@ const target = Astro.props.target ?? '.sl-markdown-content';
   🔊 Přečíst stránku
 </button>
 
-<script>
+<script is:inline>
   const btn = document.getElementById('tts-btn');
 
-  if (btn) {
-    btn.addEventListener('click', () => {
-      console.log('[TTS] click');
-      const selector = btn.dataset.target;
-      if (!selector) return;
-
-      const root = document.querySelector(selector);
-      console.log('[TTS] selector:', selector);
-      console.log('[TTS] root:', root);
-
-      if (!root) {
-        alert('Text ke čtení nebyl nalezen.');
-        return;
-      }
-
-      // zastavit případné předchozí čtení
-      speechSynthesis.cancel();
-
-      // vyber jen „čitelné“ elementy
-      const nodes = root.querySelectorAll(
-        'h1, h2, h3, h4, h5, h6, p, li, blockquote'
-      );
-
-      console.log('[TTS] nodes count:', nodes.length);
-
-      const text = Array.from(nodes)
-        .map((n) => {
-          if (n instanceof HTMLElement) {
-            return n.innerText.trim();
-          }
-          return '';
-        })
-        .filter(Boolean)
-        .join('\n\n');
-
-      if (!text) {
-        alert('Nebyl nalezen žádný čitelný text.');
-        return;
-      }
-
-      console.log('[TTS] text length:', text.length);
-      console.log('[TTS] text preview:', text.slice(0, 200));
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = document.documentElement.lang || 'en-US';
-      utterance.rate = 1;
-      utterance.pitch = 1;
-
-      console.log('[TTS] speechSynthesis:', window.speechSynthesis);
-
-      speechSynthesis.speak(utterance);
-    });
+  if (!btn || !('speechSynthesis' in window)) {
+    console.warn('[TTS] SpeechSynthesis not supported');
+    return;
   }
+
+  function extractReadableText(root) {
+    const nodes = root.querySelectorAll(
+      'h1, h2, h3, h4, h5, h6, p, li, blockquote'
+    );
+
+    return Array.from(nodes)
+      .map((n) => {
+        if (n instanceof HTMLElement) {
+          return n.innerText.trim();
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  function speakText(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    const voices = speechSynthesis.getVoices();
+    console.log('[TTS] voices:', voices);
+
+    const voice =
+      voices.find(v => v.lang.startsWith('cs'))
+      ?? voices.find(v => v.lang.startsWith('en'))
+      ?? voices[0];
+
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+      console.log('[TTS] using voice:', voice.name, voice.lang);
+    }
+
+    utterance.onstart = () => console.log('[TTS] started');
+    utterance.onend = () => console.log('[TTS] ended');
+    utterance.onerror = (e) => console.error('[TTS] error', e);
+
+    speechSynthesis.cancel();
+    // Workaround for a longstanding Chrome bug where speak() fails after cancel().
+    setTimeout(() => {
+      speechSynthesis.speak(utterance);
+    }, 100);
+  }
+
+  btn.addEventListener('click', () => {
+    const selector = btn.dataset.target;
+    if (!selector) return;
+
+    const root = document.querySelector(selector);
+    if (!root) {
+      alert('Text ke čtení nebyl nalezen.');
+      return;
+    }
+
+    const text = extractReadableText(root);
+    if (!text) {
+      alert('Nebyl nalezen žádný čitelný text.');
+      return;
+    }
+
+    // hlasy se načítají async – bez tohohle to často „mlčí“
+    if (speechSynthesis.getVoices().length === 0) {
+      console.log('[TTS] waiting for voices...');
+      speechSynthesis.onvoiceschanged = () => {
+        console.log('[TTS] voices loaded');
+        speakText(text);
+      };
+    } else {
+      speakText(text);
+    }
+  });
 </script>
