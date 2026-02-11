@@ -1,99 +1,141 @@
 ---
-const target = Astro.props.target ?? '.sl-markdown-content';
+
 ---
 
-<button
-  id="tts-btn"
-  type="button"
-  data-target={target}
-  aria-label="Přečíst obsah stránky"
->
+<button id="tts-toggle" type="button">
   🔊 Přečíst stránku
 </button>
 
-<script is:inline>
-  if (!('speechSynthesis' in window)) {
-    console.warn('[TTS] SpeechSynthesis not supported');
+<script>
+declare global {
+  interface Window {
+    __ttsReaderInitialized?: boolean;
   }
+}
 
-  // 🔥 Warm-up hlasů co nejdřív
-  speechSynthesis.getVoices();
+(() => {
+  if (window.__ttsReaderInitialized) return;
+  window.__ttsReaderInitialized = true;
 
-  const btn = document.getElementById('tts-btn');
+  const button = document.getElementById("tts-toggle");
+  if (button) {
+    const synth = window.speechSynthesis;
+    let isReading = false;
+    let queue: string[] = [];
+    let currentIndex = 0;
 
-  function extractReadableText(root) {
-    const nodes = root.querySelectorAll(
-      'h1, h2, h3, h4, h5, h6, p, li, blockquote'
-    );
+    // ---------------------------
+    // Utils
+    // ---------------------------
 
-    return Array.from(nodes)
-      .map((n) => (n instanceof HTMLElement ? n.innerText.trim() : ''))
-      .filter(Boolean)
-      .join('\n\n');
-  }
+    function getMainText() {
+      const main =
+        document.querySelector("main") ||
+        document.querySelector("article") ||
+        document.body;
 
-  function pickVoice() {
-    const voices = speechSynthesis.getVoices();
-    if (!voices.length) return null;
-
-    return (
-      voices.find(v => v.lang?.startsWith('cs'))
-      ?? voices.find(v => v.lang?.startsWith('en'))
-      ?? voices[0]
-    );
-  }
-
-  function safeSpeak(text) {
-    if (!text) return;
-
-    // ❗ rušíme jen když je to opravdu potřeba
-    if (speechSynthesis.speaking || speechSynthesis.pending) {
-      speechSynthesis.cancel();
+      return main?.innerText?.trim() ?? "";
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.volume = 1;
-    utterance.rate = 1;
-    utterance.pitch = 1;
-
-    const voice = pickVoice();
-    if (!voice) {
-      alert('V prohlížeči není dostupný žádný hlas pro předčítání.');
-      return;
+    function detectLang(text: string) {
+      // hodně jednoduchá, ale funkční heuristika
+      const czChars = /[ěščřžýáíéúůňóďť]/i;
+      return czChars.test(text) ? "cs-CZ" : "en-US";
     }
 
-    utterance.voice = voice;
+    function getVoice(lang: string) {
+      const voices = synth.getVoices();
 
-    utterance.onstart = () => console.log('[TTS] started');
-    utterance.onend = () => console.log('[TTS] ended');
-    utterance.onerror = (e) => console.error('[TTS] error', e);
+      return (
+        voices.find(v => v.lang === lang) ||
+        voices.find(v => v.lang.startsWith(lang.split("-")[0])) ||
+        voices[0]
+      );
+    }
 
-    speechSynthesis.speak(utterance);
-  }
+    function chunkText(text: string, size = 250) {
+      const chunks = [];
+      let start = 0;
 
-  if (btn) {
-    btn.addEventListener('click', () => {
-      const selector = btn.dataset.target;
-      if (!selector) return;
+      while (start < text.length) {
+        let end = start + size;
 
-      const root = document.querySelector(selector);
-      if (!root) {
-        alert('Text ke čtení nebyl nalezen.');
+        // snažíme se řezat na tečce
+        const lastDot = text.lastIndexOf(".", end);
+        if (lastDot > start + 50) end = lastDot + 1;
+
+        chunks.push(text.slice(start, end).trim());
+        start = end;
+      }
+
+      return chunks.filter(Boolean);
+    }
+
+    // ---------------------------
+    // Speech
+    // ---------------------------
+
+    function speakNext() {
+      if (!isReading || currentIndex >= queue.length) {
+        console.log("[TTS] done");
+        isReading = false;
+        button.textContent = "🔊 Přečíst stránku";
         return;
       }
 
-      const text = extractReadableText(root);
+      const text = queue[currentIndex];
+      const lang = detectLang(text);
+      const voice = getVoice(lang);
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.voice = voice;
+
+      utterance.onstart = () =>
+        console.log(`[TTS] start chunk ${currentIndex + 1}/${queue.length}`, lang);
+
+      utterance.onend = () => {
+        currentIndex++;
+        speakNext();
+      };
+
+      utterance.onerror = (e) => {
+        console.error("[TTS] error", e);
+        currentIndex++;
+        speakNext();
+      };
+
+      synth.speak(utterance);
+    }
+
+    // ---------------------------
+    // Button handler
+    // ---------------------------
+
+    button.addEventListener("click", () => {
+      if (isReading) {
+        synth.cancel();
+        isReading = false;
+        button.textContent = "🔊 Přečíst stránku";
+        console.log("[TTS] cancelled");
+        return;
+      }
+
+      const text = getMainText();
+
       if (!text) {
-        alert('Nebyl nalezen žádný čitelný text.');
+        console.warn("[TTS] no text found");
         return;
       }
 
-      // poslední pojistka – někdy Chrome hlasy lazy-loadne až teď
-      if (!speechSynthesis.getVoices().length) {
-        speechSynthesis.getVoices();
-      }
+      queue = chunkText(text);
+      currentIndex = 0;
+      isReading = true;
 
-      safeSpeak(text);
+      console.log("[TTS] chunks:", queue.length);
+      button.textContent = "⏹ Zastavit";
+      speakNext();
     });
   }
+})();
 </script>
