@@ -171,15 +171,24 @@ interface ExtendedWindow extends Window { __ttsReaderInitialized?: boolean; }
   btnNext.onclick = () => { if (currentIndex < sentences.length - 1) { currentIndex++; speak(); } };
   btnPrev.onclick = () => { if (currentIndex > 0) { currentIndex--; speak(); } };
 
-  // Kliknutí na text
+ // Reakce na kliknutí v textu (včetně pauzy)
   document.addEventListener("click", (e) => {
     const target = e.target as HTMLElement;
     const textBlock = target.closest('h1, h2, h3, h4, h5, h6, p, li') as HTMLElement;
     
-    if (textBlock && textBlock.closest('main') && !target.closest('#tts-container')) {
-      if (sentences.length === 0) prepareQueue();
-      const newIndex = sentences.findIndex(s => s.el === textBlock);
-      if (newIndex !== -1) {
+    // Pokud klikneme mimo text nebo na ovládací panel, ignorujeme
+    if (!textBlock || !textBlock.closest('main') || target.closest('#tts-container')) return;
+
+    if (sentences.length === 0) prepareQueue();
+    const newIndex = sentences.findIndex(s => s.el === textBlock);
+
+    if (newIndex !== -1) {
+      // KLÍČOVÁ ZMĚNA: Pokud klikneme na právě čtený odstavec
+      if (isReading && currentIndex >= 0 && sentences[currentIndex].el === textBlock) {
+        // Simulujeme stisk tlačítka Pause/Resume
+        btnToggle.click();
+      } else {
+        // Pokud klikneme na jiný odstavec, skočíme tam a začneme číst
         stopTTS();
         currentIndex = newIndex;
         isReading = true;
