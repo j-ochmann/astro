@@ -10,8 +10,12 @@ import { Icon } from 'astro-icon/components';
 
   <!-- Ovládací panel (skrytý do startu) -->
   <div class="tts-controls">
+    <button id="tts-stop" class="tts-btn stop-btn" aria-label="Ukončit">
+      <Icon name="line-md:square-filled" width="24" height="24" />
+    </button>
+
     <button id="tts-prev" class="tts-btn" aria-label="Předchozí sekce">
-      <Icon name="line-md:chevron-small-double-left" width="24" height="24" />
+      <Icon name="lucide:skip-back" width="24" height="24" />
     </button>
     
     <button id="tts-toggle" class="tts-btn" aria-label="Pozastavit/Hrát">
@@ -20,11 +24,7 @@ import { Icon } from 'astro-icon/components';
     </button>
 
     <button id="tts-next" class="tts-btn" aria-label="Další sekce">
-      <Icon name="line-md:chevron-small-double-right" width="24" height="24" />
-    </button>
-
-    <button id="tts-stop" class="tts-btn stop-btn" aria-label="Ukončit">
-      <Icon name="line-md:close-circle-filled" width="24" height="24" />
+      <Icon name="lucide:skip-forward" width="24" height="24" />
     </button>
   </div>
 </div>
@@ -38,30 +38,47 @@ import { Icon } from 'astro-icon/components';
   align-items: center;
 
   .tts-controls { display: none; gap: 0.25rem; }
-  .icon-resume { display: none; }
 
-  // Aktivní stav (čte se nebo je pauza)
+  // Aktivní stav
   &.is-active {
     .main-play { display: none; }
     .tts-controls { display: flex; }
   }
 
-  // Stav pauzy
+  // Logika přepínání ikon uvnitř tts-toggle
+  #tts-toggle {
+    .icon-resume { display: none; } // Výchozí stav: resume je skryté
+    .icon-pause { display: flex; }  // Výchozí stav: pause je vidět
+  }
+
+  // Stav pauzy - musíme zacílit ikony uvnitř toggle buttonu
   &.is-paused {
-    .icon-pause { display: none; }
-    .icon-resume { display: flex; }
+    #tts-toggle {
+      .icon-pause { display: none; }
+      .icon-resume { display: flex; }
+    }
   }
 
   .tts-btn {
-    @include icon-glass; // Vaše mixina
+    @include icon-glass;
     background: transparent;
     border: none;
     cursor: pointer;
-    display: flex;
-    padding: 4px;
+    display: inline-flex; // Změněno na inline-flex pro lepší zarovnání
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
     color: currentColor;
+    
+    // Zajištění, aby divy uvnitř tlačítka neporušily flexbox
+    div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 }
+
 </style>
 
 <script>
