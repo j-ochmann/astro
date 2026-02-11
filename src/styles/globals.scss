@@ -14,26 +14,25 @@
 
 header.header { display: none !important; }
 
-/* SIDEBAR KONTEJNER: Průhledný, aby Toolbar viděl skrz na Body/Sidebar položky */
+/* SIDEBAR: Plně neprůhledný, černé/bílé pozadí dle tématu */
 .sidebar-pane {
   z-index: 1000 !important; 
   position: fixed !important;
   top: 0 !important;
   height: 100vh !important;
-  background-color: transparent !important;
+  /* Použití originálních Starlight barev pro 100% shodu */
+  background-color: var(--sl-color-bg-sidebar, var(--sl-color-bg)) !important;
   border-inline-end: 1px solid var(--sl-color-hairline) !important;
+  display: flex;
+  flex-direction: column;
 }
 
-/* OBSAH SIDEBARU: Neprůhledný (zakrývá body), roluje pod toolbarem */
+/* Obsah sidebaru začíná pod Toolbarem */
 .sidebar-content {
-  background-color: var(--sl-color-bg-nav) !important;
-  /* Důležité: padding nahoře vytvoří mezeru pro glass efekt, 
-     ale pozadí (background) zajistí neprůhlednost pod položkami */
   padding-top: var(--sl-nav-height) !important;
-  min-height: 100vh;
 }
 
-/* ODSZENÍ OBSAHU WEBU */
+/* Odsazení hlavního obsahu webu */
 .main-frame {
   padding-top: var(--sl-nav-height) !important;
 }
@@ -45,14 +44,30 @@ header.header { display: none !important; }
   &::-webkit-scrollbar { display: none; }
 }
 
-/* MOBILNÍ LOGIKA */
+/* ---------- STARLIGHT SIDEBAR OVERRIDES ---------- */
+.starlight__sidebar {
+  width: 100% !important;
+  max-width: var(--sl-sidebar-width) !important;
+}
+
+/* MOBILNÍ LOGIKA: Celá šíře a centrování */
 @media (max-width: 50rem) {
   .sidebar-pane {
     width: 100% !important;
+    max-width: 100% !important;
+    left: 0 !important;
     transform: translateX(-100%) !important;
     visibility: hidden;
     transition: transform 0.3s ease-in-out, visibility 0.3s !important;
     z-index: 10000 !important;
+    /* Zarovnání textu/položek v sidebaru na střed na mobilu */
+    //text-align: center;
+  }
+
+  /* Centrování položek menu v sidebaru na mobilu */
+  .sidebar-content :global(a), 
+  .sidebar-content :global(summary) {
+    justify-content: center !important;
   }
 
   body[data-mobile-menu-expanded] .sidebar-pane {
