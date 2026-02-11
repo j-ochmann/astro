@@ -112,11 +112,6 @@ declare global {
     return contentClone.innerText.trim();
   }
 
-  function detectLang(text: string) {
-    const czChars = /[ěščřžýáíéúůňóďť]/i;
-    return czChars.test(text) ? "cs-CZ" : "en-US";
-  }
-
   const pageLang = document.documentElement.lang || "en-US";
 
   function getVoice(lang: string) {
@@ -151,7 +146,6 @@ declare global {
     }
 
     const text = queue[currentIndex];
-    const lang = detectLang(text);
     const voice = getVoice(pageLang);
     const utterance = new SpeechSynthesisUtterance(text);
     
