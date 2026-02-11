@@ -62,6 +62,7 @@ export default defineConfig({
     Search: './src/components/Search.astro',
     PageFrame: './src/components/starlight/PageFrame.astro',
     Header: './src/components/starlight/Empty.astro',
+    MobileMenuToggle: './src/components/starlight/Empty.astro',
     RightSidebar: './src/components/starlight/Empty.astro',
     MobileTableOfContents: './src/components/starlight/Empty.astro',
     Sidebar: './src/components/starlight/Sidebar.astro' },

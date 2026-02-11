@@ -13,85 +13,81 @@ import Search from '@/components/starlight/Search.astro';
   <div class="right-section">
     <LanguageSelect />
     <Search />
+    <div class="mobile-only">
+      <button
+        id="custom-mobile-menu-toggle"
+        aria-expanded="false"
+        aria-label="Menu"
+        class="mobile-nav-toggle"
+      >
+        <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <svg class="close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
   </div>
 </div>
 
+<script>
+  function init() {
+    const btn = document.getElementById('custom-mobile-menu-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', (!isExpanded).toString());
+      document.body.toggleAttribute('data-mobile-menu-expanded');
+    });
+  }
+  init();
+  document.addEventListener('astro:after-swap', init);
+</script>
+
 <style lang="scss">
   .toolbar {
-    isolation: isolate;
     position: fixed;
     top: 0;
     left: 0;
-    // Změna: Na desktopu 300px, na mobilu 100%
-    width: var(--sl-sidebar-width, 300px); 
     height: 50px;
-    
-    // Změna: Zvýšení z-indexu, aby byl nad sidebarem (Starlight sidebar má ~600)
-    z-index: 1000; 
-    
+    width: var(--sl-sidebar-width, 300px);
+    z-index: 10001;
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
     padding: 0 10px;
+    
+    /* GLASS EFEKT */
+    background-color: color-mix(in srgb, var(--sl-color-bg-nav), transparent 20%);
     backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    
     border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);
-    //background-color: var(--sl-color-bg-nav); // Doporučeno pro čitelnost při fixní pozici
   }
-  /* V ToolBar.astro */
+
+  .left-section, .right-section { display: flex; align-items: center; gap: 8px; }
+  .mobile-only { display: none; }
+
   @media (max-width: 50rem) {
-    .toolbar {
-      width: 100% !important;
-      left: 0 !important;
-      z-index: 10000; /* Musí být vyšší než z-index mobilního menu Starlightu */
+    .toolbar { 
+      width: 100% !important; 
+      /* Zachování efektu i na mobilu */
+      background-color: color-mix(in srgb, var(--sl-color-bg-nav), transparent 20%);
     }
-  }
+    .mobile-only { display: flex; }
+    .right-section { gap: 12px; :global(sl-search) { margin-left: 0 !important; } }
 
-  .right-section {
-    display: flex;
-    align-items: center;
-    gap: 0; // Žádná mezera, budeme překrývat
+    .mobile-nav-toggle {
+      width: 38px; height: 38px; border-radius: 50%;
+      border: 1px solid var(--sl-color-hairline);
+      background: transparent; /* Průhledné pozadí tlačítka pro lepší glass efekt */
+      color: var(--sl-color-white);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; padding: 0;
 
-    // 1. Cílení na tvůj vlastní LanguagePicker
-    :global(.language-picker) {
-      position: relative;
-      z-index: 1; // Nižší vrstva
-    }
-
-    // 2. Cílení na Search tlačítko
-    :global(sl-search) {
-      position: relative;
-      z-index: 2;      // Vyšší vrstva (překryje vlajku)
-      margin-left: -12px; // Posunout Search DOLEVA přes vlajku
-      
-      // Styling pro sjednocení vzhledu s vlajkou
-      :global(button) {
-        background: var(--sl-color-bg-nav) !important;
-        border: 1px solid var(--sl-color-hairline) !important;
-        border-radius: 50% !important;
-        width: 38px !important;
-        height: 38px !important;
-        padding: 0 !important;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+      .close-icon { display: none; }
+      &[aria-expanded="true"] {
+        .menu-icon { display: none; }
+        .close-icon { display: block; }
       }
-
-      &:hover {
-        z-index: 10005; // Musí být víc než dropdown v LanguageSelectu při hoveru
-        transform: scale(1.05);
-      }
-    }
-  }
-
-  .left-section {
-    display: flex;
-    :global(.starlight-theme-select) {
-      // Pokud i ThemeSelect chceš kulatý
-      :global(select) {
-        border-radius: 50%;
-        width: 38px;
-        height: 38px;
-      }
+      svg { width: 1.25rem; height: 1.25rem; }
     }
   }
 </style>
