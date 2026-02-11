@@ -117,11 +117,15 @@ declare global {
     return czChars.test(text) ? "cs-CZ" : "en-US";
   }
 
+  const pageLang = document.documentElement.lang || "en-US";
+
   function getVoice(lang: string) {
     const voices = synth.getVoices();
+    // Hledáme přesnou shodu (např. cs-CZ) nebo aspoň shodu začátku (např. cs)
     return (
-      voices.find(v => v.lang === lang) || 
-      voices.find(v => v.lang.startsWith(lang.split("-")[0]))
+      voices.find(v => v.lang.toLowerCase() === lang.toLowerCase()) ||
+      voices.find(v => v.lang.toLowerCase().startsWith(lang.toLowerCase().split('-')[0])) ||
+      voices.find(v => v.default) // fallback na výchozí hlas systému
     );
   }
 
@@ -148,10 +152,10 @@ declare global {
 
     const text = queue[currentIndex];
     const lang = detectLang(text);
-    const voice = getVoice(lang);
+    const voice = getVoice(pageLang);
     const utterance = new SpeechSynthesisUtterance(text);
     
-    utterance.lang = lang;
+    utterance.lang = pageLang;
     utterance.voice = voice ?? null;
 
     utterance.onstart = () => {
