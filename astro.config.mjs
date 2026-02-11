@@ -60,6 +60,7 @@ export default defineConfig({
     ThemeSelect: './src/components/starlight/ThemeSelect.astro',
     LanguageSelect: './src/components/starlight/LanguageSelect.astro',
     Search: './src/components/Search.astro',
+    PageFrame: './src/components/starlight/PageFrame.astro',
     Header: './src/components/starlight/Empty.astro',
     RightSidebar: './src/components/starlight/Empty.astro',
     MobileTableOfContents: './src/components/starlight/Empty.astro',

@@ -64,5 +64,11 @@ header.header {
 
 /* ---------- RESPONSIVE FIXES ---------- */
 @media (max-width: 768px) {
-
+  :root {
+    --sl-nav-height: 50px !important;
+  }
+  
+  .main-frame {
+    padding-top: 50px !important;
+  }
 }
