@@ -2,55 +2,66 @@
 import { Icon } from 'astro-icon/components';
 ---
 
-<div class="tts-wrapper">
-  <button id="tts-toggle" type="button" class="theme-toggle-btn" aria-label="Přečíst stránku">
-    <div class="tts-icon-container icon-play">
-      <Icon name="line-md:play-filled" width="24" height="24" />
-    </div>
-    <div class="tts-icon-container icon-stop">
-      <Icon name="line-md:square-filled" width="24" height="24" />
-    </div>
+<div class="tts-wrapper" id="tts-container">
+  <!-- Hlavní Play (vidět jen na začátku) -->
+  <button id="tts-start" class="tts-btn main-play" aria-label="Přečíst stránku">
+    <Icon name="line-md:play-filled" width="24" height="24" />
   </button>
+
+  <!-- Ovládací panel (skrytý do startu) -->
+  <div class="tts-controls">
+    <button id="tts-prev" class="tts-btn" aria-label="Předchozí sekce">
+      <Icon name="line-md:chevron-small-double-left" width="24" height="24" />
+    </button>
+    
+    <button id="tts-toggle" class="tts-btn" aria-label="Pozastavit/Hrát">
+      <div class="icon-pause"><Icon name="line-md:pause" width="24" height="24" /></div>
+      <div class="icon-resume"><Icon name="line-md:play-filled" width="24" height="24" /></div>
+    </button>
+
+    <button id="tts-next" class="tts-btn" aria-label="Další sekce">
+      <Icon name="line-md:chevron-small-double-right" width="24" height="24" />
+    </button>
+
+    <button id="tts-stop" class="tts-btn stop-btn" aria-label="Ukončit">
+      <Icon name="line-md:close-circle-filled" width="24" height="24" />
+    </button>
+  </div>
 </div>
+
 
 <style lang="scss">
   @use "@/styles/mixins" as *;
+.tts-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 
-  .theme-toggle-btn {
+  .tts-controls { display: none; gap: 0.25rem; }
+  .icon-resume { display: none; }
+
+  // Aktivní stav (čte se nebo je pauza)
+  &.is-active {
+    .main-play { display: none; }
+    .tts-controls { display: flex; }
+  }
+
+  // Stav pauzy
+  &.is-paused {
+    .icon-pause { display: none; }
+    .icon-resume { display: flex; }
+  }
+
+  .tts-btn {
+    @include icon-glass; // Vaše mixina
     background: transparent;
     border: none;
-    padding: 0;
     cursor: pointer;
-    outline: none;
-    appearance: none;
-  }
-
-  .tts-icon-container {
-    @include icon-glass;
-    
-    // Reset velikosti SVG, aby sedělo v "glass" ohraničení
-    :global(svg) {
-      width: 22px !important;
-      height: 22px !important;
-      fill: currentColor;
-    }
-  }
-
-  /* Default: show play, hide stop */
-  .tts-wrapper .icon-play {
     display: flex;
+    padding: 4px;
+    color: currentColor;
   }
-  .tts-wrapper .icon-stop {
-    display: none;
-  }
-
-  /* When playing: hide play, show stop */
-  .tts-wrapper.is-playing .icon-play {
-    display: none;
-  }
-  .tts-wrapper.is-playing .icon-stop {
-    display: flex;
-  }
+}
 </style>
 
 <script>
@@ -64,130 +75,132 @@ declare global {
   if (window.__ttsReaderInitialized) return;
   window.__ttsReaderInitialized = true;
 
-  const button = document.getElementById("tts-toggle") as HTMLButtonElement | null;
-  const wrapper = button?.closest('.tts-wrapper') as HTMLElement | null;
+  const container = document.getElementById("tts-container");
+  const btnStart = document.getElementById("tts-start");
+  const btnToggle = document.getElementById("tts-toggle");
+  const btnStop = document.getElementById("tts-stop");
+  const btnNext = document.getElementById("tts-next");
+  const btnPrev = document.getElementById("tts-prev");
 
-  // 1. Zabalíme vše do jedné podmínky, aby TS věděl, že elementy existují
-  if (!button || !wrapper) return;
+  if (!container || !btnStart || !btnToggle || !btnStop) return;
 
   const synth = window.speechSynthesis;
-  let isReading = false;
-  let queue: string[] = [];
+  const pageLang = document.documentElement.lang || "cs";
+
+  interface SpeechItem { text: string; el: HTMLElement; }
+  let queue: SpeechItem[] = [];
   let currentIndex = 0;
+  let isReading = false;
 
-  function initVoices(callback: () => void) {
+  function getVoice() {
     const voices = synth.getVoices();
-    if (voices.length) {
-      callback();
-    } else {
-      synth.onvoiceschanged = () => callback();
-    }
+    return voices.find(v => v.lang.startsWith(pageLang)) || voices.find(v => v.default) || null;
   }
 
-  initVoices(() => {
-    console.log("[TTS] voices ready", synth.getVoices().map(v => v.name));
-  });
-
-  function getMainText() {
+  function prepareQueue() {
     const main = document.querySelector("main");
-    if (!main) return (document.body.innerText?.trim() ?? "");
-
-    const contentClone = main.cloneNode(true) as HTMLElement;
-
-    const junk = contentClone.querySelectorAll('aside, [aria-hidden="true"], .sr-only, .anchor-link, script, style');
-    junk.forEach(el => el.remove());
-
-    // Použijeme Array.from nebo přetypování v forEach
-    const blockElements = contentClone.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, tr, dt, dd');
+    if (!main) return;
+    const elements = Array.from(main.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li')) as HTMLElement[];
     
-    blockElements.forEach((el) => {
-      const htmlEl = el as HTMLElement; // <-- Tady je to důležité přetypování
-      if (htmlEl.textContent && !htmlEl.textContent.trim().endsWith('.')) {
-        htmlEl.innerText += ' . ';
-      } else {
-        htmlEl.innerText += ' ';
-      }
-    });
-
-    return contentClone.innerText.trim();
+    queue = elements.map(el => {
+      const clone = el.cloneNode(true) as HTMLElement;
+      const junk = clone.querySelectorAll('aside, [aria-hidden="true"], .sr-only, .anchor-link, script, style');
+      junk.forEach(j => j.remove());
+      return { text: clone.innerText.trim() + " . ", el };
+    }).filter(item => item.text.trim().length > 2);
   }
 
-  const pageLang = document.documentElement.lang || "en-US";
-
-  function getVoice(lang: string) {
-    const voices = synth.getVoices();
-    // Hledáme přesnou shodu (např. cs-CZ) nebo aspoň shodu začátku (např. cs)
-    return (
-      voices.find(v => v.lang.toLowerCase() === lang.toLowerCase()) ||
-      voices.find(v => v.lang.toLowerCase().startsWith(lang.toLowerCase().split('-')[0])) ||
-      voices.find(v => v.default) // fallback na výchozí hlas systému
-    );
-  }
-
-  function chunkText(text: string) {
-    // Rozdělí text podle interpunkce, aby každá věta byla samostatný "chunk"
-    // [^.!?]+ znamená "všechno co není konec věty"
-    // [.!?]+ znamená "jeden nebo více konců vět"
-    const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
-    
-    // Odstraníme prázdné kusy a ořežeme mezery
-    return sentences
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-  }
-
-  function speakNext() {
-    // 2. Tady TS potřeboval ujistit, že wrapper a button stále existují
-    if (!isReading || currentIndex >= queue.length) {
-      isReading = false;
-      wrapper!.classList.remove('is-playing');
-      button!.setAttribute('aria-label', 'Přečíst stránku');
+  function speak() {
+    synth.cancel();
+    if (!isReading || currentIndex < 0 || currentIndex >= queue.length) {
+      if (currentIndex >= queue.length) stopTTS();
       return;
     }
 
-    const text = queue[currentIndex];
-    const voice = getVoice(pageLang);
-    const utterance = new SpeechSynthesisUtterance(text);
-    
+    const item = queue[currentIndex];
+    const utterance = new SpeechSynthesisUtterance(item.text);
     utterance.lang = pageLang;
-    utterance.voice = voice ?? null;
+    utterance.voice = getVoice();
 
-    utterance.onstart = () => {
-      console.log(`[TTS] ${currentIndex + 1}/${queue.length}`, utterance.lang);
-    };
-
+    // Vizuální zpětná vazba - jemné zvýraznění aktuálního textu
+    item.el.style.backgroundColor = "rgba(var(--accent-rgb), 0.1)";
+    
     utterance.onend = () => {
+      item.el.style.backgroundColor = "";
       currentIndex++;
-      speakNext();
+      speak();
     };
 
     utterance.onerror = () => {
+      item.el.style.backgroundColor = "";
       currentIndex++;
-      speakNext();
+      speak();
     };
 
     synth.speak(utterance);
   }
 
-  button.addEventListener("click", () => {
-    if (isReading) {
-      synth.cancel();
-      isReading = false;
-      wrapper.classList.remove('is-playing');
-      button.setAttribute('aria-label', 'Přečíst stránku');
-      return;
-    }
-
-    const text = getMainText();
-    if (!text) return;
-
-    queue = chunkText(text);
+  function stopTTS() {
+    synth.cancel();
+    isReading = false;
     currentIndex = 0;
+    queue.forEach(item => item.el.style.backgroundColor = "");
+    container?.classList.remove('is-active', 'is-paused');
+  }
+
+  // Handlery
+  btnStart.onclick = () => {
+    prepareQueue();
     isReading = true;
+    container.classList.add('is-active');
+    speak();
+  };
+
+  btnToggle.onclick = () => {
+    if (synth.speaking && !container.classList.contains('is-paused')) {
+      synth.pause();
+      container.classList.add('is-paused');
+    } else {
+      synth.resume();
+      container.classList.remove('is-paused');
+    }
+  };
+
+  btnStop.onclick = stopTTS;
+
+  btnNext.onclick = () => {
+    if (currentIndex < queue.length - 1) {
+      queue[currentIndex].el.style.backgroundColor = "";
+      currentIndex++;
+      speak();
+    }
+  };
+
+  btnPrev.onclick = () => {
+    if (currentIndex > 0) {
+      queue[currentIndex].el.style.backgroundColor = "";
+      currentIndex--;
+      speak();
+    }
+  };
+
+  // Kliknutí na text v dokumentu
+  document.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+    const textBlock = target.closest('h1, h2, h3, h4, h5, h6, p, li') as HTMLElement;
     
-    wrapper.classList.add('is-playing');
-    button.setAttribute('aria-label', 'Zastavit čtení');
-    speakNext();
+    if (textBlock && textBlock.closest('main') && !target.closest('#tts-container')) {
+      if (queue.length === 0) prepareQueue();
+      const newIndex = queue.findIndex(item => item.el === textBlock);
+      if (newIndex !== -1) {
+        queue.forEach(item => item.el.style.backgroundColor = "");
+        currentIndex = newIndex;
+        isReading = true;
+        container.classList.add('is-active', 'is-paused'); // Reset ikony
+        container.classList.remove('is-paused');
+        speak();
+      }
+    }
   });
 })();
 </script>
