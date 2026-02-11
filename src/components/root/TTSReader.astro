@@ -64,150 +64,132 @@ declare global {
   if (window.__ttsReaderInitialized) return;
   window.__ttsReaderInitialized = true;
 
-  const button = document.getElementById("tts-toggle");
-  const wrapper = button?.closest('.tts-wrapper');
+  const button = document.getElementById("tts-toggle") as HTMLButtonElement | null;
+  const wrapper = button?.closest('.tts-wrapper') as HTMLElement | null;
 
-  if (button && wrapper) {
-    const synth = window.speechSynthesis;
-    // inicializace hlasů
-    function initVoices(callback: () => void) {
-      const voices = synth.getVoices();
-      if (voices.length) {
-        callback();
-      } else {
-        synth.onvoiceschanged = () => callback();
-      }
+  // 1. Zabalíme vše do jedné podmínky, aby TS věděl, že elementy existují
+  if (!button || !wrapper) return;
+
+  const synth = window.speechSynthesis;
+  let isReading = false;
+  let queue: string[] = [];
+  let currentIndex = 0;
+
+  function initVoices(callback: () => void) {
+    const voices = synth.getVoices();
+    if (voices.length) {
+      callback();
+    } else {
+      synth.onvoiceschanged = () => callback();
     }
-
-    initVoices(() => {
-      console.log("[TTS] voices ready", synth.getVoices().map(v => v.name));
-    });
-
-    let isReading = false;
-    let queue: string[] = [];
-    let currentIndex = 0;
-
-    // ---------------------------
-    // Utils
-    // ---------------------------
-
-    function getMainText() {
-      const main =
-        document.querySelector("main") ||
-        document.querySelector("article") ||
-        document.body;
-
-      return main?.innerText?.trim() ?? "";
-    }
-
-    function detectLang(text: string) {
-      // hodně jednoduchá, ale funkční heuristika
-      const czChars = /[ěščřžýáíéúůňóďť]/i;
-      return czChars.test(text) ? "cs-CZ" : "en-US";
-    }
-
-    function getVoice(lang: string) {
-      const voices = synth.getVoices();
-
-      return (
-        voices.find(v => v.lang === lang) ||
-        voices.find(v => v.lang.startsWith(lang.split("-")[0]))
-      );
-    }
-
-    function chunkText(text: string, size = 250) {
-      const chunks = [];
-      let start = 0;
-
-      while (start < text.length) {
-        let end = start + size;
-
-        // snažíme se řezat na tečce
-        const lastDot = text.lastIndexOf(".", end);
-        if (lastDot > start + 50) end = lastDot + 1;
-
-        chunks.push(text.slice(start, end).trim());
-        start = end;
-      }
-
-      return chunks.filter(Boolean);
-    }
-
-    // ---------------------------
-    // Speech
-    // ---------------------------
-
-    function speakNext() {
-      if (!isReading || currentIndex >= queue.length) {
-        console.log("[TTS] done");
-        isReading = false;
-        wrapper.classList.remove('is-playing');
-        button.setAttribute('aria-label', 'Přečíst stránku');
-        return;
-      }
-
-      const text = queue[currentIndex];
-      const lang = detectLang(text);
-      const voice = getVoice(lang);
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.voice = voice ?? null;
-
-      /*utterance.onstart = () =>
-        console.log(`[TTS] start chunk ${currentIndex + 1}/${queue.length}`, lang);*/
-      utterance.onstart = () => {
-        console.log(
-          `[TTS] start chunk ${currentIndex + 1}/${queue.length}`,
-          "lang:", utterance.lang,
-          "voice:", utterance.voice?.name
-        );
-      };
-
-      utterance.onend = () => {
-        currentIndex++;
-        speakNext();
-      };
-
-      utterance.onerror = (e) => {
-        console.error("[TTS] error", e);
-        currentIndex++;
-        speakNext();
-      };
-
-      synth.speak(utterance);
-    }
-
-    // ---------------------------
-    // Button handler
-    // ---------------------------
-
-    button.addEventListener("click", () => {
-      if (isReading) {
-        synth.cancel();
-        isReading = false;
-        wrapper.classList.remove('is-playing');
-        button.setAttribute('aria-label', 'Přečíst stránku');
-        console.log("[TTS] cancelled");
-        return;
-      }
-
-      const text = getMainText();
-
-      if (!text) {
-        console.warn("[TTS] no text found");
-        return;
-      }
-
-      queue = chunkText(text);
-      currentIndex = 0;
-      isReading = true;
-
-      console.log("[TTS] chunks:", queue.length);
-      wrapper.classList.add('is-playing');
-      button.setAttribute('aria-label', 'Zastavit čtení');
-      speakNext();
-    });
   }
+
+  initVoices(() => {
+    console.log("[TTS] voices ready", synth.getVoices().map(v => v.name));
+  });
+
+  function getMainText() {
+    const main = document.querySelector("main");
+    if (!main) return (document.body.innerText?.trim() ?? "");
+
+    const contentClone = main.cloneNode(true) as HTMLElement;
+
+    const junk = contentClone.querySelectorAll('aside, [aria-hidden="true"], .sr-only, .anchor-link, script, style');
+    junk.forEach(el => el.remove());
+
+    // Použijeme Array.from nebo přetypování v forEach
+    const blockElements = contentClone.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, tr, dt, dd');
+    
+    blockElements.forEach((el) => {
+      const htmlEl = el as HTMLElement; // <-- Tady je to důležité přetypování
+      if (htmlEl.textContent && !htmlEl.textContent.trim().endsWith('.')) {
+        htmlEl.innerText += ' . ';
+      } else {
+        htmlEl.innerText += ' ';
+      }
+    });
+
+    return contentClone.innerText.trim();
+  }
+
+  function detectLang(text: string) {
+    const czChars = /[ěščřžýáíéúůňóďť]/i;
+    return czChars.test(text) ? "cs-CZ" : "en-US";
+  }
+
+  function getVoice(lang: string) {
+    const voices = synth.getVoices();
+    return (
+      voices.find(v => v.lang === lang) || 
+      voices.find(v => v.lang.startsWith(lang.split("-")[0]))
+    );
+  }
+
+  function chunkText(text: string) {
+    // Rozdělí text podle interpunkce, aby každá věta byla samostatný "chunk"
+    // [^.!?]+ znamená "všechno co není konec věty"
+    // [.!?]+ znamená "jeden nebo více konců vět"
+    const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+    
+    // Odstraníme prázdné kusy a ořežeme mezery
+    return sentences
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+  }
+
+  function speakNext() {
+    // 2. Tady TS potřeboval ujistit, že wrapper a button stále existují
+    if (!isReading || currentIndex >= queue.length) {
+      isReading = false;
+      wrapper!.classList.remove('is-playing');
+      button!.setAttribute('aria-label', 'Přečíst stránku');
+      return;
+    }
+
+    const text = queue[currentIndex];
+    const lang = detectLang(text);
+    const voice = getVoice(lang);
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    utterance.lang = lang;
+    utterance.voice = voice ?? null;
+
+    utterance.onstart = () => {
+      console.log(`[TTS] ${currentIndex + 1}/${queue.length}`, utterance.lang);
+    };
+
+    utterance.onend = () => {
+      currentIndex++;
+      speakNext();
+    };
+
+    utterance.onerror = () => {
+      currentIndex++;
+      speakNext();
+    };
+
+    synth.speak(utterance);
+  }
+
+  button.addEventListener("click", () => {
+    if (isReading) {
+      synth.cancel();
+      isReading = false;
+      wrapper.classList.remove('is-playing');
+      button.setAttribute('aria-label', 'Přečíst stránku');
+      return;
+    }
+
+    const text = getMainText();
+    if (!text) return;
+
+    queue = chunkText(text);
+    currentIndex = 0;
+    isReading = true;
+    
+    wrapper.classList.add('is-playing');
+    button.setAttribute('aria-label', 'Zastavit čtení');
+    speakNext();
+  });
 })();
 </script>
