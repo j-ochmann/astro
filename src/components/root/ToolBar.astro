@@ -14,14 +14,9 @@ import Search from '@/components/starlight/Search.astro';
     <LanguageSelect />
     <Search />
     <div class="mobile-only">
-      <button
-        id="custom-mobile-menu-toggle"
-        aria-expanded="false"
-        aria-label="Menu"
-        class="mobile-nav-toggle"
-      >
-        <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        <svg class="close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      <button id="custom-mobile-menu-toggle" aria-expanded="false" aria-label="Menu" class="mobile-nav-toggle">
+        <svg class="menu-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <svg class="close-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
   </div>
@@ -31,11 +26,11 @@ import Search from '@/components/starlight/Search.astro';
   function init() {
     const btn = document.getElementById('custom-mobile-menu-toggle');
     if (!btn) return;
-    btn.addEventListener('click', () => {
+    btn.onclick = () => {
       const isExpanded = btn.getAttribute('aria-expanded') === 'true';
       btn.setAttribute('aria-expanded', (!isExpanded).toString());
       document.body.toggleAttribute('data-mobile-menu-expanded');
-    });
+    };
   }
   init();
   document.addEventListener('astro:after-swap', init);
@@ -48,15 +43,17 @@ import Search from '@/components/starlight/Search.astro';
     left: 0;
     height: 50px;
     width: var(--sl-sidebar-width, 300px);
-    z-index: 10001;
+    /* Vyšší než sidebar-pane (1000) a sidebar na mobilu (10000) */
+    z-index: 11000; 
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     padding: 0 10px;
-    
-    /* GLASS EFEKT */
-    backdrop-filter: blur(8px) saturate(180%);
-    //-webkit-backdrop-filter: blur(8px) saturate(180%);
+
+    /* GLASS EFFECT */
+    background-color: color-mix(in srgb, var(--sl-color-bg-nav), transparent 25%);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
     border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);
   }
 
@@ -64,22 +61,18 @@ import Search from '@/components/starlight/Search.astro';
   .mobile-only { display: none; }
 
   @media (max-width: 50rem) {
-    .toolbar { 
-      width: 100% !important; 
-      backdrop-filter: blur(8px) saturate(180%);
-      border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);
-    }
-    .mobile-only { display: flex; }
-    .right-section { gap: 12px; :global(sl-search) { margin-left: 0 !important; } }
-
+    .toolbar { width: 100% !important; }
+    .mobile-only { display: flex; margin-left: 8px; }
+    .right-section { gap: 8px; :global(sl-search) { margin-left: 0 !important; } }
+    
     .mobile-nav-toggle {
       width: 38px; height: 38px; border-radius: 50%;
       border: 1px solid var(--sl-color-hairline);
-      background: transparent; /* Průhledné pozadí tlačítka pro lepší glass efekt */
+      background: transparent;
       color: var(--sl-color-white);
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer; padding: 0;
-
+      cursor: pointer;
+      padding: 0;
       .close-icon { display: none; }
       &[aria-expanded="true"] {
         .menu-icon { display: none; }
@@ -87,5 +80,15 @@ import Search from '@/components/starlight/Search.astro';
       }
       svg { width: 1.25rem; height: 1.25rem; }
     }
+  }
+
+  /* Kruhové prvky v toolbaru */
+  :global(.starlight-theme-select select),
+  .right-section :global(sl-search button) {
+    background: var(--sl-color-bg-nav) !important;
+    border: 1px solid var(--sl-color-hairline) !important;
+    border-radius: 50% !important;
+    width: 38px !important;
+    height: 38px !important;
   }
 </style>

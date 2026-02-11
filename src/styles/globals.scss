@@ -7,90 +7,57 @@
 @import '@fontsource/montserrat/600.css';
 @import '@fontsource/montserrat/700.css';
 
-aside#starlight__sidebar { z-index: 10000 !important; }
 /* ---------- RESET & LAYOUT ---------- */
 :root {
   --sl-nav-height: 50px !important;
 }
 
-html, body {
+header.header { display: none !important; }
+
+/* SIDEBAR KONTEJNER: Průhledný, aby Toolbar viděl skrz na Body/Sidebar položky */
+.sidebar-pane {
+  z-index: 1000 !important; 
+  position: fixed !important;
+  top: 0 !important;
+  height: 100vh !important;
+  background-color: transparent !important;
+  border-inline-end: 1px solid var(--sl-color-hairline) !important;
+}
+
+/* OBSAH SIDEBARU: Neprůhledný (zakrývá body), roluje pod toolbarem */
+.sidebar-content {
+  background-color: var(--sl-color-bg-nav) !important;
+  /* Důležité: padding nahoře vytvoří mezeru pro glass efekt, 
+     ale pozadí (background) zajistí neprůhlednost pod položkami */
+  padding-top: var(--sl-nav-height) !important;
   min-height: 100vh;
 }
 
-/* Skrytí původního headeru */
-header.header {
-  display: none !important;
-}
-
-/* Odsazení obsahu pod Toolbar */
+/* ODSZENÍ OBSAHU WEBU */
 .main-frame {
   padding-top: var(--sl-nav-height) !important;
-}
-
-.content-panel {
-  padding-top: 1.5rem !important; /* Prostor pro nadpis H1 */
 }
 
 /* ---------- SCROLLBAR HIDING ---------- */
 * {
   scrollbar-width: none;
   -ms-overflow-style: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  &::-webkit-scrollbar { display: none; }
 }
 
-/* ---------- STARLIGHT SIDEBAR OVERRIDES ---------- */
-/* Desktop i mobil - lícování se šířkou Toolbaru */
-.starlight__sidebar {
-  overflow-x: clip !important;
-  max-width: var(--sl-sidebar-width) !important;
-}
-
-.sidebar-content {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-
-  :global(details) { width: 100%; }
-  :global(summary) { justify-content: center !important; text-align: center; }
-  :global(a) { text-align: center; justify-content: center; }
-}
-
-/* Mobilní Sidebar - musí poslouchat JS přepínač */
+/* MOBILNÍ LOGIKA */
 @media (max-width: 50rem) {
-  /* Cílení na Starlight sidebar s extrémní prioritou */
-  aside#starlight__sidebar.starlight__sidebar, 
   .sidebar-pane {
-    display: flex !important;
-    position: fixed !important;
-    top: var(--sl-nav-height) !important;
-    left: 0 !important;
     width: 100% !important;
-    height: calc(100vh - var(--sl-nav-height)) !important;
-    z-index: 10000 !important;
-    //background-color: var(--sl-color-bg-nav) !important;
-    
-    /* Plynulý přechod */
-    transition: transform 0.3s ease, visibility 0.3s !important;
-    
-    /* VÝCHOZÍ STAV (Schovaný) */
     transform: translateX(-100%) !important;
-    visibility: hidden !important;
+    visibility: hidden;
+    transition: transform 0.3s ease-in-out, visibility 0.3s !important;
+    z-index: 10000 !important;
   }
 
-  /* AKTIVNÍ STAV - Přidáno body selektorem pro maximální váhu */
-  body[data-mobile-menu-expanded] aside#starlight__sidebar.starlight__sidebar,
   body[data-mobile-menu-expanded] .sidebar-pane {
     transform: translateX(0) !important;
     visibility: visible !important;
-  }
-
-  /* Zajištění, že se pod menu neskroluje obsah */
-  body[data-mobile-menu-expanded] {
-    overflow: hidden !important;
-    position: fixed; /* Totální stopka pro skrol na iOS/Android */
-    width: 100%;
+    display: flex !important;
   }
 }
