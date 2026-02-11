@@ -20,6 +20,20 @@ declare global {
   const button = document.getElementById("tts-toggle");
   if (button) {
     const synth = window.speechSynthesis;
+    // inicializace hlasů
+    function initVoices(callback: () => void) {
+      const voices = synth.getVoices();
+      if (voices.length) {
+        callback();
+      } else {
+        synth.onvoiceschanged = () => callback();
+      }
+    }
+
+    initVoices(() => {
+      console.log("[TTS] voices ready", synth.getVoices().map(v => v.name));
+    });
+
     let isReading = false;
     let queue: string[] = [];
     let currentIndex = 0;
@@ -90,8 +104,15 @@ declare global {
       utterance.lang = lang;
       utterance.voice = voice ?? null;
 
-      utterance.onstart = () =>
-        console.log(`[TTS] start chunk ${currentIndex + 1}/${queue.length}`, lang);
+      /*utterance.onstart = () =>
+        console.log(`[TTS] start chunk ${currentIndex + 1}/${queue.length}`, lang);*/
+      utterance.onstart = () => {
+        console.log(
+          `[TTS] start chunk ${currentIndex + 1}/${queue.length}`,
+          "lang:", utterance.lang,
+          "voice:", utterance.voice?.name
+        );
+      };
 
       utterance.onend = () => {
         currentIndex++;
