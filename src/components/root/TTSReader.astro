@@ -170,8 +170,8 @@ declare global {
 
  
   function stopTTS() {
-    synth.cancel();
     isReading = false;
+    synth.cancel();
     currentIndex = 0;
     queue.forEach(item => item.el.style.backgroundColor = "");
     container?.classList.remove('is-active', 'is-paused');
@@ -186,12 +186,17 @@ declare global {
   };
 
   btnToggle.onclick = () => {
-    if (synth.speaking && !container.classList.contains('is-paused')) {
-      synth.pause();
+    if (isReading && !container.classList.contains('is-paused')) {
+      // PAUZA: Na mobilu místo synth.pause() mluvení úplně zastavíme,
+      // ale necháme isReading = true a currentIndex na stejném místě.
+      synth.cancel();
       container.classList.add('is-paused');
     } else {
-      synth.resume();
+      // OBNOVENÍ: Znovu zavoláme speak(), který začne tam, kde currentIndex zůstal.
       container.classList.remove('is-paused');
+      if (isReading) {
+        speak();
+      }
     }
   };
 
