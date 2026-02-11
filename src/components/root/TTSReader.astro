@@ -48,8 +48,7 @@ declare global {
 
       return (
         voices.find(v => v.lang === lang) ||
-        voices.find(v => v.lang.startsWith(lang.split("-")[0])) ||
-        voices[0]
+        voices.find(v => v.lang.startsWith(lang.split("-")[0]))
       );
     }
 
@@ -79,7 +78,7 @@ declare global {
       if (!isReading || currentIndex >= queue.length) {
         console.log("[TTS] done");
         isReading = false;
-        button.textContent = "🔊 Přečíst stránku";
+        button!.textContent = "🔊 Přečíst stránku";
         return;
       }
 
@@ -89,7 +88,7 @@ declare global {
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = lang;
-      utterance.voice = voice;
+      utterance.voice = voice ?? null;
 
       utterance.onstart = () =>
         console.log(`[TTS] start chunk ${currentIndex + 1}/${queue.length}`, lang);
@@ -116,7 +115,7 @@ declare global {
       if (isReading) {
         synth.cancel();
         isReading = false;
-        button.textContent = "🔊 Přečíst stránku";
+        button!.textContent = "🔊 Přečíst stránku";
         console.log("[TTS] cancelled");
         return;
       }
@@ -133,7 +132,7 @@ declare global {
       isReading = true;
 
       console.log("[TTS] chunks:", queue.length);
-      button.textContent = "⏹ Zastavit";
+      button!.textContent = "⏹ Zastavit";
       speakNext();
     });
   }
