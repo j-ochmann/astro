@@ -3,7 +3,7 @@
 ---
 
 <button id="tts-toggle" type="button">
-  🔊 Přečíst stránku
+  🔊 Přečíst
 </button>
 
 <script>
@@ -78,7 +78,7 @@ declare global {
       if (!isReading || currentIndex >= queue.length) {
         console.log("[TTS] done");
         isReading = false;
-        button!.textContent = "🔊 Přečíst stránku";
+        button!.textContent = "🔊 Přečíst";
         return;
       }
 
