@@ -9,7 +9,7 @@
 
 /* ---------- RESET & LAYOUT ---------- */
 :root {
-  --sl-nav-height: 50px !important;
+  --sl-nav-height: 0px;/* !important;*/
 }
 
 header.header { display: none !important; }
@@ -18,7 +18,7 @@ header.header { display: none !important; }
 .sidebar-pane {
   z-index: 1000 !important; 
   position: fixed !important;
-  top: 0 !important;
+  top: 20px !important;
   height: 100vh !important;
   /* Použití originálních Starlight barev pro 100% shodu */
   background-color: var(--sl-color-bg-sidebar, var(--sl-color-bg)) !important;
@@ -29,14 +29,18 @@ header.header { display: none !important; }
 
 /* Obsah sidebaru začíná pod Toolbarem */
 .sidebar-content {
-  padding-top: var(--sl-nav-height) !important;
+  //padding-top: var(--sl-nav-height) !important;
+  padding-top: 0px !important;
 }
 
 /* Odsazení hlavního obsahu webu */
 .main-frame {
-  padding-top: var(--sl-nav-height) !important;
+  //padding-top: var(--sl-nav-height) !important;
+  padding-top: 0px !important;
 }
-
+.content-panel {
+  padding-top: 0px !important; /* Původně bylo 1.5rem */
+}
 /* ---------- SCROLLBAR HIDING ---------- */
 * {
   scrollbar-width: none;
@@ -52,6 +56,9 @@ header.header { display: none !important; }
 
 /* MOBILNÍ LOGIKA: Celá šíře a centrování */
 @media (max-width: 50rem) {
+  .content-panel {
+    padding-top: 50px !important; /* Původně bylo 1.5rem */
+  }
   .sidebar-pane {
     width: 100% !important;
     max-width: 100% !important;
