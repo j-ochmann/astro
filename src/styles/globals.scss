@@ -70,7 +70,7 @@ header.header {
     width: 100% !important;
     height: calc(100vh - var(--sl-nav-height)) !important;
     z-index: 10000 !important;
-    background-color: var(--sl-color-bg-nav) !important;
+    //background-color: var(--sl-color-bg-nav) !important;
     
     /* Plynulý přechod */
     transition: transform 0.3s ease, visibility 0.3s !important;

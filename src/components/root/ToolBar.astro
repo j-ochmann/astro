@@ -55,10 +55,8 @@ import Search from '@/components/starlight/Search.astro';
     padding: 0 10px;
     
     /* GLASS EFEKT */
-    background-color: color-mix(in srgb, var(--sl-color-bg-nav), transparent 20%);
     backdrop-filter: blur(8px) saturate(180%);
-    -webkit-backdrop-filter: blur(8px) saturate(180%);
-    
+    //-webkit-backdrop-filter: blur(8px) saturate(180%);
     border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);
   }
 
@@ -68,8 +66,8 @@ import Search from '@/components/starlight/Search.astro';
   @media (max-width: 50rem) {
     .toolbar { 
       width: 100% !important; 
-      /* Zachování efektu i na mobilu */
-      background-color: color-mix(in srgb, var(--sl-color-bg-nav), transparent 20%);
+      backdrop-filter: blur(8px) saturate(180%);
+      border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);
     }
     .mobile-only { display: flex; }
     .right-section { gap: 12px; :global(sl-search) { margin-left: 0 !important; } }
