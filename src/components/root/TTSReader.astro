@@ -1,10 +1,57 @@
 ---
-
+import { Icon } from 'astro-icon/components';
 ---
 
-<button id="tts-toggle" type="button">
-  🔊 Přečíst
-</button>
+<div class="tts-wrapper">
+  <button id="tts-toggle" type="button" class="theme-toggle-btn" aria-label="Přečíst stránku">
+    <div class="tts-icon-container icon-play">
+      <Icon name="line-md:play-filled" width="24" height="24" />
+    </div>
+    <div class="tts-icon-container icon-stop">
+      <Icon name="line-md:square-filled" width="24" height="24" />
+    </div>
+  </button>
+</div>
+
+<style lang="scss">
+  @use "@/styles/mixins" as *;
+
+  .theme-toggle-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+  }
+
+  .tts-icon-container {
+    @include icon-glass;
+    
+    // Reset velikosti SVG, aby sedělo v "glass" ohraničení
+    :global(svg) {
+      width: 22px !important;
+      height: 22px !important;
+      fill: currentColor;
+    }
+  }
+
+  /* Default: show play, hide stop */
+  .tts-wrapper .icon-play {
+    display: flex;
+  }
+  .tts-wrapper .icon-stop {
+    display: none;
+  }
+
+  /* When playing: hide play, show stop */
+  .tts-wrapper.is-playing .icon-play {
+    display: none;
+  }
+  .tts-wrapper.is-playing .icon-stop {
+    display: flex;
+  }
+</style>
 
 <script>
 declare global {
@@ -18,7 +65,9 @@ declare global {
   window.__ttsReaderInitialized = true;
 
   const button = document.getElementById("tts-toggle");
-  if (button) {
+  const wrapper = button?.closest('.tts-wrapper');
+
+  if (button && wrapper) {
     const synth = window.speechSynthesis;
     // inicializace hlasů
     function initVoices(callback: () => void) {
@@ -92,7 +141,8 @@ declare global {
       if (!isReading || currentIndex >= queue.length) {
         console.log("[TTS] done");
         isReading = false;
-        button!.textContent = "🔊 Přečíst";
+        wrapper.classList.remove('is-playing');
+        button.setAttribute('aria-label', 'Přečíst stránku');
         return;
       }
 
@@ -136,7 +186,8 @@ declare global {
       if (isReading) {
         synth.cancel();
         isReading = false;
-        button!.textContent = "🔊 Přečíst stránku";
+        wrapper.classList.remove('is-playing');
+        button.setAttribute('aria-label', 'Přečíst stránku');
         console.log("[TTS] cancelled");
         return;
       }
@@ -153,7 +204,8 @@ declare global {
       isReading = true;
 
       console.log("[TTS] chunks:", queue.length);
-      button!.textContent = "⏹ Zastavit";
+      wrapper.classList.add('is-playing');
+      button.setAttribute('aria-label', 'Zastavit čtení');
       speakNext();
     });
   }
