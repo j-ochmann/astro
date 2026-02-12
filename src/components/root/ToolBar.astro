@@ -38,13 +38,13 @@ import Search from '@/components/starlight/Search.astro';
 
 <style lang="scss">
   .toolbar {
-    isolation: isolate; /* Vytvoří čistý štít pro z-indexy jen uvnitř toolbaru */
+    /*isolation: isolate; /* Vytvoří čistý štít pro z-indexy jen uvnitř toolbaru */
     position: fixed;
     top: 0;
     left: 0;
     height: 50px;
     width: var(--sl-sidebar-width, 300px);
-    z-index: 10; /*1500; */
+    z-index: 8;
     display: flex;
     justify-content: space-between;
     align-items: center;

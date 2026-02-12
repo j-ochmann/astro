@@ -18,12 +18,12 @@ import ToolBar from '@/components/root/ToolBar.astro';
 		100% { z-index: 5; }
 	}
 	.social-circle-wrapper {
-		position: relative;
-		z-index: 20000;
+		position: fixed;
+		z-index: 9999;
 		margin: 50px 0px;
 		transition: transform 0.2s ease;
-		animation: sink-under linear both;
+		/*animation: sink-under linear both;
 		animation-timeline: scroll();
-		animation-range: 0px 80px; 
+		animation-range: 0px 80px; */
 	}
 </style>

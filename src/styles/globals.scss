@@ -44,6 +44,7 @@ header.header { display: none !important; }
 .starlight__sidebar {
   width: 100% !important;
   max-width: var(--sl-sidebar-width) !important;
+  z-index: auto !important;
 }
 
 @media (max-width: 50rem) {
