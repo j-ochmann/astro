@@ -19,7 +19,7 @@ import Search from '@/components/starlight/Search.astro';
         <svg class="close-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
-  </div>  
+  </div>
 </div>
 
 <script>
@@ -49,16 +49,21 @@ import Search from '@/components/starlight/Search.astro';
     justify-content: space-between;
     align-items: center;
     padding: 0 10px;
-    /* Glass efekt */
+
+    /* Glass efekt využívající CSS proměnné Starlightu */
     //background-color: color-mix(in srgb, var(--sl-color-bg), transparent 30%);
     backdrop-filter: blur(8px) saturate(180%);
     //-webkit-backdrop-filter: blur(12px) saturate(180%);
     border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);  }
+
   .left-section, .right-section { display: flex; align-items: center; gap: 8px; }
   .mobile-only { display: none; }
+
   @media (max-width: 50rem) {
     .toolbar { 
       width: 100% !important; 
+      /* Na mobilu chceme trošku tmavší glass pro lepší čitelnost nad sidebarem */
+      //background-color: color-mix(in srgb, var(--sl-color-bg), transparent 20%);
     }
     .mobile-only { display: flex; margin-left: 8px; }
     .right-section { gap: 8px; :global(sl-search) { margin-left: 0 !important; } }

@@ -1,14 +1,20 @@
 ---
 import type { StarlightRouteData } from '@astrojs/starlight/route-data';
+import Icons from '@/components/root/Icon.astro';
 import DefaultSidebar from '@astrojs/starlight/components/Sidebar.astro';
+import ToolBar from '@/components/root/ToolBar.astro';
 import SocialCircle from '@/components/root/SocialCircle.astro';
+
 interface Props extends StarlightRouteData {}
 ---
-<div class="sidebar-layout">
+<Icons />
 
+<div class="sidebar-layout">
   <div class="profile-container">
     <div class="social-circle-wrapper">
+
       <SocialCircle />
+
     </div>
   </div>
 

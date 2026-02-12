@@ -1,10 +1,10 @@
 ---
-import Icons from '@/components/root/Icon.astro';
 import Default from '@astrojs/starlight/components/PageFrame.astro';
 import ToolBar from '@/components/root/ToolBar.astro';
 ---
-<Icons />
+
 <ToolBar />
+
 <Default {...Astro.props}>
   <slot name="header" slot="header" />
   <slot name="sidebar" slot="sidebar" />
@@ -19,16 +19,11 @@ import ToolBar from '@/components/root/ToolBar.astro';
 	}
 	.social-circle-wrapper {
 		position: absolute;
-
-		width: var(--sl-sidebar-width);
-		display: flex;
-		justify-content: center;
-		z-index: 9999;
-		margin: 50px 0px;
-		margin-top: 40px;
+		z-index: 10;
+		margin: 50px 0px 20px 0;
 		transition: transform 0.2s ease;
 		animation: sink-under linear both;
 		animation-timeline: scroll();
-		animation-range: 0px 80px; 
+		animation-range: 0px 80px;
 	}
 </style>
