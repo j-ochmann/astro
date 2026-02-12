@@ -10,3 +10,29 @@ import ToolBar from '@/components/root/ToolBar.astro';
   <slot name="sidebar" slot="sidebar" />
   <slot />
 </Default>
+
+<style is:global>
+	@keyframes sink-sidebar {
+		0% {
+			z-index: 1600;
+		}
+		100% {
+			z-index: 5;
+		}
+	}
+
+	.sidebar-pane {
+		/* Make the pane itself transparent so it doesn't hide the toolbar when its z-index is high. */
+		background-color: transparent !important;
+
+		/* Apply the animation to change stacking context based on scroll */
+		animation: sink-sidebar linear forwards;
+		animation-timeline: scroll(self);
+		animation-range: 0px 1px;
+	}
+
+	.sidebar-content {
+		/* Give the background color back to the inner content wrapper. */
+		background-color: var(--sl-color-bg-sidebar);
+	}
+</style>
