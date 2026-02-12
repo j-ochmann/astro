@@ -1,5 +1,6 @@
 ---
 import ThemeSelect from '@/components/starlight/ThemeSelect.astro';
+import TTSReader from '@/components/root/TTSReader.astro';
 import LanguageSelect from '@/components/starlight/LanguageSelect.astro';
 import Search from '@/components/starlight/Search.astro';
 ---
@@ -7,12 +8,21 @@ import Search from '@/components/starlight/Search.astro';
 <div class="toolbar">
   <div class="left-section">
     <ThemeSelect />
+    <TTSReader />
   </div>
   <div class="right-section">
     <LanguageSelect />
     <Search />
+    <div class="mobile-only">
+      <button id="custom-mobile-menu-toggle" aria-expanded="false" aria-label="Menu" class="mobile-nav-toggle">
+        <svg class="menu-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <svg class="close-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
   </div>
 </div>
+
+
 
 <style lang="scss">
   .toolbar {
@@ -29,51 +39,23 @@ import Search from '@/components/starlight/Search.astro';
     padding: 0 10px;
     backdrop-filter: blur(8px) saturate(180%);
     border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);
-  }
 
-  .right-section {
-    display: flex;
-    align-items: center;
-    gap: 0; // Žádná mezera, budeme překrývat
-
-    :global(.language-picker) {
-      position: relative;
-      z-index: 1;
-    }
-
-    // 2. Cílení na Search tlačítko
-    :global(sl-search) {
-      position: relative;
-      z-index: 2;      // Vyšší vrstva (překryje vlajku)
-      margin-left: -12px; // Posunout Search DOLEVA přes vlajku
-      
-      // Styling pro sjednocení vzhledu s vlajkou
-      :global(button) {
-        background: var(--sl-color-bg-nav) !important;
-        border: 1px solid var(--sl-color-hairline) !important;
-        border-radius: 50% !important;
-        width: 38px !important;
-        height: 38px !important;
-        padding: 0 !important;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    .left-section, .right-section { display: flex; align-items: center; gap: 0; }
+    /*.mobile-only { display: none; }*/
+    .mobile-nav-toggle {
+      width: 38px; height: 38px; border-radius: 50%;
+      border: 1px solid var(--sl-color-hairline);
+      background: transparent;
+      color: var(--sl-color-white);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      .close-icon { display: none; }
+      &[aria-expanded="true"] {
+        .menu-icon { display: none; }
+        .close-icon { display: block; }
       }
-
-      &:hover {
-        z-index: 10005; // Musí být víc než dropdown v LanguageSelectu při hoveru
-        transform: scale(1.05);
-      }
-    }
-  }
-
-  .left-section {
-    :global(.starlight-theme-select) {
-      :global(select) {
-        border-radius: 50%;
-        width: 38px;
-        height: 38px;
-      }
+      svg { width: 1.25rem; height: 1.25rem; }
     }
   }
 </style>
