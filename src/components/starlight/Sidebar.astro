@@ -13,7 +13,7 @@ const { pathname } = Astro.url;
   <RootSidebar {...Astro.props} />
 )}
 
-<style is:global> /* is:global ovlivní i ToolBar */
+<style is:global>
   .sidebar-layout {
     display: flex;
     flex-direction: column;
@@ -21,21 +21,9 @@ const { pathname } = Astro.url;
   }
   .profile-container {
     position: relative;
-    /* Rezervuje místo, aby menu pod ním neskákalo */
     min-height: 200px; 
     display: flex;
     justify-content: center;
-    /*padding-top: 2rem; */
-  }
-  .social-circle-wrapper {
-    position: relative;
-    z-index: 2000;
-    margin: 50px 0px;
-    transition: transform 0.2s ease;
-    /* CLEAN CSS SCROLL EFFECT */
-    animation: sink-under linear both;
-    animation-timeline: scroll();
-    animation-range: 0px 80px; 
   }
   .profile-img {
     position: relative;
@@ -49,11 +37,6 @@ const { pathname } = Astro.url;
   }
   .social-circle-wrapper:hover .hover-img {
     opacity: 1;
-  }
-  @keyframes sink-under {
-    0% { z-index: 2000; }
-    10% { z-index: 1400; } 
-    100% { z-index: 1400; }
   }
   .wrapper {
     position: relative;
