@@ -16,7 +16,7 @@ header.header { display: none !important; }
 
 /* SIDEBAR: Plně neprůhledný, černé/bílé pozadí dle tématu */
 .sidebar-pane {
-  z-index: 1000 !important; 
+  //z-index: 1000 !important; 
   position: fixed !important;
   //top: 20px !important;
   height: 100vh !important;
@@ -66,7 +66,7 @@ header.header { display: none !important; }
     transform: translateX(-100%) !important;
     visibility: hidden;
     transition: transform 0.3s ease-in-out, visibility 0.3s !important;
-    z-index: 10000 !important;
+    //z-index: 10000 !important;
     /* Zarovnání textu/položek v sidebaru na střed na mobilu */
     //text-align: center;
   }
