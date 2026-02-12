@@ -1,29 +1,9 @@
 ---
 import Default from '@astrojs/starlight/components/PageFrame.astro';
-import ToolBar from '@/components/root/ToolBar.astro';
 ---
-
-<ToolBar />
 
 <Default {...Astro.props}>
   <slot name="header" slot="header" />
   <slot name="sidebar" slot="sidebar" />
   <slot />
 </Default>
-
-<style is:global>
-	@keyframes sink-under {
-		0% { z-index: 1500; }
-		10% { z-index: 5; } 
-		100% { z-index: 5; }
-	}
-	.social-circle-wrapper {
-		position: absolute;
-		z-index: 10;
-		margin: 50px 0px 20px 0;
-		transition: transform 0.2s ease;
-		animation: sink-under linear both;
-		animation-timeline: scroll();
-		animation-range: 0px 80px;
-	}
-</style>
