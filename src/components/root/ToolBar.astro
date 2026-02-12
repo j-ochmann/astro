@@ -1,6 +1,5 @@
 ---
 import ThemeSelect from '@/components/starlight/ThemeSelect.astro';
-import TTSReader from '@/components/root/TTSReader.astro';
 import LanguageSelect from '@/components/starlight/LanguageSelect.astro';
 import Search from '@/components/starlight/Search.astro';
 ---
@@ -8,90 +7,73 @@ import Search from '@/components/starlight/Search.astro';
 <div class="toolbar">
   <div class="left-section">
     <ThemeSelect />
-    <TTSReader />
   </div>
   <div class="right-section">
     <LanguageSelect />
     <Search />
-    <div class="mobile-only">
-      <button id="custom-mobile-menu-toggle" aria-expanded="false" aria-label="Menu" class="mobile-nav-toggle">
-        <svg class="menu-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        <svg class="close-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-    </div>
   </div>
 </div>
 
-<script>
-  function init() {
-    const btn = document.getElementById('custom-mobile-menu-toggle');
-    if (!btn) return;
-    btn.onclick = () => {
-      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
-      btn.setAttribute('aria-expanded', (!isExpanded).toString());
-      document.body.toggleAttribute('data-mobile-menu-expanded');
-    };
-  }
-  init();
-  document.addEventListener('astro:after-swap', init);
-</script>
-
 <style lang="scss">
   .toolbar {
-    /*isolation: isolate; /* Vytvoří čistý štít pro z-indexy jen uvnitř toolbaru */
+    isolation: isolate; /* Vytvoří čistý štít pro z-indexy jen uvnitř toolbaru */
     position: fixed;
     top: 0;
     left: 0;
+    width: 300px; 
     height: 50px;
-    width: var(--sl-sidebar-width, 300px);
-    z-index: 8;
+    z-index: 1000;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 10px;
-
-    /* Glass efekt využívající CSS proměnné Starlightu */
-    //background-color: color-mix(in srgb, var(--sl-color-bg), transparent 30%);
     backdrop-filter: blur(8px) saturate(180%);
-    //-webkit-backdrop-filter: blur(12px) saturate(180%);
-    border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);  }
+    border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);
+  }
 
-  .left-section, .right-section { display: flex; align-items: center; gap: 8px; }
-  .mobile-only { display: none; }
+  .right-section {
+    display: flex;
+    align-items: center;
+    gap: 0; // Žádná mezera, budeme překrývat
 
-  @media (max-width: 50rem) {
-    .toolbar { 
-      width: 100% !important; 
-      /* Na mobilu chceme trošku tmavší glass pro lepší čitelnost nad sidebarem */
-      //background-color: color-mix(in srgb, var(--sl-color-bg), transparent 20%);
+    :global(.language-picker) {
+      position: relative;
+      z-index: 1;
     }
-    .mobile-only { display: flex; margin-left: 8px; }
-    .right-section { gap: 8px; :global(sl-search) { margin-left: 0 !important; } }
-    
-    .mobile-nav-toggle {
-      width: 38px; height: 38px; border-radius: 50%;
-      border: 1px solid var(--sl-color-hairline);
-      background: transparent;
-      color: var(--sl-color-white);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      padding: 0;
-      .close-icon { display: none; }
-      &[aria-expanded="true"] {
-        .menu-icon { display: none; }
-        .close-icon { display: block; }
+
+    // 2. Cílení na Search tlačítko
+    :global(sl-search) {
+      position: relative;
+      z-index: 2;      // Vyšší vrstva (překryje vlajku)
+      margin-left: -12px; // Posunout Search DOLEVA přes vlajku
+      
+      // Styling pro sjednocení vzhledu s vlajkou
+      :global(button) {
+        background: var(--sl-color-bg-nav) !important;
+        border: 1px solid var(--sl-color-hairline) !important;
+        border-radius: 50% !important;
+        width: 38px !important;
+        height: 38px !important;
+        padding: 0 !important;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
-      svg { width: 1.25rem; height: 1.25rem; }
+
+      &:hover {
+        z-index: 10005; // Musí být víc než dropdown v LanguageSelectu při hoveru
+        transform: scale(1.05);
+      }
     }
   }
 
-  /* Ikony a přepínače v toolbaru */
-  :global(.starlight-theme-select select),
-  .right-section :global(sl-search button) {
-    background: var(--sl-color-bg) !important;
-    border: 1px solid var(--sl-color-hairline) !important;
-    border-radius: 50% !important;
-    width: 38px !important;
-    height: 38px !important;
+  .left-section {
+    :global(.starlight-theme-select) {
+      :global(select) {
+        border-radius: 50%;
+        width: 38px;
+        height: 38px;
+      }
+    }
   }
 </style>
