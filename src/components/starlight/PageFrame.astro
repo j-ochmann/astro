@@ -1,9 +1,14 @@
 ---
+import Icons from '@/components/root/Icon.astro';
 import Default from '@astrojs/starlight/components/PageFrame.astro';
 import ToolBar from '@/components/root/ToolBar.astro';
+import SocialCircle from '@/components/root/SocialCircle.astro';
 ---
+<Icons />
 
 <ToolBar />
+
+<SocialCircle />
 
 <Default {...Astro.props}>
   <slot name="header" slot="header" />
@@ -22,8 +27,8 @@ import ToolBar from '@/components/root/ToolBar.astro';
 		z-index: 9999;
 		margin: 50px 0px;
 		transition: transform 0.2s ease;
-		/*animation: sink-under linear both;
+		animation: sink-under linear both;
 		animation-timeline: scroll();
-		animation-range: 0px 80px; */
+		animation-range: 0px 80px; 
 	}
 </style>
