@@ -53,7 +53,7 @@ import Search from '@/components/starlight/Search.astro';
     top: 0 !important;
     left: 0 !important;
     height: 50px !important;
-    z-index: 1000; /* Musí být nad sidebarem */
+    z-index: 1000; /* over Sidebar */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -61,26 +61,21 @@ import Search from '@/components/starlight/Search.astro';
     backdrop-filter: blur(8px) saturate(180%);
     border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);
     border-right: 1px solid var(--sl-color-hairline);
-
-    /* Desktop šířka */
+    /* Desktop */
     width: var(--sl-sidebar-width, 300px) !important;
-
     .left-section, .right-section { display: flex; align-items: center; gap: 8px; }
     .mobile-only { display: none; }
-
-    /* Mobilní verze */
+    /* Mobile */
     @media (max-width: 50rem) {
       width: 100% !important;
       left: 0 !important;
       right: 0 !important;
       transform: translate(0) !important; /* Klíčové: neulétne se sidebarem */
       visibility: visible !important;
-
       .mobile-only { 
         display: flex; 
         margin-left: 8px; 
       }
-
       .mobile-nav-toggle {
         width: 38px; height: 38px; border-radius: 50%;
         border: 1px solid var(--sl-color-hairline);
@@ -92,7 +87,6 @@ import Search from '@/components/starlight/Search.astro';
 
         svg { width: 1.25rem; height: 1.25rem; display: block; }
         .close-icon { display: none; }
-        
         &[aria-expanded="true"] {
           .menu-icon { display: none; }
           .close-icon { display: block; }
@@ -100,13 +94,11 @@ import Search from '@/components/starlight/Search.astro';
       }
     }
   }
-
   /* Odsunutí obsahu na mobilu */
   @media (max-width: 50rem) {
     :global(.main-frame) {
       padding-top: 50px !important;
     }
-
     /* Zobrazení Sidebaru při aktivním menu */
     :global(body[data-mobile-menu-expanded] .sidebar-pane) {
       //transform: translate(0) !important;
@@ -129,10 +121,9 @@ import Search from '@/components/starlight/Search.astro';
     width: 38px !important;
     height: 38px !important;
   }
-
-    /* Skrytí defaultních Starlight prvků (Theme, Lang, Social), které mají třídu pro skrytí na desktopu */
+/* Skrytí defaultních Starlight prvků (Theme, Lang, Social), 
+   které mají třídu pro skrytí na desktopu */
   :global(.sidebar-pane .mobile-preferences){
     display: none !important;
   }
-
 </style>
