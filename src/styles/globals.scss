@@ -1,31 +1,22 @@
 @use 'mixins';
-/* ---------- FONTS ---------- */
 @import '@fontsource/syne/400.css';
 @import '@fontsource/syne/600.css';
 @import '@fontsource/syne/700.css';
 @import '@fontsource/montserrat/400.css';
 @import '@fontsource/montserrat/600.css';
 @import '@fontsource/montserrat/700.css';
-
 /* ---------- RESET & LAYOUT ---------- */
 :root {
   --sl-nav-height: 0px !important;
   --sl-mobile-toc-height: 0px !important;
   overflow-x: clip;
 }
-
-html, body {
-  min-height: 100vh;
-}
-
 header.header {
   display: none !important;
 }
-
 .content-panel {
   padding-top: 0 !important;
 }
-
 /* ---------- SCROLLBAR HIDING ---------- */
 * {
   scrollbar-width: none; /* Firefox */
@@ -33,36 +24,4 @@ header.header {
   &::-webkit-scrollbar {
     display: none; /* Chrome/Safari/Brave */
   }
-}
-
-/* ---------- STARLIGHT SIDEBAR OVERRIDES ---------- */
-.starlight__sidebar {
-  overflow-x: clip !important;
-  max-width: var(--sl-sidebar-width) !important;
-}
-
-.sidebar-content {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-
-  :global(details) {
-    width: 100%;
-  }
-
-  :global(summary) {
-    justify-content: center !important;
-    text-align: center;
-  }
-
-  :global(a) {
-    text-align: center;
-    justify-content: center;
-  }
-}
-
-/* ---------- RESPONSIVE FIXES ---------- */
-@media (max-width: 768px) {
-
 }

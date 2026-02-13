@@ -28,7 +28,7 @@ import Search from '@/components/starlight/Search.astro';
     position: fixed;
     top: 0;
     left: 0;
-    width: 300px; 
+    width: 300px;
     height: 50px;
     z-index: 1000;
     display: flex;
@@ -39,7 +39,17 @@ import Search from '@/components/starlight/Search.astro';
     border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);
 
     .left-section, .right-section { display: flex; align-items: center; gap: 0; }
-    /*.mobile-only { display: none; }*/
+    .mobile-only { display: none; }
+    @media (max-width: 50rem) {
+      width: 100% !important; /* Použijeme šířku viewportu */
+      max-width: 100% !important;
+      left: 0 !important;
+      right: 0 !important;
+
+      .mobile-only { 
+        display: flex; 
+      }
+    }
     .mobile-nav-toggle {
       width: 38px; height: 38px; border-radius: 50%;
       border: 1px solid var(--sl-color-hairline);
