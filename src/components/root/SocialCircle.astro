@@ -6,8 +6,54 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 const lang = Astro.currentLocale || 'en';
 const landingLink = getRelativeLocaleUrl(lang, '/');
 ---
+
 <script>
+  // Import tvého fly-away skriptu
   import "@/scripts/fly-away.js";
+
+  function initMobileProfile() {
+    const menu = document.querySelector('.circular-menu');
+    const profileLink = document.querySelector('.profile-link');
+    const actionIconsContainer = document.querySelector('.action-icons');
+
+    if (!menu || !profileLink || !actionIconsContainer) return;
+
+    // Funkce pro simulaci "vletu" ikon (manuální trigger fly-away.js)
+    const triggerFlyAway = () => {
+      // Vytvoříme umělý event, aby původní skript v fly-away.js zareagoval
+      const enterEvent = new MouseEvent('mouseenter', { bubbles: true });
+      actionIconsContainer.dispatchEvent(enterEvent);
+    };
+
+    const stopFlyAway = () => {
+      const leaveEvent = new MouseEvent('mouseleave', { bubbles: true });
+      actionIconsContainer.dispatchEvent(leaveEvent);
+    };
+
+    profileLink.addEventListener('click', (e) => {
+      const isMobile = window.matchMedia("(max-width: 1024px)").matches;
+      
+      if (isMobile && !menu.classList.contains('is-active')) {
+        e.preventDefault(); // Zastavíme odkaz domů
+        menu.classList.add('is-active');
+        
+        // Musíme počkat zlomek sekundy, než se action-icons v CSS objeví (opacity: 1)
+        setTimeout(triggerFlyAway, 50);
+      }
+    });
+
+    // Reset menu při kliku mimo
+    document.addEventListener('click', (e) => {
+      if (!menu.contains(e.target as Node) && menu.classList.contains('is-active')) {
+        menu.classList.remove('is-active');
+        stopFlyAway();
+      }
+    });
+  }
+
+  // Běží při prvním načtení i při navigaci ve Starlightu
+  initMobileProfile();
+  document.addEventListener('astro:after-swap', initMobileProfile);
 </script>
 
 <div class="circular-menu">
@@ -17,7 +63,7 @@ const landingLink = getRelativeLocaleUrl(lang, '/');
       <img src={hoverImage} class="profile-img hover-img" alt="Profile Hover" />
     </a>
   </slot>
-  <!-- ---------- NAME CIRCLE ---------- -->
+
   <div class="name-circle">
     <svg viewBox="0 0 200 200">
       <path id="circlePath" d="M 20, 100 A 80, 80 0 1, 1 180, 100" fill="transparent" />
@@ -28,61 +74,43 @@ const landingLink = getRelativeLocaleUrl(lang, '/');
       </text>
     </svg>
   </div>
+
   <div class="social-icons">
-    <a href="https://github.com/j-ochmann" class="icon-github" aria-label="GitHub">
-      <svg><use href="#icon-github"></use></svg>
-    </a>
-    <a href="https://www.linkedin.com/in/jindrich-ochmann" class="icon-linkedin" aria-label="LinkedIn">
-      <svg><use href="#icon-linkedin"></use></svg>
-    </a>
-    <a href="https://www.instagram.com/jindrichochmann" class="icon-instagram" aria-label="Instagram">
-      <svg><use href="#icon-instagram"></use></svg>
-    </a>
-    <a href="https://www.facebook.com/jindrich.ochmann" class="icon-facebook" aria-label="Facebook">
-      <svg><use href="#icon-facebook"></use></svg>
-    </a>
-    <a href="https://www.youtube.com/@JindrichOchmann" class="icon-youtube" aria-label="YouTube">
-      <svg><use href="#icon-youtube"></use></svg>
-    </a>
-    <a href="https://wa.me/420792353539" class="icon-whatsapp" aria-label="WhatsApp">
-      <svg><use href="#icon-whatsapp"></use></svg>
-    </a>
-    <a href="mailto:jindrich.ochmann@gmail.com" class="icon-email" aria-label="E-mail">
-      <svg><use href="#icon-email"></use></svg>
-    </a>
-    <a href="/rss.xml" class="icon-rss" aria-label="RSS">
-      <Icon name="rss" />
-    </a>
+    <a href="https://github.com/j-ochmann" class="icon-github" aria-label="GitHub"><svg><use href="#icon-github"></use></svg></a>
+    <a href="https://www.linkedin.com/in/jindrich-ochmann" class="icon-linkedin" aria-label="LinkedIn"><svg><use href="#icon-linkedin"></use></svg></a>
+    <a href="https://www.instagram.com/jindrichochmann" class="icon-instagram" aria-label="Instagram"><svg><use href="#icon-instagram"></use></svg></a>
+    <a href="https://www.facebook.com/jindrich.ochmann" class="icon-facebook" aria-label="Facebook"><svg><use href="#icon-facebook"></use></svg></a>
+    <a href="https://www.youtube.com/@JindrichOchmann" class="icon-youtube" aria-label="YouTube"><svg><use href="#icon-youtube"></use></svg></a>
+    <a href="https://wa.me/420792353539" class="icon-whatsapp" aria-label="WhatsApp"><svg><use href="#icon-whatsapp"></use></svg></a>
+    <a href="mailto:jindrich.ochmann@gmail.com" class="icon-email" aria-label="E-mail"><svg><use href="#icon-email"></use></svg></a>
+    <a href="/rss.xml" class="icon-rss" aria-label="RSS"><Icon name="rss" /></a>
   </div>
-  <!-- ---------- ACTIONS ICONS ---------- -->
+
   <div class="action-icons">
-    <a href="" class="icon-settings">
-      <svg><use href="#icon-settings"></use></svg>
-    </a>
-    <a href="" class="icon-login">
-      <svg><use href="#icon-login"></use></svg>
-    </a>
+    <a href="" class="icon-settings"><svg><use href="#icon-settings"></use></svg></a>
+    <a href="" class="icon-login"><svg><use href="#icon-login"></use></svg></a>
   </div>
 </div>
 
 <style lang="scss">
 @use "@/styles/animations" as *;
 @use "@/styles/mixins" as *;
-/* ---------- ICONS ARC ---------- */
 
 .social-icons {
   position: absolute;
-  top: 90px;  /* Polovina výšky obrázku (180/2) */
-  left: 90px; /* Polovina šířky obrázku (180/2) */
+  top: 90px;
+  left: 90px;
   z-index: 12;
 }
+
 .social-icons a {
   @include icon-base;
   position: absolute;
-  margin-top: -19px; /* Vycentrování ikony (výška/2) */
-  margin-left: -19px; /* Vycentrování ikony (šířka/2) */
+  margin-top: -19px;
+  margin-left: -19px;
   transform: rotate(var(--angle)) translateX(70px) translateY(-70px) rotate(calc(-1 * var(--angle)));
 }
+
 .social-icons a:hover {
   transform: rotate(var(--angle)) translateX(70px) translateY(-70px) rotate(calc(-1 * var(--angle))) scale(1.5);
   box-shadow: 0 8px 15px rgba(0,0,0,0.5);
@@ -91,15 +119,12 @@ const landingLink = getRelativeLocaleUrl(lang, '/');
   z-index: 100;
   animation: pulse-glow 3s infinite ease-in-out;
 }
-/* Nastavení ikon po oblouku */
+
 $icon-count: 10;
 $start-angle: 160deg;
 $angle-range: 180deg;
-$angle-step: 0deg;
-@if $icon-count > 1 {
-  $angle-step: calc($angle-range / ($icon-count - 1));
-}
-$action-start-angle: $start-angle + 2*$angle-step;
+$angle-step: 20deg; // Fixní krok pro přehlednost
+$action-start-angle: $start-angle + 2 * $angle-step;
 
 @for $i from 1 through $icon-count {
   .social-icons a:nth-child(#{$i}) {
@@ -112,45 +137,11 @@ $action-start-angle: $start-angle + 2*$angle-step;
 
 .action-icons {
   @extend .social-icons;
-  opacity: 0; /* invisible by default */
-  pointer-events: none; /* non-interactive by default */
-  transition: opacity 0.3s ease; /* Smooth transition */
-}
-.action-icons a{
-  transform: rotate(var(--angle)) translateX(70px) translateY(-70px) rotate(calc(-1 * var(--angle)));
-}
-/* ---------- NAME CIRCLE ---------- */
-.name-circle {
-  clip-path: circle(50%); /* Funkční kruh pro myš */
+  opacity: 0;
   pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
-.name-circle svg {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-}
-
-:root[data-theme='light'] .name-circle text{
-  fill: #333;
-  stroke: rgba(255, 255, 255, 0.5);
-}
-:root[data-theme='dark'] .name-circle text {
-  fill: #ffffff;
-  stroke: rgba(26, 0, 69, 0.485);
-}
-
-.name-circle text {
-  font-family: 'Syne', 'Montserrat', 'Space Grotesk', sans-serif !important;
-  font-size: 18px;
-  letter-spacing: 2px;
-  font-weight: 700;
-  text-transform: uppercase;
-  paint-order: stroke;
-  stroke-width: 6px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
 .name-circle {
   position: absolute;
   top: -15px;
@@ -161,60 +152,55 @@ $action-start-angle: $start-angle + 2*$angle-step;
   transform: rotate(-45deg);
   transition: transform 1s ease;
   z-index: 20;
+  svg { width: 100%; height: 100%; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+  text {
+    font-family: 'Syne', sans-serif !important;
+    font-size: 18px;
+    letter-spacing: 2px;
+    font-weight: 700;
+    text-transform: uppercase;
+    paint-order: stroke;
+    stroke-width: 6px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 }
-/* ---------- PROFILE ---------- */
+
+:root[data-theme='light'] .name-circle text { fill: #333; stroke: rgba(255, 255, 255, 0.5); }
+:root[data-theme='dark'] .name-circle text { fill: #ffffff; stroke: rgba(26, 0, 69, 0.485); }
+
 .circular-menu {
   position: relative;
   width: 180px;
   height: 180px;
 }
+
 .profile-img {
   width: 180px;
   height: 180px;
   border-radius: 50%;
   object-fit: cover;
-  transition: transform 0.5s ease, opacity 0.5s ease;
   position: absolute;
   top: 0;
   left: 0;
   will-change: transform, opacity;
-  backface-visibility: hidden; /* Zabrání blikání při rotaci */
-  transform: scale(1);
   transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.7s ease;
 }
-.main-img {
-  opacity: 1;
-  z-index: 1;
-  transform: scale(1) rotate(0deg);
-}
-.hover-img {
-  opacity: 0;
-  z-index: 2;
-  animation: pulse-glow 3s infinite ease-in-out;
-  transform: scale(0.5) rotate(-180deg);
-}
 
-/* V SocialCircle.astro */
-.circular-menu:hover .main-img {
-  opacity: 0;
-  transform: scale(1.5) rotate(180deg);
-}
+.main-img { opacity: 1; z-index: 1; transform: scale(1) rotate(0deg); }
+.hover-img { opacity: 0; z-index: 2; transform: scale(0.5) rotate(-180deg); }
 
-.circular-menu:hover .hover-img {
-  opacity: 1;
-  transform: scale(1.2) rotate(0deg); /* Přidáno rotate(0deg) pro plynulost! */
-  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-  z-index: 11;
+/* AKTIVNÍ STAVY */
+.circular-menu:hover,
+.circular-menu.is-active {
+  .main-img { opacity: 0; transform: scale(1.5) rotate(180deg); }
+  .hover-img {
+    opacity: 1;
+    transform: scale(1.2) rotate(0deg);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    z-index: 11;
+  }
+  .name-circle { transform: scale(1.3) rotate(0deg); z-index: 11; }
+  .action-icons { opacity: 1; pointer-events: auto; }
 }
-
-.circular-menu:hover .name-circle {
-  transform: scale(1.3) rotate(0deg);
-  z-index: 11;
-}
-
-.circular-menu:hover .action-icons {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 </style>
