@@ -26,7 +26,6 @@ const getLanguageUrl = (targetLang: string) => {
       <span class:list={['fi', `fi-${currentFlag}`, 'fib', 'current-fi']} aria-hidden="true"></span>
     </label>
     
-    {/* Overlay je nyní fixní k viewportu */}
     <label for="lang-toggle" class="glass-overlay"></label>
 
     <div class="language-dropdown">
@@ -47,10 +46,10 @@ const getLanguageUrl = (targetLang: string) => {
 )}
 
 <style lang="scss">
-  @use "@/styles/mixins.scss";
-  /* Zámek scrollu při otevření */
-  :global(html:has(.lang-checkbox:checked)) {
-    overflow: hidden;
+  /* A) ZÁMEK SCROLLU */
+  :global(body:has(.lang-checkbox:checked)) {
+    overflow: hidden !important;
+    touch-action: none;
   }
 
   .language-picker-wrapper {
@@ -60,9 +59,10 @@ const getLanguageUrl = (targetLang: string) => {
   }
 
   .lang-checkbox {
-    display: none;
+    display: none !important;
   }
 
+  /* C) IKONA - Barevná pulzace bez kroužku */
   .language-button {
     cursor: pointer;
     display: flex;
@@ -70,29 +70,63 @@ const getLanguageUrl = (targetLang: string) => {
     justify-content: center;
     width: 38px;
     height: 38px;
-    z-index: 10005; /* Nad overlayem i dropdownem pro zavření */
-    
+    border-radius: 50%;
+    z-index: 10005; 
+    position: relative;
+    /* Odstraněn border i box-shadow pro čistý vzhled */
+    border: none !important; 
+    background: transparent !important;
+    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), filter 0.7s ease;
+    will-change: transform, filter;
+
     .current-fi {
-      width: 38px;
-      height: 38px;
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
       background-size: cover !important;
-      border: 1px solid var(--sl-color-hairline);
+      background-position: center;
+      display: block;
+      /* Přidán jemný stín jen pro oddělení od pozadí v klidu */
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    /* Efekt při najetí nebo když je menu otevřené */
+    &:hover,
+    .lang-checkbox:checked ~ & {
+      transform: scale(1.5);
+      z-index: 10010;
+      /* Animace barevné záře podle barev vlajky */
+      animation: flag-pulse-glow 3s infinite ease-in-out;
     }
   }
 
-  /* GLASS OVERLAY - Opravená pozice */
+  /* Animace využívající barvy vlajky přes drop-shadow */
+  @keyframes flag-pulse-glow {
+    0% {
+      filter: drop-shadow(0 0 2px rgba(255,255,255,0.2)) brightness(1);
+    }
+    50% {
+      /* Drop-shadow bez barvy (v CSS filteru) bere barvy z pixelů prvku */
+      filter: drop-shadow(0 0 12px currentColor) brightness(1.2);
+    }
+    100% {
+      filter: drop-shadow(0 0 2px rgba(255,255,255,0.2)) brightness(1);
+    }
+  }
+
+  /* A) GLASS OVERLAY */
   .glass-overlay {
     position: fixed;
     inset: 0;
     width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
-    z-index: 9999; /* Pod tlačítkem a dropdownem */
+    height: 100dvh;
+    background: color-mix(in srgb, var(--sl-color-bg), transparent 40%);
+    backdrop-filter: blur(12px) saturate(180%);
+    z-index: 9999;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    touch-action: none;
   }
 
   .lang-checkbox:checked ~ .glass-overlay {
@@ -100,43 +134,81 @@ const getLanguageUrl = (targetLang: string) => {
     visibility: visible;
   }
 
-  /* DROPDOWN - Opravená vrstva */
+  /* B) DROPDOWN */
   .language-dropdown {
     position: absolute;
-    top: calc(100% + 10px);
+    top: calc(100% + 20px);
     right: 0;
     z-index: 10000;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.2s ease;
+    transform: translateY(-15px) scale(0.95);
+    transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transform-origin: top right;
   }
 
   .lang-checkbox:checked ~ .language-dropdown {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 
   .dropdown-content {
     background: var(--sl-color-bg-sidebar);
-    border: 1px solid var(--sl-color-gray-5);
-    border-radius: 0.75rem;
+    border: 1px solid var(--sl-color-hairline);
+    border-radius: 1rem;
     padding: 0.5rem;
-    min-width: 12rem;
+    min-width: 14rem;
     box-shadow: var(--sl-shadow-xl);
+    max-height: 60vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
   }
 
   .lang-link {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem;
+    padding: 0.85rem;
     text-decoration: none;
     color: var(--sl-color-gray-2);
-    border-radius: 0.5rem;
-    &:hover { background: var(--sl-color-gray-6); color: white; }
-    &.active { background: var(--sl-color-accent-low); color: var(--sl-color-accent); }
-    .fi { width: 1.25rem; height: 0.9rem; }
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+
+    &:hover { 
+      background: var(--sl-color-gray-6); 
+      color: var(--sl-color-white); 
+      transform: translateX(4px);
+    }
+    
+    &.active { 
+      background: var(--sl-color-accent-low); 
+      color: var(--sl-color-accent); 
+      font-weight: 600;
+    }
+
+    .fi { 
+      width: 1.5rem; 
+      height: 1.5rem; 
+      border-radius: 50%;
+      object-fit: cover;
+      /* Zajištění, že vlaječky v seznamu nemají border */
+      border: none !important;
+    }
+  }
+
+  @media (max-width: 50rem) {
+    .language-dropdown {
+      position: fixed;
+      top: 65px;
+      right: 15px;
+      left: 15px;
+      transform-origin: top center;
+    }
+    .dropdown-content {
+      width: 100%;
+      max-height: 65dvh;
+    }
   }
 </style>
