@@ -352,8 +352,10 @@ export const uiStrings = {
 
 export function useTranslations(lang: string) {
   const translations = uiStrings[lang as keyof typeof uiStrings] || uiStrings.en;
-  // Pokud klíč neexistuje, vrátí klíč samotný
-  return (key: keyof typeof uiStrings.en) => (translations as any)[key] || key;
+  const countryNames = countryTranslations[lang as keyof typeof countryTranslations] || countryTranslations.en;
+  
+  // Pokud klíč neexistuje v UI strings ani v Country strings, vrátí klíč samotný
+  return (key: string) => (translations as any)[key] || (countryNames as any)[key] || key;
 }
 
 export const countries = {
