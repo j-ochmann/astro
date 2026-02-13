@@ -23,7 +23,6 @@ const allCountriesRaw = Object.values(countriesData).map(c => ({
   continent: c.continent,
   population: c.population,
   phone: c.phone.map(p => `+${p}`).join(', '),
-  // Data pro export (ponecháváme v raw formátu pro čistotu souborů)
   native: c.native,
   currency: c.currency?.map(curr => getCurrencyLabel(curr, lang)).join(', ') || '—',
   languages: c.language?.map(l => getLanguageLabel(l, lang)).join(', ') || '—'
@@ -80,7 +79,7 @@ const allCountriesRaw = Object.values(countriesData).map(c => ({
             </td>
             <td>{c.capital}</td>
             <td>{c.continent}</td>
-            <td data-val={c.population}>{c.population.toLocaleString(lang)}</td>
+            <td>{c.population.toLocaleString(lang)}</td>
             <td>{c.phone}</td>
           </tr>
         ))}
@@ -92,7 +91,6 @@ const allCountriesRaw = Object.values(countriesData).map(c => ({
 <style>
   .table-controls {
     display: flex;
-    flex-direction: row;
     flex-wrap: wrap;
     gap: 1.5rem;
     align-items: center;
@@ -110,8 +108,8 @@ const allCountriesRaw = Object.values(countriesData).map(c => ({
 
   .search-box input {
     width: 100%;
-    padding: 0.6rem 1rem;
-    /* Oprava barev pro oba módy */
+    height: 2.2rem;
+    padding: 0 1rem;
     background: var(--sl-color-bg);
     color: var(--sl-color-white);
     border: 1px solid var(--sl-color-gray-4);
@@ -129,32 +127,43 @@ const allCountriesRaw = Object.values(countriesData).map(c => ({
     gap: 1rem;
   }
 
-  .export-buttons {
-    display: flex;
-    gap: 0.25rem; /* Těsnější tlačítka bez mezer při zalamování */
-  }
-
   .export-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: bold;
     color: var(--sl-color-gray-3);
     text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .export-buttons {
+    display: flex;
+    background: var(--sl-color-gray-4);
+    border: 1px solid var(--sl-color-gray-4);
+    border-radius: 4px;
+    overflow: hidden;
+    gap: 1px; /* Oddělovač mezi tlačítky */
   }
 
   .export-btn {
-    padding: 0.4rem 0.8rem;
+    appearance: none;
+    margin: 0;
+    border: none;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.85rem;
     background: var(--sl-color-gray-5);
-    border: 1px solid var(--sl-color-gray-4);
     color: var(--sl-color-white);
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: 600;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease;
   }
 
   .export-btn:hover {
     background: var(--sl-color-accent-low);
-    border-color: var(--sl-color-accent);
+    color: var(--sl-color-white);
   }
 
   .table-wrapper {
@@ -166,7 +175,7 @@ const allCountriesRaw = Object.values(countriesData).map(c => ({
     width: 100%;
     border-collapse: collapse;
     font-size: 0.875rem;
-    margin: 0; /* Starlight reset */
+    margin: 0;
   }
 
   th {
@@ -195,11 +204,6 @@ const allCountriesRaw = Object.values(countriesData).map(c => ({
     gap: 0.6rem;
     text-decoration: none !important;
     color: inherit !important;
-    font-weight: 500;
-  }
-
-  .country-link:hover {
-    color: var(--sl-color-accent-high) !important;
   }
 
   th svg {
@@ -209,15 +213,13 @@ const allCountriesRaw = Object.values(countriesData).map(c => ({
     opacity: 0.4;
   }
 
-  @media (max-width: 40rem) {
+  @media (max-width: 45rem) {
     .table-controls { flex-direction: column; align-items: stretch; }
     .export-group { justify-content: space-between; }
   }
 </style>
 
 <script>
-  // Zde zůstává tvůj opravený skript pro filtrování, řazení a export
-  // Jen pozor, ať ID sedí (tableSearch, tableBody, countriesTable)
   const searchInput = document.getElementById('tableSearch') as HTMLInputElement | null;
   const table = document.getElementById('countriesTable') as HTMLTableElement | null;
   const tableBody = document.getElementById('tableBody');
