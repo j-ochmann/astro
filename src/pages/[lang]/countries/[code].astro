@@ -1,0 +1,34 @@
+---
+// src/pages/[lang]/countries/[code].astro
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { countriesData, locales } from '@src/content/config/i18n.ts';
+
+export async function getStaticPaths() {
+  const paths = [];
+  const langs = Object.keys(locales);
+  const countries = Object.values(countriesData);
+
+  for (const lang of langs) {
+    for (const country of countries) {
+      paths.push({
+        params: { lang, code: country.code.toLowerCase() },
+        props: { country, lang }
+      });
+    }
+  }
+  return paths;
+}
+
+const { country, lang } = Astro.props;
+---
+
+<StarlightPage frontmatter={{ title: country.name }}>
+  <p>Detail země v jazyce: {lang}</p>
+  <div class="fi-box">
+     <span class:list={['fi', `fi-${country.code.toLowerCase()}`]}></span>
+  </div>
+  <ul>
+    <li>Populace: {country.population.toLocaleString()}</li>
+    <li>Hlavní město: {country.capital}</li>
+  </ul>
+</StarlightPage>
