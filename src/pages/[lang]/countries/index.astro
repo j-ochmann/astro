@@ -1,8 +1,7 @@
 ---
 // src/pages/[lang]/countries/index.astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { countries, getAllContinents } from '@/content/config/i18n';
-import { locales } from '@/content/config/i18n';
+import { countriesData, getAllContinents, locales } from '@/content/config/i18n';
 
 export async function getStaticPaths() {
   return Object.keys(locales).map((lang) => ({ params: { lang } }));

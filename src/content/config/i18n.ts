@@ -2965,7 +2965,7 @@ export const countries = {
    }
 };
 
-interface Country {
+export interface Country {
   code: string;
   name: string;
   native: string;
@@ -2977,7 +2977,7 @@ interface Country {
   language?: string[];   // Otazník znamená: může být undefined
 }
 
-const countriesData = countries as Record<string, Country>;
+export const countriesData = countries as Record<string, Country>;
 
 /** Unikátní jazyky (Antarktidu s undefined přeskočí) */
 export const getAllLanguages = (): string[] => {

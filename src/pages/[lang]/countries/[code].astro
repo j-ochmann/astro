@@ -1,7 +1,7 @@
 ---
 // src/pages/[lang]/countries/[code].astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { countriesData, locales } from '@src/content/config/i18n.ts';
+import { countriesData, locales } from '@/content/config/i18n';
 
 export async function getStaticPaths() {
   const paths = [];
@@ -29,6 +29,6 @@ const { country, lang } = Astro.props;
   </div>
   <ul>
     <li>Populace: {country.population.toLocaleString()}</li>
-    <li>Hlavní město: {country.capital}</li>
+    <li>Hlavní město: {country.capital ?? '—'}</li>
   </ul>
 </StarlightPage>

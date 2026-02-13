@@ -153,7 +153,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
     resolve: {
       alias: {
-        '@': path.resolve('./src'),
+        '@': path.resolve('./src')
       },
     },
   },
