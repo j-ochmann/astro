@@ -60,7 +60,8 @@ import Search from '@/components/starlight/Search.astro';
     padding: 0 10px;
     backdrop-filter: blur(8px) saturate(180%);
     border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);
-    
+    border-right: 1px solid var(--sl-color-hairline);
+
     /* Desktop šířka */
     width: var(--sl-sidebar-width, 300px) !important;
 
@@ -127,6 +128,12 @@ import Search from '@/components/starlight/Search.astro';
     border-radius: 50% !important;
     width: 38px !important;
     height: 38px !important;
+  }
+
+    /* Skrytí defaultních Starlight prvků (Theme, Lang, Social), které mají třídu pro skrytí na desktopu */
+  :global(.sidebar-pane .mobile-preferences),
+  :global(.sidebar-pane .md\:sl-hidden) {
+    display: none !important;
   }
 
 </style>

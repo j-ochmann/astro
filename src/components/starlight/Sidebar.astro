@@ -29,7 +29,7 @@ const { pathname } = Astro.url;
   }
   .social-circle-wrapper {
     position: relative;
-    z-index: 10000;
+    z-index: 1100;
     margin: 30px 0px;
     transition: transform 0.2s ease;
     /* CLEAN CSS SCROLL EFFECT */
@@ -60,4 +60,22 @@ const { pathname } = Astro.url;
     z-index: 1;
     margin-top: 1rem;
   }
+
+@media (max-width: 50rem) {
+  body[data-mobile-menu-expanded] {
+    overflow: hidden;
+  }
+
+  .sidebar-pane {
+    position: fixed;
+    inset: 0;
+
+    height: 100dvh;
+    max-height: 100dvh;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
 </style>
