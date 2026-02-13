@@ -1,7 +1,6 @@
 ---
-// src/pages/[lang]/countries/[code].astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { countriesData, locales } from '@/content/config/i18n';
+import { countriesData, locales, useTranslations } from '@/content/config/i18n';
 
 export async function getStaticPaths() {
   const paths = [];
@@ -20,15 +19,97 @@ export async function getStaticPaths() {
 }
 
 const { country, lang } = Astro.props;
+const t = useTranslations(lang);
+
+// Dynamický klíč pro kontinent
+const continentKey = `geo.continent.${country.continent.toLowerCase().replace(/\s+/g, '-')}` as any;
 ---
 
 <StarlightPage frontmatter={{ title: country.name }}>
-  <p>Detail země v jazyce: {lang}</p>
-  <div class="fi-box">
-     <span class:list={['fi', `fi-${country.code.toLowerCase()}`]}></span>
+  
+  <div class="country-header">
+    <span class:list={['fi', `fi-${country.code.toLowerCase()}`, 'large-flag']}></span>
+    <div class="header-text">
+       <p class="native-name"><strong>{t('geo.stats.native')}:</strong> {country.native}</p>
+    </div>
   </div>
-  <ul>
-    <li>Populace: {country.population.toLocaleString()}</li>
-    <li>Hlavní město: {country.capital ?? '—'}</li>
-  </ul>
+
+  <div class="stats-card">
+    <ul>
+      <li><strong>{t('geo.stats.capital')}:</strong> {country.capital ?? '—'}</li>
+      <li><strong>{t('geo.stats.population')}:</strong> {country.population.toLocaleString(lang)}</li>
+      <li><strong>{t('geo.stats.continent')}:</strong> {t(continentKey) || country.continent}</li>
+      <li><strong>{t('geo.stats.currency')}:</strong> {country.currency?.join(', ') ?? '—'}</li>
+      <li><strong>{t('geo.stats.languages')}:</strong> {country.language?.join(', ') ?? '—'}</li>
+    </ul>
+  </div>
+
+  <div class="actions">
+    <a href={`/${lang}/countries/`}>← {t('geo.detail.back')}</a>
+  </div>
 </StarlightPage>
+
+<style>
+  .country-header {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--sl-color-hairline);
+  }
+
+  .large-flag {
+    width: 120px;
+    height: auto;
+    border-radius: 0.5rem;
+    box-shadow: var(--sl-shadow-md);
+  }
+
+  .native-name {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  .stats-card {
+    background: var(--sl-color-gray-6);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--sl-color-hairline);
+  }
+
+  .stats-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .stats-card li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .stats-card strong {
+    color: var(--sl-color-gray-3);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+  }
+
+  .actions {
+    margin-top: 2rem;
+  }
+
+  .actions a {
+    text-decoration: none;
+    color: var(--sl-color-accent-high);
+    font-weight: 500;
+  }
+
+  .actions a:hover {
+    text-decoration: underline;
+  }
+</style>

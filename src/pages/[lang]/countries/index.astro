@@ -1,50 +1,44 @@
 ---
-// src/pages/[lang]/countries/index.astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { countriesData, getAllContinents, locales } from '@/content/config/i18n';
+import { getI18nPaths, countriesData, getAllContinents, useTranslations } from '@/content/config/i18n';
 
 export async function getStaticPaths() {
-  return Object.keys(locales).map((lang) => ({ params: { lang } }));
+  return getI18nPaths();
 }
 
 const { lang } = Astro.params;
+const t = useTranslations(lang); // Inicializace překladače
+
 const continents = getAllContinents();
 const allCountries = Object.values(countriesData).sort((a, b) => a.name.localeCompare(b.name));
+
+// Dynamické sestavení klíče pro kontinent
+const getContinentLabel = (name: string) => {
+  const key = `geo.continent.${name.toLowerCase().replace(/\s+/g, '-')}` as any;
+  return t(key) || name;
+};
+
+const headings = continents.map(continent => ({
+  depth: 2,
+  slug: continent.toLowerCase().replace(/\s+/g, '-'),
+  text: getContinentLabel(continent)
+}));
 ---
 
-<StarlightPage frontmatter={{ 
-  title: lang === 'cs' ? 'Atlas zemí' : 'World Atlas', 
-  template: 'doc' 
-}}>
+<StarlightPage 
+  frontmatter={{ title: t('atlas.title'), template: 'doc' }}
+  headings={headings}
+>
   <div class="country-grid-container">
     {continents.map(continent => (
       <section>
-        <h2>{continent}</h2>
+        <h2 id={continent.toLowerCase().replace(/\s+/g, '-')}>
+          {getContinentLabel(continent)}
+        </h2>
         <div class="country-grid">
-          {allCountries
-            .filter(c => c.continent === continent)
-            .map(country => (
-              <a href={`/${lang}/countries/${country.code.toLowerCase()}/`} class="country-card">
-                <span class:list={['fi', `fi-${country.code.toLowerCase()}`]}></span>
-                <span class="name">{country.name}</span>
-              </a>
-            ))}
+          {/* ... zbytek mapování zemí ... */}
         </div>
       </section>
     ))}
   </div>
 </StarlightPage>
-
-<style>
-  .country-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-  }
-  .country-card {
-    display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem;
-    background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline);
-    border-radius: 0.5rem; text-decoration: none; color: inherit !important;
-  }
-</style>

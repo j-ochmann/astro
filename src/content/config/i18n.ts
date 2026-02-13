@@ -25,6 +25,12 @@ export const locales = {
   he: { lang: 'he', flag: 'IL', label: 'עברית' },
 };
 
+export function getI18nPaths() {
+  return Object.keys(locales).map((lang) => ({
+    params: { lang },
+  }));
+}
+
 export function getFlagCode(lang_id: string) {
   return Object.values(locales).find(
     (item) => item.lang.toLowerCase() === lang_id.toLowerCase())?.flag.toLowerCase();
@@ -215,6 +221,48 @@ export const languages = {
   zh: { order: 182, iso_639_1: 'zh', en: 'Chinese',      label: '中文' },
   zu: { order: 183, iso_639_1: 'zu', en: 'Zulu',         label: 'isiZulu' }
 };
+
+export const uiStrings = {
+  cs: {
+    "geo.continent.africa": "Afrika",
+    "geo.continent.asia": "Asie",
+    "geo.continent.europe": "Evropa",
+    "geo.continent.north-america": "Severní Amerika",
+    "geo.continent.south-america": "Jižní Amerika",
+    "geo.continent.oceania": "Oceánie",
+    "geo.continent.antarctica": "Antarktida",
+    "geo.stats.population": "Populace",
+    "geo.stats.capital": "Hlavní město",
+    "geo.stats.currency": "Měna",
+    "geo.stats.languages": "Jazyky",
+    "geo.stats.continent": "Kontinent",
+    "geo.stats.native": "Nativní název",
+    "geo.detail.back": "Zpět na atlas",
+    "atlas.title": "Atlas zemí",
+  },
+  en: {
+    "geo.continent.africa": "Africa",
+    "geo.continent.asia": "Asia",
+    "geo.continent.europe": "Europe",
+    "geo.continent.north-america": "North America",
+    "geo.continent.south-america": "South America",
+    "geo.continent.oceania": "Oceania",
+    "geo.continent.antarctica": "Antarctica",
+    "geo.stats.population": "Population",
+    "geo.stats.capital": "Capital",
+    "geo.stats.currency": "Currency",
+    "geo.stats.languages": "Languages",
+    "geo.stats.continent": "Continent",
+    "geo.stats.native": "Native Name",
+    "geo.detail.back": "Back to atlas",
+    "atlas.title": "World Atlas",
+  }
+} as const;
+
+export function useTranslations(lang: string) {
+  const translations = uiStrings[lang as keyof typeof uiStrings] || uiStrings.en;
+  return (key: keyof typeof uiStrings.en) => translations[key] || uiStrings.en[key];
+}
 
 export const countries = {
    "AD": {
