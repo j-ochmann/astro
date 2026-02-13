@@ -22,6 +22,20 @@ import Search from '@/components/starlight/Search.astro';
   </div>
 </div>
 
+<script>
+  function init() {
+    const btn = document.getElementById('custom-mobile-menu-toggle');
+    if (!btn) return;
+    btn.onclick = () => {
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', (!isExpanded).toString());
+      document.body.toggleAttribute('data-mobile-menu-expanded');
+    };
+  }
+  init();
+  document.addEventListener('astro:after-swap', init);
+</script>
+
 <style lang="scss">
   .toolbar {
     isolation: isolate !important; /* Vytvoří čistý štít pro z-indexy jen uvnitř toolbaru */
@@ -68,12 +82,24 @@ import Search from '@/components/starlight/Search.astro';
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
       padding: 0;
+
+      .menu-icon { display: block; }
       .close-icon { display: none; }
+      // Když je menu otevřené (skript nastaví aria-expanded="true")
       &[aria-expanded="true"] {
         .menu-icon { display: none; }
         .close-icon { display: block; }
       }
-      svg { width: 1.25rem; height: 1.25rem; }
+
+      color: var(--sl-color-text-accent, var(--sl-color-white)) !important; // Použije akcentní barvu nebo bílou
+      
+      svg { 
+        width: 24px !important; // Vynucení velikosti
+        height: 24px !important; 
+        display: block !important;
+        stroke: currentColor !important; 
+        stroke-width: 2px;
+      }
     }
   }
   @media (max-width: 50rem) {
