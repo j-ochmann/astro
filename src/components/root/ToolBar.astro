@@ -15,8 +15,12 @@ import Search from '@/components/starlight/Search.astro';
     <Search />
     <div class="mobile-only">
       <button id="custom-mobile-menu-toggle" aria-expanded="false" aria-label="Menu" class="mobile-nav-toggle">
-        <svg class="menu-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        <svg class="close-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+        <svg class="close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
       </button>
     </div>
   </div>
@@ -31,6 +35,13 @@ import Search from '@/components/starlight/Search.astro';
       btn.setAttribute('aria-expanded', (!isExpanded).toString());
       document.body.toggleAttribute('data-mobile-menu-expanded');
     };
+
+    // Pojistka: Pokud někdo klikne na odkaz v menu, zavřeme ho a resetujeme ikonu
+    const observer = new MutationObserver(() => {
+      const isExpanded = document.body.hasAttribute('data-mobile-menu-expanded');
+      btn.setAttribute('aria-expanded', isExpanded.toString());
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-mobile-menu-expanded'] });
   }
   init();
   document.addEventListener('astro:after-swap', init);
@@ -38,76 +49,72 @@ import Search from '@/components/starlight/Search.astro';
 
 <style lang="scss">
   .toolbar {
-    isolation: isolate !important; /* Vytvoří čistý štít pro z-indexy jen uvnitř toolbaru */
     position: fixed !important; 
-    z-index: 1000;
     top: 0 !important;
     left: 0 !important;
     height: 50px !important;
-    width: var(--sl-sidebar-width, 300px) !important;
+    z-index: 1000; /* Musí být nad sidebarem */
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 10px;
     backdrop-filter: blur(8px) saturate(180%);
     border-bottom: 1px solid color-mix(in srgb, var(--sl-color-hairline), transparent 80%);
+    
+    /* Desktop šířka */
+    width: var(--sl-sidebar-width, 300px) !important;
 
-    .left-section, .right-section { display: flex; align-items: center; gap: 0; }
+    .left-section, .right-section { display: flex; align-items: center; gap: 8px; }
+    .mobile-only { display: none; }
+
+    /* Mobilní verze */
     @media (max-width: 50rem) {
-      /* Totální vynucení šířky a pozice */
       width: 100% !important;
-      min-width: 100% !important;
-      max-width: 100% !important;
       left: 0 !important;
       right: 0 !important;
-      
-      /* Zrušení transformací, které Starlight používá k odsouvání sidebaru mimo obrazovku */
-      transform: translate(0) !important; 
+      transform: translate(0) !important; /* Klíčové: neulétne se sidebarem */
       visibility: visible !important;
-      opacity: 1 !important;
 
       .mobile-only { 
         display: flex; 
-        margin-left: 4px;
-      }
-    }
-
-    /* Ujisti se, že mobile-only je i zde definováno pro skrytí na desktopu */
-    .mobile-only { display: none; }
-    .mobile-nav-toggle {
-      width: 38px; height: 38px; border-radius: 50%;
-      border: 1px solid var(--sl-color-hairline);
-      background: transparent;
-      color: var(--sl-color-white);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      padding: 0;
-
-      .menu-icon { display: block; }
-      .close-icon { display: none; }
-      // Když je menu otevřené (skript nastaví aria-expanded="true")
-      &[aria-expanded="true"] {
-        .menu-icon { display: none; }
-        .close-icon { display: block; }
+        margin-left: 8px; 
       }
 
-      color: var(--sl-color-text-accent, var(--sl-color-white)) !important; // Použije akcentní barvu nebo bílou
-      
-      svg { 
-        width: 24px !important; // Vynucení velikosti
-        height: 24px !important; 
-        display: block !important;
-        stroke: currentColor !important; 
-        stroke-width: 2px;
+      .mobile-nav-toggle {
+        width: 38px; height: 38px; border-radius: 50%;
+        border: 1px solid var(--sl-color-hairline);
+        background: transparent;
+        color: var(--sl-color-white);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        padding: 0;
+
+        svg { width: 1.25rem; height: 1.25rem; display: block; }
+        .close-icon { display: none; }
+        
+        &[aria-expanded="true"] {
+          .menu-icon { display: none; }
+          .close-icon { display: block; }
+        }
       }
     }
   }
+
+  /* Odsunutí obsahu na mobilu */
   @media (max-width: 50rem) {
     :global(.main-frame) {
       padding-top: 50px !important;
     }
-    :global(.page) {
-      margin-top: 0 !important;
-    }
   }
+
+  /* Styl tlačítek témat a hledání (zachováno z tvé verze) */
+  :global(.starlight-theme-select select),
+  .right-section :global(sl-search button) {
+    background: var(--sl-color-bg) !important;
+    border: 1px solid var(--sl-color-hairline) !important;
+    border-radius: 50% !important;
+    width: 38px !important;
+    height: 38px !important;
+  }
+
 </style>
