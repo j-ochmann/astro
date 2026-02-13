@@ -46,22 +46,14 @@ const getLanguageUrl = (targetLang: string) => {
 )}
 
 <style lang="scss">
-  /* 1. DESKTOP LOCK - Zastavení scrollu na PC */
+  /* 1. LOCK SCROLLU (PC i MOBIL) */
   :global(html:has(.lang-checkbox:checked)),
   :global(body:has(.lang-checkbox:checked)) {
-    /* overflow hidden na HTML i BODY je pro PC nejjistější */
     overflow: hidden !important;
-    /* Prevence posunu obsahu při zmizení scrollbaru */
-    padding-right: var(--scrollbar-gutter, 0px); 
     height: 100vh !important;
-  }
-
-  /* 2. MANIPULACE S OKOLÍM (včetně social-circle-wrapper) */
-  :global(body:has(.lang-checkbox:checked) .toolbar),
-  :global(body:has(.lang-checkbox:checked) .social-circle-wrapper) {
-    backdrop-filter: none !important;
-    background: transparent !important;
-    z-index: 10 !important;
+    /* Klíčové pro mobily: */
+    touch-action: none !important; 
+    -webkit-overflow-scrolling: none;
   }
 
   .language-picker-wrapper {
@@ -75,7 +67,15 @@ const getLanguageUrl = (targetLang: string) => {
     display: none !important;
   }
 
-  /* 3. TLAČÍTKO (VLAJKA) */
+  /* 2. MANIPULACE S OKOLÍM */
+  :global(body:has(.lang-checkbox:checked) .toolbar),
+  :global(body:has(.lang-checkbox:checked) .social-circle-wrapper) {
+    backdrop-filter: none !important;
+    background: transparent !important;
+    z-index: 10 !important;
+  }
+
+  /* 3. TLAČÍTKO (VLAJKA) - VRÁCEN STÍN */
   .language-button {
     cursor: pointer;
     display: flex;
@@ -88,6 +88,8 @@ const getLanguageUrl = (targetLang: string) => {
     z-index: 1000010 !important; 
     border: none !important;
     transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Výraznější stín pro světlé vlajky */
+    box-shadow: 0 0 0 1px var(--sl-color-hairline), 0 2px 8px rgba(0,0,0,0.4);
 
     .current-fi {
       width: 100%;
@@ -95,13 +97,13 @@ const getLanguageUrl = (targetLang: string) => {
       border-radius: 50%;
       background-size: cover !important;
       background-position: center;
-      display: block;
     }
 
     &:hover,
     .lang-checkbox:checked ~ & {
       transform: scale(1.3);
       animation: flag-pulse-glow 3s infinite ease-in-out;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
   }
 
@@ -117,12 +119,14 @@ const getLanguageUrl = (targetLang: string) => {
     width: 100vw !important;
     height: 100vh !important;
     background: rgba(0, 0, 0, 0.6) !important;
-    backdrop-filter: blur(8px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(8px) saturate(180%) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
     z-index: 1000000 !important; 
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.4s ease;
+    /* Blokuje touch na pozadí */
+    touch-action: none !important;
   }
 
   .lang-checkbox:checked ~ .glass-overlay {
@@ -130,22 +134,22 @@ const getLanguageUrl = (targetLang: string) => {
     visibility: visible;
   }
 
-  /* 5. DROPDOWN (MAXIMÁLNÍ DÉLKA) */
+  /* 5. DROPDOWN - Centrování pod ikonou na PC */
   .language-dropdown {
     position: absolute;
     top: calc(100% + 15px);
-    right: 0;
+    left: 50%; /* Střed pod ikonou */
+    transform: translateX(-50%) translateY(-20px);
     z-index: 1000008 !important;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-20px);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .lang-checkbox:checked ~ .language-dropdown {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
   }
 
   .dropdown-content {
@@ -155,18 +159,16 @@ const getLanguageUrl = (targetLang: string) => {
     padding: 0.2rem;
     min-width: 15rem;
     box-shadow: 0 25px 60px rgba(0,0,0,0.9);
-    
     max-height: 85vh;
     overflow-y: auto;
+    /* Povolení scrollu jen uvnitř dropdownu */
+    touch-action: pan-y !important;
     
-    /* Elegantní scrollbar pro PC */
     scrollbar-width: thin;
     scrollbar-color: var(--sl-color-gray-4) transparent;
-    &::-webkit-scrollbar { width: 6px; }
-    &::-webkit-scrollbar-thumb { background: var(--sl-color-gray-4); border-radius: 10px; }
   }
 
-  /* 6. POLOŽKY (HUSTÉ, HRANATÉ) */
+  /* 6. POLOŽKY */
   .lang-link {
     display: flex;
     align-items: center;
@@ -201,13 +203,20 @@ const getLanguageUrl = (targetLang: string) => {
   @media (max-width: 50rem) {
     .language-dropdown {
       position: fixed !important;
-      top: 60px !important;
-      left: 10px !important;
-      right: 10px !important;
+      top: 70px !important;
+      left: 10% !important; /* Zúžení: odsazení zleva */
+      right: 10% !important; /* Zúžení: odsazení zprava */
       width: auto !important;
+      transform: translateY(-20px) !important;
     }
+    
+    .lang-checkbox:checked ~ .language-dropdown {
+      transform: translateY(0) !important;
+    }
+
     .dropdown-content {
-      max-height: calc(100vh - 80px) !important;
+      max-height: calc(100vh - 100px) !important;
+      min-width: 0; /* Povolí zúžení */
     }
   }
 </style>
