@@ -1,6 +1,12 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { countriesData, locales, useTranslations } from '@/content/config/i18n';
+import { 
+  countriesData, 
+  locales, 
+  useTranslations, 
+  getCurrencyLabel, 
+  getLanguageLabel 
+} from '@/content/config/i18n';
 
 export async function getStaticPaths() {
   const paths = [];
@@ -21,10 +27,9 @@ export async function getStaticPaths() {
 const { country, lang } = Astro.props;
 const t = useTranslations(lang);
 
-// Lokalizovaný název země (vynucení velkých písmen pro kód)
-const countryCode = country.code.toUpperCase();
-const translation = t(countryCode as any);
-const localizedName = (translation && translation !== countryCode) 
+const countryCodeUpper = country.code.toUpperCase();
+const translation = t(countryCodeUpper as any);
+const localizedName = (translation && translation !== countryCodeUpper) 
   ? translation 
   : country.name;
 
@@ -33,60 +38,124 @@ const continentKey = `geo.continent.${country.continent.toLowerCase().replace(/\
 
 <StarlightPage frontmatter={{ 
   title: String(localizedName || 'Country'),
-  description: String(`${t('geo.stats.continent') || 'Continent'}: ${t(continentKey) || country.continent || ''}`)
+  description: String(`${t('geo.stats.continent')}: ${t(continentKey) || country.continent}`)
 }}>
-  
-  <div class="country-header">
-    <span class:list={['fi', `fi-${country.code.toLowerCase()}`, 'large-flag']}></span>
-    <div class="header-text">
-       <p class="native-name"><strong>{t('geo.stats.native')}:</strong> {country.native}</p>
+
+  <div class="country-hero">
+    <div class="names-stack">
+      <p class="native-name">
+        <strong>{t('geo.stats.native')}:</strong> 
+        <span class="native-value">{country.native}</span>
+      </p>
+
+      {lang === 'cs' && (
+        <p class="secondary-name">
+          <strong>English Name:</strong> {country.name}
+        </p>
+      )}
+
+      <p class="code-line">
+        <strong>ISO Code:</strong> <span class="mono">{country.code}</span>
+      </p>
+    </div>
+
+    <div class="flag-container">
+      <span class:list={['fi', `fi-${country.code.toLowerCase()}`, 'large-flag']}></span>
     </div>
   </div>
 
-  <div class="stats-card">
-    <ul>
-      <li><strong>{t('geo.stats.capital')}:</strong> {country.capital ?? '—'}</li>
-      <li><strong>{t('geo.stats.population')}:</strong> {country.population.toLocaleString(lang)}</li>
-      <li><strong>{t('geo.stats.continent')}:</strong> {t(continentKey) || country.continent}</li>
-      <li><strong>{t('geo.stats.currency')}:</strong> {country.currency?.join(', ') ?? '—'}</li>
-      <li><strong>{t('geo.stats.languages')}:</strong> {country.language?.join(', ') ?? '—'}</li>
-    </ul>
+  <div class="stats-grid">
+    <div class="stats-card">
+      <h3>{t('geo.detail.basicInfo') || 'Základní informace'}</h3>
+      <ul>
+        <li>
+            <strong>{t('geo.stats.capital')}:</strong> 
+            {country.capital ?? '—'}
+        </li>
+        <li>
+            <strong>{t('geo.stats.population')}:</strong> 
+            {country.population.toLocaleString(lang)}
+        </li>
+        <li>
+            <strong>{t('geo.stats.continent')}:</strong> 
+            {t(continentKey) || country.continent}
+        </li>
+        <li>
+            <strong>{t('geo.stats.phone') || 'Předvolba'}:</strong> 
+            {country.phone.map(p => `+${p}`).join(', ')}
+        </li>
+      </ul>
+    </div>
+
+    <div class="stats-card">
+      <h3>{t('geo.detail.localization') || 'Měna a jazyky'}</h3>
+      <ul>
+        <li>
+          <strong>{t('geo.stats.currency')}:</strong> 
+          <div class="list-tags">
+            {country.currency?.map(c => (
+              <span class="tag">{getCurrencyLabel(c, lang)}</span>
+            )) ?? '—'}
+          </div>
+        </li>
+        <li>
+          <strong>{t('geo.stats.languages')}:</strong> 
+          <div class="list-tags">
+            {country.language?.map(l => (
+              <span class="tag">{getLanguageLabel(l, lang)}</span>
+            )) ?? '—'}
+          </div>
+        </li>
+      </ul>
+    </div>
   </div>
 
   <div class="actions">
-    <a href={`/${lang}/countries/`}>← {t('geo.detail.back')}</a>
+    <a href={`/${lang}/countries/`} class="back-link">
+      <span class="arrow">←</span> {t('geo.detail.back')}
+    </a>
   </div>
 </StarlightPage>
 
 <style>
-  .country-header {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--sl-color-hairline);
+  .country-hero {
+    display: flex; flex-direction: column; gap: 1.5rem;
+    margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--sl-color-hairline);
   }
+  .names-stack { display: flex; flex-direction: column; gap: 0.5rem; }
+  .native-name { font-size: 1.25rem; color: var(--sl-color-gray-2); margin: 0; }
+  .native-value { color: var(--sl-color-white); font-weight: 500; }
+  .secondary-name, .code-line { font-size: 1rem; color: var(--sl-color-gray-3); margin: 0; }
+  .mono { font-family: var(--sl-font-mono); color: var(--sl-color-accent); font-weight: bold; }
+  
   .large-flag {
-    width: 120px;
-    height: auto;
-    border-radius: 0.5rem;
-    box-shadow: var(--sl-shadow-md);
+    display: block; width: 240px; height: auto; aspect-ratio: 4/3;
+    background-size: cover; border: 1px solid var(--sl-color-gray-5); border-radius: 0;
   }
-  .native-name { font-size: 1.2rem; margin: 0; }
+
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;
+  }
   .stats-card {
-    background: var(--sl-color-gray-6);
-    padding: 1.5rem;
-    border-radius: 0.75rem;
-    border: 1px solid var(--sl-color-hairline);
+    background: var(--sl-color-gray-6); padding: 1.5rem; border: 1px solid var(--sl-color-hairline);
   }
-  .stats-card ul {
-    list-style: none; padding: 0; margin: 0;
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;
+  .stats-card h3 { 
+    margin: 0 0 1rem 0; font-size: 1rem; color: var(--sl-color-white); 
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--sl-color-gray-5);
+    padding-bottom: 0.5rem;
   }
+  .stats-card ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem; }
   .stats-card li { display: flex; flex-direction: column; gap: 0.25rem; }
-  .stats-card strong { color: var(--sl-color-gray-3); font-size: 0.85rem; text-transform: uppercase; }
-  .actions { margin-top: 2rem; }
-  .actions a { text-decoration: none; color: var(--sl-color-accent-high); font-weight: 500; }
-  .actions a:hover { text-decoration: underline; }
+  .stats-card strong { color: var(--sl-color-accent); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
+  
+  .list-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem; }
+  .tag { 
+    background: var(--sl-color-gray-5); padding: 0.2rem 0.6rem; 
+    font-size: 0.9rem; border-left: 3px solid var(--sl-color-accent);
+  }
+
+  .actions { margin-top: 3rem; }
+  .back-link { display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--sl-color-accent-high); font-weight: 600; }
+
+  @media (max-width: 50rem) { .large-flag { width: 100%; max-width: 320px; } }
 </style>

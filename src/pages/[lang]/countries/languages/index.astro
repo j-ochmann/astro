@@ -1,6 +1,14 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { getI18nPaths, countriesData, getAllLanguages, languages, useTranslations } from '@/content/config/i18n';
+// Přidáme import typu Country
+import { 
+  getI18nPaths, 
+  countriesData, 
+  getAllLanguages, 
+  languages, 
+  useTranslations,
+  type Country // Importuj interface, který jsi definoval v i18n.ts
+} from '@content/config/i18n';
 
 export async function getStaticPaths() {
   return getI18nPaths();
@@ -9,23 +17,24 @@ export async function getStaticPaths() {
 const { lang } = Astro.params;
 const t = useTranslations(lang);
 
-// Získat všechny unikátní jazyky používané v zemích
 const allUsedLanguages = getAllLanguages();
-const allCountries = Object.values(countriesData);
+const allCountries = Object.values(countriesData) as Country[]; // Explicitní přetypování
 
-// Připravit data: Jazyk -> Seznam zemí
 const languageGroups = allUsedLanguages.map(langCode => {
-  // Najít metadata o jazyku (název, label)
   const langMeta = languages[langCode as keyof typeof languages];
   const label = langMeta ? (langMeta.label || langMeta.en) : langCode;
   
-  // Najít země, které tímto jazykem mluví
+  // speakers je nyní pole typu Country[]
   const speakers = allCountries.filter(c => c.language && c.language.includes(langCode));
   
-  // Seřadit země podle lokalizovaného názvu
-  speakers.sort((a, b) => {
-    const nameA = t(a.code) !== a.code ? t(a.code) : a.name;
-    const nameB = t(b.code) !== b.code ? t(b.code) : b.name;
+  speakers.sort((a: Country, b: Country) => {
+    // Přetypování na any u t() potlačí chybu, pokud t() očekává jen specifické klíče
+    const translationA = t(a.code as any);
+    const translationB = t(b.code as any);
+    
+    const nameA = translationA && translationA !== a.code ? translationA : a.name;
+    const nameB = translationB && translationB !== b.code ? translationB : b.name;
+    
     return nameA.localeCompare(nameB, lang);
   });
 
@@ -34,8 +43,7 @@ const languageGroups = allUsedLanguages.map(langCode => {
     label,
     countries: speakers
   };
-}).sort((a, b) => a.label.localeCompare(b.label, lang)); // Seřadit jazyky abecedně
-
+}).sort((a, b) => a.label.localeCompare(b.label, lang));
 ---
 
 <StarlightPage 

@@ -1,0 +1,298 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { Icon } from 'astro-icon/components';
+import { 
+  getI18nPaths, 
+  countriesData, 
+  useTranslations, 
+  getCurrencyLabel, 
+  getLanguageLabel 
+} from '@/content/config/i18n';
+
+export async function getStaticPaths() {
+  return getI18nPaths();
+}
+
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+
+const allCountriesRaw = Object.values(countriesData).map(c => ({
+  code: c.code,
+  name: lang === 'cs' ? (t(c.code as any) !== c.code ? t(c.code as any) : c.name) : c.name,
+  capital: c.capital || '—',
+  continent: c.continent,
+  population: c.population,
+  phone: c.phone.map(p => `+${p}`).join(', '),
+  // Data pro export (ponecháváme v raw formátu pro čistotu souborů)
+  native: c.native,
+  currency: c.currency?.map(curr => getCurrencyLabel(curr, lang)).join(', ') || '—',
+  languages: c.language?.map(l => getLanguageLabel(l, lang)).join(', ') || '—'
+}));
+---
+
+<StarlightPage 
+  frontmatter={{ 
+    title: String(t('atlas.table.title')), 
+    template: 'doc' 
+  }}
+>
+  <div class="table-controls">
+    <div class="search-box">
+      <input 
+        type="text" 
+        id="tableSearch" 
+        placeholder={String(t('atlas.table.search'))} 
+        aria-label={String(t('atlas.table.search'))}
+      />
+    </div>
+    
+    <div class="export-group">
+      <span class="export-label">Export:</span>
+      <div class="export-buttons">
+        <button class="export-btn" data-type="json">JSON</button>
+        <button class="export-btn" data-type="csv">CSV</button>
+        <button class="export-btn" data-type="xml">XML</button>
+        <button class="export-btn" data-type="yaml">YAML</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="countriesTable">
+      <thead>
+        <tr>
+          <th data-sort="code">{t('geo.stats.code')} <Icon name="lucide:arrow-up-down" /></th>
+          <th data-sort="name">{t('geo.stats.name')} <Icon name="lucide:arrow-up-down" /></th>
+          <th data-sort="capital">{t('geo.stats.capital')} <Icon name="lucide:arrow-up-down" /></th>
+          <th data-sort="continent">{t('geo.stats.continent')} <Icon name="lucide:arrow-up-down" /></th>
+          <th data-sort="population">{t('geo.stats.population')} <Icon name="lucide:arrow-up-down" /></th>
+          <th>{t('geo.stats.phone')}</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        {allCountriesRaw.map(c => (
+          <tr data-country={JSON.stringify(c)}>
+            <td class="mono">{c.code}</td>
+            <td>
+              <a href={`/${lang}/countries/${c.code.toLowerCase()}/`} class="country-link">
+                <span class:list={['fi', `fi-${c.code.toLowerCase()}`]}></span> {c.name}
+              </a>
+            </td>
+            <td>{c.capital}</td>
+            <td>{c.continent}</td>
+            <td data-val={c.population}>{c.population.toLocaleString(lang)}</td>
+            <td>{c.phone}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</StarlightPage>
+
+<style>
+  .table-controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding: 1.25rem;
+    background: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-hairline);
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 250px;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    /* Oprava barev pro oba módy */
+    background: var(--sl-color-bg);
+    color: var(--sl-color-white);
+    border: 1px solid var(--sl-color-gray-4);
+    border-radius: 4px;
+  }
+
+  .search-box input:focus {
+    outline: 2px solid var(--sl-color-accent);
+    border-color: transparent;
+  }
+
+  .export-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .export-buttons {
+    display: flex;
+    gap: 0.25rem; /* Těsnější tlačítka bez mezer při zalamování */
+  }
+
+  .export-label {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--sl-color-gray-3);
+    text-transform: uppercase;
+  }
+
+  .export-btn {
+    padding: 0.4rem 0.8rem;
+    background: var(--sl-color-gray-5);
+    border: 1px solid var(--sl-color-gray-4);
+    color: var(--sl-color-white);
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .export-btn:hover {
+    background: var(--sl-color-accent-low);
+    border-color: var(--sl-color-accent);
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--sl-color-hairline);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    margin: 0; /* Starlight reset */
+  }
+
+  th {
+    background: var(--sl-color-gray-6);
+    padding: 1rem 0.75rem;
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--sl-color-hairline);
+  }
+
+  td {
+    padding: 0.85rem 0.75rem;
+    border-bottom: 1px solid var(--sl-color-hairline);
+  }
+
+  .mono {
+    font-family: var(--sl-font-mono);
+    color: var(--sl-color-accent-high);
+    font-weight: 600;
+  }
+
+  .country-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none !important;
+    color: inherit !important;
+    font-weight: 500;
+  }
+
+  .country-link:hover {
+    color: var(--sl-color-accent-high) !important;
+  }
+
+  th svg {
+    width: 14px;
+    height: 14px;
+    margin-left: 4px;
+    opacity: 0.4;
+  }
+
+  @media (max-width: 40rem) {
+    .table-controls { flex-direction: column; align-items: stretch; }
+    .export-group { justify-content: space-between; }
+  }
+</style>
+
+<script>
+  // Zde zůstává tvůj opravený skript pro filtrování, řazení a export
+  // Jen pozor, ať ID sedí (tableSearch, tableBody, countriesTable)
+  const searchInput = document.getElementById('tableSearch') as HTMLInputElement | null;
+  const table = document.getElementById('countriesTable') as HTMLTableElement | null;
+  const tableBody = document.getElementById('tableBody');
+  const exportBtns = document.querySelectorAll('.export-btn');
+  
+  if (searchInput && table && tableBody) {
+    const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+    searchInput.addEventListener('input', () => {
+      const term = searchInput.value.toLowerCase();
+      rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+      });
+    });
+
+    table.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.getAttribute('data-sort');
+        if (!col) return;
+        const isAsc = th.classList.contains('asc');
+        const sortedRows = rows.sort((a, b) => {
+          const rawA = a.getAttribute('data-country');
+          const rawB = b.getAttribute('data-country');
+          if (!rawA || !rawB) return 0;
+          const dataA = JSON.parse(rawA);
+          const dataB = JSON.parse(rawB);
+          const valA = dataA[col];
+          const valB = dataB[col];
+          if (typeof valA === 'number') return isAsc ? valB - valA : valA - valB;
+          return isAsc ? String(valB).localeCompare(String(valA)) : String(valA).localeCompare(String(valB));
+        });
+        table.querySelectorAll('th').forEach(h => h.classList.remove('asc', 'desc'));
+        th.classList.toggle('asc', !isAsc);
+        th.classList.toggle('desc', isAsc);
+        tableBody.append(...sortedRows);
+      });
+    });
+
+    exportBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-type');
+        const visibleData = rows
+          .filter(r => r.style.display !== 'none')
+          .map(r => JSON.parse(r.getAttribute('data-country') || '{}'));
+
+        if (visibleData.length === 0) return;
+
+        let content = '';
+        let mime = 'text/plain';
+
+        if (type === 'json') {
+          content = JSON.stringify(visibleData, null, 2);
+          mime = 'application/json';
+        } else if (type === 'csv') {
+          const keys = Object.keys(visibleData[0]);
+          content = [keys.join(','), ...visibleData.map(row => keys.map(k => `"${String(row[k]).replace(/"/g, '""')}"`).join(','))].join('\n');
+          mime = 'text/csv';
+        } else if (type === 'yaml') {
+          content = visibleData.map(obj => Object.entries(obj).map(([k, v]) => `${k}: "${v}"`).join('\n')).join('\n---\n');
+          mime = 'text/yaml';
+        } else if (type === 'xml') {
+          content = `<?xml version="1.0" encoding="UTF-8"?>\n<countries>\n` + 
+            visibleData.map(obj => `  <country>\n${Object.entries(obj).map(([k, v]) => `    <${k}>${v}</${k}>`).join('\n')}\n  </country>`).join('\n') + 
+            `\n</countries>`;
+          mime = 'application/xml';
+        }
+
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `export.${type}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    });
+  }
+</script>

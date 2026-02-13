@@ -130,6 +130,11 @@ export default defineConfig({
               link: '/countries/' 
             },
             { 
+              label: 'Data Table', 
+              translations: { cs: 'Tabulkový přehled' },
+              link: '/countries/table/'
+            },
+            { 
               label: 'Languages', 
               translations: { cs: 'Jazyky' },
               link: '/countries/languages/' 

@@ -222,6 +222,30 @@ export const languages = {
   zu: { order: 183, iso_639_1: 'zu', en: 'Zulu',         label: 'isiZulu' }
 };
 
+export const getLanguageLabel = (code: string, lang: string) => {
+  const l = (languages as any)[code];
+  if (!l) return code;
+  // Pro češtinu můžeme časem přidat český název, zatím bereme 'en' nebo 'label'
+  return `${l.en} (${code.toUpperCase()})`;
+};
+
+// číselník měn
+export const currencies: Record<string, { en: string, cs: string }> = {
+  "USD": { en: "US Dollar", cs: "Americký dolar" },
+  "EUR": { en: "Euro", cs: "Euro" },
+  "CZK": { en: "Czech Koruna", cs: "Česká koruna" },
+  "GBP": { en: "British Pound", cs: "Britská libra" },
+  "ZMW": { en: "Zambian Kwacha", cs: "Zambijská kwacha" },
+  "ZAR": { en: "South African Rand", cs: "Jihoafrický rand" },
+  // ... dopisovat podle potřeby
+};
+
+export const getCurrencyLabel = (code: string, lang: string) => {
+  const curr = currencies[code];
+  if (!curr) return code;
+  return lang === 'cs' ? `${curr.cs} (${code})` : `${curr.en} (${code})`;
+};
+
 const countryTranslations = {
 en: {}, gb: {}, // Pro angličtinu necháme prázdné, použijeme fallback na country.name
 cs: {
@@ -484,6 +508,12 @@ export const uiStrings = {
    "geo.table.code": "Code",
    "geo.table.countries": "Countries",
    "geo.table.count": "Country count",
+
+   "atlas.table.title": "Countries Table Overview",
+   "atlas.table.search": "Search country, capital, code...",
+   "geo.stats.code": "ISO Code",
+   "geo.stats.name": "Name",
+   "geo.stats.phone": "Calling Code",
 }, cs: {
    // Kontinenty
    "geo.continent.africa": "Afrika",
@@ -513,6 +543,12 @@ export const uiStrings = {
    "geo.table.code": "Kód",
    "geo.table.countries": "Země",
    "geo.table.count": "Počet zemí",
+
+   "atlas.table.title": "Tabulkový přehled zemí",
+   "atlas.table.search": "Hledat zemi, hlavní město, kód...",
+   "geo.stats.code": "ISO Kód",
+   "geo.stats.name": "Název",
+   "geo.stats.phone": "Předvolba",
 }, sk: {
    // Kontinenty
    "geo.continent.africa": "Afrika",
