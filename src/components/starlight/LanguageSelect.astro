@@ -46,12 +46,11 @@ const getLanguageUrl = (targetLang: string) => {
 )}
 
 <style lang="scss">
-  /* 1. LOCK SCROLLU (PC i MOBIL) */
+  /* 1. LOCK SCROLLU (Zlepšená touch-action) */
   :global(html:has(.lang-checkbox:checked)),
   :global(body:has(.lang-checkbox:checked)) {
     overflow: hidden !important;
     height: 100vh !important;
-    /* Klíčové pro mobily: */
     touch-action: none !important; 
     -webkit-overflow-scrolling: none;
   }
@@ -75,7 +74,7 @@ const getLanguageUrl = (targetLang: string) => {
     z-index: 10 !important;
   }
 
-  /* 3. TLAČÍTKO (VLAJKA) - VRÁCEN STÍN */
+  /* 3. TLAČÍTKO (VLAJKA) - Jen čistý stín bez linky */
   .language-button {
     cursor: pointer;
     display: flex;
@@ -86,10 +85,10 @@ const getLanguageUrl = (targetLang: string) => {
     border-radius: 50%;
     position: relative;
     z-index: 1000010 !important; 
-    border: none !important;
+    border: none !important; /* Žádná linka */
     transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-    /* Výraznější stín pro světlé vlajky */
-    box-shadow: 0 0 0 1px var(--sl-color-hairline), 0 2px 8px rgba(0,0,0,0.4);
+    /* Jen měkký stín pro separaci od pozadí */
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
 
     .current-fi {
       width: 100%;
@@ -103,7 +102,6 @@ const getLanguageUrl = (targetLang: string) => {
     .lang-checkbox:checked ~ & {
       transform: scale(1.3);
       animation: flag-pulse-glow 3s infinite ease-in-out;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
   }
 
@@ -125,7 +123,6 @@ const getLanguageUrl = (targetLang: string) => {
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.4s ease;
-    /* Blokuje touch na pozadí */
     touch-action: none !important;
   }
 
@@ -134,16 +131,17 @@ const getLanguageUrl = (targetLang: string) => {
     visibility: visible;
   }
 
-  /* 5. DROPDOWN - Centrování pod ikonou na PC */
+  /* 5. DROPDOWN (Centrování a oprava posuvníku) */
   .language-dropdown {
     position: absolute;
     top: calc(100% + 15px);
-    left: 50%; /* Střed pod ikonou */
+    left: 50%;
     transform: translateX(-50%) translateY(-20px);
     z-index: 1000008 !important;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    width: max-content; /* Aby se neroztahoval zbytečně */
   }
 
   .lang-checkbox:checked ~ .language-dropdown {
@@ -156,33 +154,34 @@ const getLanguageUrl = (targetLang: string) => {
     background: var(--sl-color-bg-sidebar) !important;
     border: 1px solid var(--sl-color-hairline);
     border-radius: 1rem;
-    padding: 0.2rem;
+    padding: 0.25rem;
     min-width: 15rem;
     box-shadow: 0 25px 60px rgba(0,0,0,0.9);
     max-height: 85vh;
     overflow-y: auto;
-    /* Povolení scrollu jen uvnitř dropdownu */
+    overflow-x: hidden; /* Zákaz horizontálního posunu */
     touch-action: pan-y !important;
     
     scrollbar-width: thin;
     scrollbar-color: var(--sl-color-gray-4) transparent;
   }
 
-  /* 6. POLOŽKY */
+  /* 6. POLOŽKY (Zahuštěno, bez odskakování) */
   .lang-link {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.35rem 0.8rem;
+    padding: 0.4rem 0.8rem;
     text-decoration: none;
     color: var(--sl-color-gray-2);
     border-radius: 0.4rem;
     font-size: 0.88rem;
+    transition: background 0.2s ease, color 0.2s ease; /* Odstraněno transform */
 
     &:hover { 
       background: var(--sl-color-gray-6); 
       color: white;
-      transform: translateX(4px);
+      /* Odstraněno translateX(4px) pro čistý vzhled bez posuvníku */
     }
     
     &.active { 
@@ -196,6 +195,8 @@ const getLanguageUrl = (targetLang: string) => {
       border-radius: 2px;
       object-fit: cover;
       flex-shrink: 0;
+      /* Jemný stín pro vlaječky uvnitř seznamu */
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
     }
   }
 
@@ -204,8 +205,8 @@ const getLanguageUrl = (targetLang: string) => {
     .language-dropdown {
       position: fixed !important;
       top: 70px !important;
-      left: 10% !important; /* Zúžení: odsazení zleva */
-      right: 10% !important; /* Zúžení: odsazení zprava */
+      left: 10% !important;
+      right: 10% !important;
       width: auto !important;
       transform: translateY(-20px) !important;
     }
@@ -215,8 +216,8 @@ const getLanguageUrl = (targetLang: string) => {
     }
 
     .dropdown-content {
-      max-height: calc(100vh - 100px) !important;
-      min-width: 0; /* Povolí zúžení */
+      max-height: calc(100vh - 110px) !important;
+      min-width: 0;
     }
   }
 </style>
