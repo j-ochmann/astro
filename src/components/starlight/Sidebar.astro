@@ -7,10 +7,10 @@ interface Props extends StarlightRouteData {}
 const { pathname } = Astro.url;
 ---
 
-{pathname.includes('/geo') ? (
+{['/geo', '/countries'].some(path => pathname.includes(path)) ? (
   <GeoSidebar {...Astro.props} /> 
 ) : (
-  <RootSidebar {...Astro.props} />
+  <RootSidebar {...Astro.props} /> 
 )}
 
 <style is:global> /* is:global ovlivní i ToolBar */

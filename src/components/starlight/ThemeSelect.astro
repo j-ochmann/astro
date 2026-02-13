@@ -5,7 +5,7 @@ import GeoThemeSelect from '@/components/geo/ThemeSelect.astro';
 const { pathname } = Astro.url;
 ---
 
-{pathname.includes('/geo') ? (
+{['/geo', '/countries'].some(path => pathname.includes(path)) ? (
   <GeoThemeSelect /> 
 ) : (
   <RootThemeSelect /> 

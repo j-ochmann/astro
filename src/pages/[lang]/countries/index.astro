@@ -7,17 +7,29 @@ export async function getStaticPaths() {
 }
 
 const { lang } = Astro.params;
-const t = useTranslations(lang); // Inicializace překladače
+const t = useTranslations(lang);
 
 const continents = getAllContinents();
-const allCountries = Object.values(countriesData).sort((a, b) => a.name.localeCompare(b.name));
 
-// Dynamické sestavení klíče pro kontinent
+// Seřazení zemí podle lokalizovaného názvu
+const allCountries = Object.values(countriesData).sort((a, b) => {
+  const codeA = a.code.toUpperCase();
+  const codeB = b.code.toUpperCase();
+  
+  const nameA = (t(codeA as any) !== codeA ? t(codeA as any) : a.name) || "";
+  const nameB = (t(codeB as any) !== codeB ? t(codeB as any) : b.name) || "";
+  
+  return nameA.localeCompare(nameB, lang);
+});
+
+// Pomocník pro překlad názvu kontinentu
 const getContinentLabel = (name: string) => {
   const key = `geo.continent.${name.toLowerCase().replace(/\s+/g, '-')}` as any;
-  return t(key) || name;
+  const translation = t(key);
+  return translation === key ? name : translation;
 };
 
+// Definice kotev pro pravý sidebar
 const headings = continents.map(continent => ({
   depth: 2,
   slug: continent.toLowerCase().replace(/\s+/g, '-'),
@@ -26,19 +38,74 @@ const headings = continents.map(continent => ({
 ---
 
 <StarlightPage 
-  frontmatter={{ title: t('atlas.title'), template: 'doc' }}
+  frontmatter={{ 
+    title: String(t('atlas.title') || 'Atlas'), 
+    template: 'doc',
+    description: String(t('atlas.description') || 'Atlas zemí')
+  }}
   headings={headings}
 >
   <div class="country-grid-container">
-    {continents.map(continent => (
-      <section>
-        <h2 id={continent.toLowerCase().replace(/\s+/g, '-')}>
-          {getContinentLabel(continent)}
-        </h2>
-        <div class="country-grid">
-          {/* ... zbytek mapování zemí ... */}
-        </div>
-      </section>
-    ))}
+    {continents.map(continent => {
+      const continentId = continent.toLowerCase().replace(/\s+/g, '-');
+      return (
+        <section>
+          <h2 id={continentId}>{getContinentLabel(continent)}</h2>
+          <div class="country-grid">
+            {allCountries
+              .filter(c => c.continent === continent)
+              .map(country => {
+                const countryCode = country.code.toUpperCase();
+                const translation = t(countryCode as any);
+                
+                // Pokud překlad existuje a není to jen vrácený klíč (kód), použijeme ho
+                const displayName = (translation && translation !== countryCode) 
+                  ? translation 
+                  : country.name;
+                
+                return (
+                  <a href={`/${lang}/countries/${country.code.toLowerCase()}/`} class="country-card">
+                    <span class:list={['fi', `fi-${country.code.toLowerCase()}`]}></span>
+                    <span class="name">{displayName}</span>
+                  </a>
+                );
+              })}
+          </div>
+        </section>
+      );
+    })}
   </div>
 </StarlightPage>
+
+<style>
+  .country-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+  }
+  .country-card {
+    display: flex; 
+    align-items: center; 
+    gap: 0.75rem; 
+    padding: 0.75rem;
+    background: var(--sl-color-gray-6); 
+    border: 1px solid var(--sl-color-hairline);
+    border-radius: 0.5rem; 
+    text-decoration: none; 
+    color: var(--sl-color-white) !important;
+    transition: all 0.2s ease;
+  }
+  .country-card:hover {
+    background: var(--sl-color-gray-5);
+    border-color: var(--sl-color-accent);
+    transform: translateY(-2px);
+  }
+  .fi { flex-shrink: 0; font-size: 1.2rem; }
+  h2 {
+    scroll-margin-top: 5rem;
+    margin-top: 2rem;
+    border-bottom: 1px solid var(--sl-color-hairline);
+    padding-bottom: 0.5rem;
+  }
+</style>

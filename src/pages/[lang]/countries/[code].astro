@@ -21,11 +21,20 @@ export async function getStaticPaths() {
 const { country, lang } = Astro.props;
 const t = useTranslations(lang);
 
-// Dynamický klíč pro kontinent
+// Lokalizovaný název země (vynucení velkých písmen pro kód)
+const countryCode = country.code.toUpperCase();
+const translation = t(countryCode as any);
+const localizedName = (translation && translation !== countryCode) 
+  ? translation 
+  : country.name;
+
 const continentKey = `geo.continent.${country.continent.toLowerCase().replace(/\s+/g, '-')}` as any;
 ---
 
-<StarlightPage frontmatter={{ title: country.name }}>
+<StarlightPage frontmatter={{ 
+  title: String(localizedName || 'Country'),
+  description: String(`${t('geo.stats.continent') || 'Continent'}: ${t(continentKey) || country.continent || ''}`)
+}}>
   
   <div class="country-header">
     <span class:list={['fi', `fi-${country.code.toLowerCase()}`, 'large-flag']}></span>
@@ -58,58 +67,26 @@ const continentKey = `geo.continent.${country.continent.toLowerCase().replace(/\
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--sl-color-hairline);
   }
-
   .large-flag {
     width: 120px;
     height: auto;
     border-radius: 0.5rem;
     box-shadow: var(--sl-shadow-md);
   }
-
-  .native-name {
-    font-size: 1.2rem;
-    margin: 0;
-  }
-
+  .native-name { font-size: 1.2rem; margin: 0; }
   .stats-card {
     background: var(--sl-color-gray-6);
     padding: 1.5rem;
     border-radius: 0.75rem;
     border: 1px solid var(--sl-color-hairline);
   }
-
   .stats-card ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    list-style: none; padding: 0; margin: 0;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;
   }
-
-  .stats-card li {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .stats-card strong {
-    color: var(--sl-color-gray-3);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-  }
-
-  .actions {
-    margin-top: 2rem;
-  }
-
-  .actions a {
-    text-decoration: none;
-    color: var(--sl-color-accent-high);
-    font-weight: 500;
-  }
-
-  .actions a:hover {
-    text-decoration: underline;
-  }
+  .stats-card li { display: flex; flex-direction: column; gap: 0.25rem; }
+  .stats-card strong { color: var(--sl-color-gray-3); font-size: 0.85rem; text-transform: uppercase; }
+  .actions { margin-top: 2rem; }
+  .actions a { text-decoration: none; color: var(--sl-color-accent-high); font-weight: 500; }
+  .actions a:hover { text-decoration: underline; }
 </style>
