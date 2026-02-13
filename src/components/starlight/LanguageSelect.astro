@@ -46,31 +46,30 @@ const getLanguageUrl = (targetLang: string) => {
 )}
 
 <style lang="scss">
-  /* 1. MANIPULACE S OKOLÍM (Vypnutí z-indexů a skla Toolbaru) */
+  /* 1. MANIPULACE S OKOLÍM - Totální shození ostatních prvků */
   :global(body:has(.lang-checkbox:checked) .toolbar) {
     backdrop-filter: none !important;
     background: transparent !important;
-    z-index: 10 !important; /* Shodíme celý toolbar dolů */
+    z-index: 10 !important;
   }
 
-  /* Shodíme i sekce uvnitř toolbarů, aby jejich stacking context nepřekážel */
-  :global(body:has(.lang-checkbox:checked) .left-section),
-  :global(body:has(.lang-checkbox:checked) .right-section) {
+  /* Toto je klíčové: Snížíme z-index všem wrapperům ikon v toolbar, kromě toho našeho */
+  :global(body:has(.lang-checkbox:checked) .social-circle-wrapper) {
     z-index: 10 !important;
+  }
+
+  /* Musíme ale zajistit, aby náš wrapper v picker zůstal nahoře */
+  .language-picker-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    z-index: 1000005 !important; 
   }
 
   /* 2. ZÁMEK SCROLLU */
   :global(body:has(.lang-checkbox:checked)) {
     overflow: hidden !important;
     touch-action: none;
-  }
-
-  .language-picker-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    /* Při otevření wrapper vystřelí nahoru, aby přebil sourozence v sekci */
-    z-index: 1000002 !important; 
   }
 
   .lang-checkbox {
@@ -87,7 +86,7 @@ const getLanguageUrl = (targetLang: string) => {
     height: 38px;
     border-radius: 50%;
     position: relative;
-    z-index: 1000005 !important; /* Nejvyšší bod pro interakci */
+    z-index: 1000010 !important; 
     border: none !important;
     transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -121,7 +120,7 @@ const getLanguageUrl = (targetLang: string) => {
     background: rgba(0, 0, 0, 0.6) !important;
     backdrop-filter: blur(8px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(8px) saturate(180%) !important;
-    z-index: 1000000 !important; /* Mezi Toolbarem a Dropdownem */
+    z-index: 1000000 !important; 
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.4s ease;
@@ -132,12 +131,12 @@ const getLanguageUrl = (targetLang: string) => {
     visibility: visible;
   }
 
-  /* 5. DROPDOWN (PRODLOUŽENÝ A ZAHUŠTĚNÝ) */
+  /* 5. DROPDOWN (MAXIMÁLNÍ DÉLKA) */
   .language-dropdown {
     position: absolute;
     top: calc(100% + 15px);
     right: 0;
-    z-index: 1000004 !important;
+    z-index: 1000008 !important;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-20px);
@@ -154,27 +153,27 @@ const getLanguageUrl = (targetLang: string) => {
     background: var(--sl-color-bg-sidebar) !important;
     border: 1px solid var(--sl-color-hairline);
     border-radius: 1rem;
-    padding: 0.25rem;
+    padding: 0.2rem;
     min-width: 15rem;
     box-shadow: 0 25px 60px rgba(0,0,0,0.9);
     
-    max-height: 85vh; /* Prodloužení na desktopu */
+    max-height: 88vh; /* Desktop: co nejdelší */
     overflow-y: auto;
     
     scrollbar-width: thin;
     scrollbar-color: var(--sl-color-gray-4) transparent;
   }
 
-  /* 6. POLOŽKY (ZAHUŠTĚNO, HRANATÉ) */
+  /* 6. POLOŽKY (HUSTÉ, HRANATÉ) */
   .lang-link {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.4rem 0.8rem; /* Maximální zahuštění */
+    gap: 0.6rem;
+    padding: 0.35rem 0.8rem; /* Maximální zahuštění */
     text-decoration: none;
     color: var(--sl-color-gray-2);
     border-radius: 0.4rem;
-    font-size: 0.88rem;
+    font-size: 0.85rem;
 
     &:hover { 
       background: var(--sl-color-gray-6); 
@@ -188,7 +187,7 @@ const getLanguageUrl = (targetLang: string) => {
 
     .fi { 
       width: 1.4rem; 
-      height: 0.95rem; 
+      height: 0.9rem; 
       border-radius: 2px;
       object-fit: cover;
       flex-shrink: 0;
@@ -205,7 +204,7 @@ const getLanguageUrl = (targetLang: string) => {
       width: auto !important;
     }
     .dropdown-content {
-      max-height: calc(100dvh - 80px) !important; /* Maximální délka na mobilu */
+      max-height: calc(100dvh - 70px) !important;
     }
   }
 </style>
