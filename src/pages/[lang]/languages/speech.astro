@@ -1,150 +1,249 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { getI18nPaths, getUsedLanguagesData, getUnusedLanguagesData } from '@/content/config/i18n';
+import { Icon } from 'astro-icon/components';
+import { 
+  getI18nPaths, 
+  useTranslations,
+  getUsedLanguagesData,
+  getUnusedLanguagesData
+} from '@/content/config/i18n';
 
 export async function getStaticPaths() {
   return getI18nPaths();
 }
 
 const { lang } = Astro.params;
+const t = useTranslations(lang);
 
-// Získáme všechna data o jazycích, která máme k dispozici
 const usedLangs = getUsedLanguagesData();
 const unusedLangs = getUnusedLanguagesData();
-const allLangs = [...usedLangs, ...unusedLangs].sort((a, b) => a.nameEn.localeCompare(b.nameEn));
+
+// Sjednocení dat pro testování
+const allLangs = ([...usedLangs, ...unusedLangs] as any[]).map(l => ({
+  code: l.code,
+  nameEn: l.nameEn,
+  nameNative: l.nameNative,
+  usageCount: l.usageCount || 0
+})).sort((a, b) => b.usageCount - a.usageCount);
+
+const labels = {
+  title: lang === 'cs' ? 'Diagnostika hlasů TTS' : 'TTS Voice Diagnostics',
+  description: lang === 'cs' ? 'Test dostupnosti systémových hlasů pro atlas.' : 'System voice availability test.',
+  systemVoices: lang === 'cs' ? 'Hlasy nalezené v systému:' : 'Voices found in system:',
+  tableCode: 'ISO',
+  tableName: lang === 'cs' ? 'Jazyk' : 'Language',
+  tableVoice: lang === 'cs' ? 'Dostupný hlas' : 'Available Voice',
+  tableAction: lang === 'cs' ? 'Test' : 'Test'
+};
 ---
 
-<StarlightPage frontmatter={{ title: 'TTS Voice Debugger', template: 'doc' }}>
-  <p>Tato stránka testuje dostupnost hlasů ve vašem prohlížeči pro všechny definované jazyky.</p>
+<StarlightPage frontmatter={{ title: labels.title, template: 'doc' }}>
   
-  <div class="voice-summary" id="voice-summary">
-    Načítám systémové hlasy...
+  <div class="voice-debug-header">
+    <p>{labels.description}</p>
+    <div id="voice-summary" class="summary-box">
+      <div class="spinner"></div> Načítám systémové hlasy...
+    </div>
   </div>
 
-  <table class="tts-debug-table">
-    <thead>
-      <tr>
-        <th>Kód</th>
-        <th>Název (EN)</th>
-        <th>Nativně</th>
-        <th>Dostupný hlas</th>
-        <th>Akce</th>
-      </tr>
-    </thead>
-    <tbody>
-      {allLangs.map(l => (
-        <tr data-lang-code={l.code.toLowerCase()}>
-          <td class="mono">{l.code}</td>
-          <td>{l.nameEn}</td>
-          <td class="native-cell">{l.nameNative}</td>
-          <td class="voice-info">---</td>
-          <td>
-            <button class="test-btn" data-code={l.code} data-text={l.nameNative}>
-              Přehrát
-            </button>
-          </td>
+  <div class="table-wrapper">
+    <table id="ttsTestTable">
+      <thead>
+        <tr>
+          <th>{labels.tableCode}</th>
+          <th>{labels.tableName}</th>
+          <th>{labels.tableVoice}</th>
+          <th>{labels.tableAction}</th>
         </tr>
-      ))}
-    </tbody>
-  </table>
+      </thead>
+      <tbody id="tableBody">
+        {allLangs.map(l => (
+          <tr data-lang-code={l.code.toLowerCase()}>
+            <td class="mono">{l.code}</td>
+            <td>
+              <span class="en-name">{l.nameEn}</span><br/>
+              <small class="native-name">{l.nameNative}</small>
+            </td>
+            <td class="voice-info">---</td>
+            <td>
+              <button 
+                class="test-btn" 
+                data-code={l.code} 
+                data-text={l.nameNative}
+                disabled
+              >
+                <Icon name="line-md:play-filled" />
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
 </StarlightPage>
 
-<style>
-  .tts-debug-table {
+<style is:global>
+  .voice-debug-header {
+    margin-bottom: 2rem;
+  }
+
+  .summary-box {
+    padding: 1.25rem;
+    background: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-hairline);
+    border-left: 4px solid var(--sl-color-accent);
+    border-radius: 4px;
+  }
+
+  .debug-voice-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 0.75rem;
+  }
+
+  .debug-voice-list span {
+    background: var(--sl-color-bg);
+    padding: 2px 8px;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
+  .debug-voice-list code {
+    color: var(--sl-color-accent-high);
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--sl-color-hairline);
+  }
+
+  table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 2rem;
+    font-size: 0.875rem;
   }
+
   th, td {
-    padding: 0.75rem;
+    padding: 0.85rem 0.75rem;
     border-bottom: 1px solid var(--sl-color-hairline);
     text-align: left;
   }
-  .mono { font-family: var(--sl-font-mono); font-weight: bold; color: var(--sl-color-accent); }
-  .native-cell { font-style: italic; }
-  .voice-info { font-size: 0.8rem; color: var(--sl-color-gray-3); }
-  
-  .voice-summary {
-    padding: 1rem;
-    background: var(--sl-color-gray-6);
-    border-left: 4px solid var(--sl-color-accent);
-    margin: 1rem 0;
-  }
 
+  th { background: var(--sl-color-gray-6); }
+
+  .mono { font-family: var(--sl-font-mono); font-weight: bold; }
+  .native-name { opacity: 0.6; font-style: italic; }
+  
   .test-btn {
+    appearance: none;
     background: var(--sl-color-accent);
     color: white;
     border: none;
-    padding: 0.4rem 0.8rem;
-    border-radius: 4px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
     cursor: pointer;
-    font-size: 0.8rem;
+    opacity: 0.3;
+    transition: all 0.2s ease;
   }
-  .test-btn:disabled {
-    background: var(--sl-color-gray-5);
-    opacity: 0.5;
-    cursor: not-allowed;
+
+  .test-btn:not(:disabled) {
+    opacity: 1;
   }
-  .has-voice { color: #4ade80 !important; font-weight: bold; }
-  .no-voice { color: #f87171 !important; }
+
+  .test-btn:not(:disabled):hover {
+    transform: scale(1.1);
+    background: var(--sl-color-accent-high);
+  }
+
+  .has-voice { color: #4ade80; font-weight: bold; }
+  .no-voice { color: #f87171; }
+
+  .spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--sl-color-gray-4);
+    border-top-color: var(--sl-color-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 0.5rem;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
 <script>
   const synth = window.speechSynthesis;
 
-  function updateTable() {
+  function updateUI() {
     const voices = synth.getVoices();
     const summaryEl = document.getElementById('voice-summary');
     const rows = document.querySelectorAll('tr[data-lang-code]');
 
-    if (summaryEl) {
-      summaryEl.innerHTML = `Nalezeno celkem <strong>${voices.length}</strong> systémových hlasů.`;
+    if (!summaryEl) return;
+
+    if (voices.length === 0) {
+      summaryEl.innerHTML = `<div class="spinner"></div> Čekám na systémové hlasy (pokus č. ${Math.round(performance.now()/1000)}s)...`;
+      return;
     }
 
-    if (voices.length === 0) return; // Ještě nemáme hlasy, počkáme na další event
+    // 1. Vykreslení seznamu všech hlasů pro vizuální kontrolu
+    let listHtml = `<p>Nalezeno celkem <strong>${voices.length}</strong> hlasů:</p>`;
+    listHtml += `<div class="debug-voice-list">`;
+    voices.forEach(v => {
+      listHtml += `<span><code>${v.lang}</code> ${v.name}</span>`;
+    });
+    listHtml += `</div>`;
+    summaryEl.innerHTML = listHtml;
 
+    // 2. Propojení s tabulkou
     rows.forEach(row => {
       const code = row.getAttribute('data-lang-code');
       const infoCell = row.querySelector('.voice-info');
       const btn = row.querySelector('.test-btn') as HTMLButtonElement;
       
-      // Vyčištění kódu pro porovnání (např. cs-CZ -> cs)
-      const cleanCode = code?.toLowerCase().split('-')[0];
+      if (!code) return;
 
-      const matchingVoices = voices.filter(v => {
+      // Hledáme shodu (např. 'cs' odpovídá 'cs-CZ')
+      const cleanCode = code.split('-')[0];
+      const match = voices.find(v => {
         const vLang = v.lang.toLowerCase().replace('_', '-');
         return vLang === code || vLang.startsWith(cleanCode + '-');
       });
 
-      if (matchingVoices.length > 0) {
-        if (infoCell) {
-          infoCell.innerHTML = `<span style="color: #4ade80; font-weight: bold;">ANO (${matchingVoices.length})</span><br><small>${matchingVoices[0].name}</small>`;
-        }
-        if (btn) {
-          btn.disabled = false; // AKTIVACE TLAČÍTKA
-          btn.style.opacity = "1";
-          btn.style.cursor = "pointer";
-        }
-      } else {
-        if (infoCell) infoCell.innerHTML = `<span style="color: #f87171;">NE</span>`;
-        if (btn) btn.disabled = true;
+      if (match && infoCell && btn) {
+        infoCell.innerHTML = `<span class="has-voice">ANO</span><br/><small>${match.name}</small>`;
+        btn.disabled = false;
+      } else if (infoCell && btn) {
+        infoCell.innerHTML = `<span class="no-voice">NE</span>`;
+        btn.disabled = true;
       }
     });
   }
 
-  // 1. Zkusíme hned
-  updateTable();
-
-  // 2. Chrome/Android vyžaduje tento event, hlasy se načítají asynchronně
-  if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = updateTable;
+  // Inicializace
+  if (typeof speechSynthesis !== 'undefined') {
+    // Pro Chrome/Android
+    speechSynthesis.onvoiceschanged = updateUI;
+    // Pro Safari/Firefox/Debian
+    updateUI();
+    
+    // Pojistky pro asynchronní načítání
+    setTimeout(updateUI, 500);
+    setTimeout(updateUI, 2000);
+    setTimeout(updateUI, 5000);
   }
 
-  // 3. Brutální fallback pro jistotu (některé prohlížeče event neposílají správně)
-  setTimeout(updateTable, 500);
-  setTimeout(updateTable, 2000);
-
-  // Obsluha kliknutí (delegace)
+  // Klikací logika
   document.addEventListener('click', (e) => {
     const btn = (e.target as HTMLElement).closest('.test-btn') as HTMLButtonElement;
     if (!btn || btn.disabled) return;
@@ -152,24 +251,24 @@ const allLangs = [...usedLangs, ...unusedLangs].sort((a, b) => a.nameEn.localeCo
     const text = btn.getAttribute('data-text') || '';
     const code = btn.getAttribute('data-code')?.toLowerCase() || 'en';
     
-    synth.cancel(); 
+    synth.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = code;
-    
+
+    // Výběr nejlepšího hlasu pro konkrétní test
     const voices = synth.getVoices();
-    // Najdeme hlas pro daný kód
-    const voice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(code.split('-')[0]));
+    const cleanCode = code.split('-')[0];
+    const voice = voices.find(v => {
+      const vLang = v.lang.toLowerCase().replace('_', '-');
+      return vLang === code || vLang.startsWith(cleanCode + '-');
+    });
+
+    if (voice) utterance.voice = voice;
+
+    // Logování pro ladění v konzoli (F12)
+    console.log(`TTS Test: [${code}] "${text}" pomocí [${voice?.name || 'default'}]`);
     
-    if (voice) {
-      utterance.voice = voice;
-    }
-
-    // Pro jistotu nastavíme i parametry, které občas pomůžou na Linuxu
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-
     synth.speak(utterance);
   });
 </script>
