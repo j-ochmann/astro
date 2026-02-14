@@ -145,6 +145,11 @@ export default defineConfig({
               link: '/languages/table/'
             },
             { 
+              label: 'Speech Test', 
+              translations: { cs: 'Dostupnost jazyků' },
+              link: '/languages/speech/'
+            },
+            { 
               label: 'Currencies', 
               translations: { cs: 'Měny' },
               link: '/currencies/' 

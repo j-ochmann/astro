@@ -1,0 +1,149 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getI18nPaths, getUsedLanguagesData, getUnusedLanguagesData } from '@/content/config/i18n';
+
+export async function getStaticPaths() {
+  return getI18nPaths();
+}
+
+const { lang } = Astro.params;
+
+// Získáme všechna data o jazycích, která máme k dispozici
+const usedLangs = getUsedLanguagesData();
+const unusedLangs = getUnusedLanguagesData();
+const allLangs = [...usedLangs, ...unusedLangs].sort((a, b) => a.nameEn.localeCompare(b.nameEn));
+---
+
+<StarlightPage frontmatter={{ title: 'TTS Voice Debugger', template: 'doc' }}>
+  <p>Tato stránka testuje dostupnost hlasů ve vašem prohlížeči pro všechny definované jazyky.</p>
+  
+  <div class="voice-summary" id="voice-summary">
+    Načítám systémové hlasy...
+  </div>
+
+  <table class="tts-debug-table">
+    <thead>
+      <tr>
+        <th>Kód</th>
+        <th>Název (EN)</th>
+        <th>Nativně</th>
+        <th>Dostupný hlas</th>
+        <th>Akce</th>
+      </tr>
+    </thead>
+    <tbody>
+      {allLangs.map(l => (
+        <tr data-lang-code={l.code.toLowerCase()}>
+          <td class="mono">{l.code}</td>
+          <td>{l.nameEn}</td>
+          <td class="native-cell">{l.nameNative}</td>
+          <td class="voice-info">---</td>
+          <td>
+            <button class="test-btn" data-code={l.code} data-text={l.nameNative}>
+              Přehrát
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</StarlightPage>
+
+<style>
+  .tts-debug-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+  }
+  th, td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--sl-color-hairline);
+    text-align: left;
+  }
+  .mono { font-family: var(--sl-font-mono); font-weight: bold; color: var(--sl-color-accent); }
+  .native-cell { font-style: italic; }
+  .voice-info { font-size: 0.8rem; color: var(--sl-color-gray-3); }
+  
+  .voice-summary {
+    padding: 1rem;
+    background: var(--sl-color-gray-6);
+    border-left: 4px solid var(--sl-color-accent);
+    margin: 1rem 0;
+  }
+
+  .test-btn {
+    background: var(--sl-color-accent);
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+  }
+  .test-btn:disabled {
+    background: var(--sl-color-gray-5);
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .has-voice { color: #4ade80 !important; font-weight: bold; }
+  .no-voice { color: #f87171 !important; }
+</style>
+
+<script>
+  const synth = window.speechSynthesis;
+  
+  function initVoiceDebug() {
+    const voices = synth.getVoices();
+    const summaryEl = document.getElementById('voice-summary');
+    const rows = document.querySelectorAll('tr[data-lang-code]');
+
+    if (summaryEl) {
+      summaryEl.innerHTML = `Nalezeno celkem <strong>${voices.length}</strong> systémových hlasů.`;
+    }
+
+    rows.forEach(row => {
+      const code = row.getAttribute('data-lang-code');
+      const infoCell = row.querySelector('.voice-info');
+      const btn = row.querySelector('.test-btn') as HTMLButtonElement;
+      
+      // Hledáme hlas, který začíná na náš kód (např. "cs", "en", "fr")
+      const matchingVoice = voices.find(v => 
+        v.lang.toLowerCase().replace('_', '-').startsWith(code || '')
+      );
+
+      if (matchingVoice && infoCell) {
+        infoCell.innerHTML = `<span class="has-voice">ANO</span> (${matchingVoice.name})`;
+      } else if (infoCell) {
+        infoCell.innerHTML = `<span class="no-voice">NE</span>`;
+        if (btn) btn.disabled = true;
+      }
+    });
+  }
+
+  // Chrome načítá hlasy asynchronně, Firefox hned. Musíme ošetřit oba případy.
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = initVoiceDebug;
+  }
+  initVoiceDebug();
+
+  // Logika přehrávání
+  document.querySelectorAll('.test-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const b = btn as HTMLButtonElement;
+      const text = b.getAttribute('data-text') || '';
+      const code = b.getAttribute('data-code') || 'en';
+      
+      synth.cancel(); // Zastavit předchozí pokusy
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = code;
+      
+      // Najdeme nejlepší hlas pro tento pokus
+      const voices = synth.getVoices();
+      const voice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(code.toLowerCase()));
+      if (voice) utterance.voice = voice;
+
+      synth.speak(utterance);
+    });
+  });
+</script>
