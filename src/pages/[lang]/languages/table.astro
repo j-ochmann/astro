@@ -17,7 +17,15 @@ const t = useTranslations(lang);
 
 const usedLangs = getUsedLanguagesData();
 const unusedLangs = getUnusedLanguagesData();
-const allLangs = [...usedLangs, ...unusedLangs] as any[];
+
+// Sjednotíme data a explicitně TypeScriptu řekneme, že usageCount existuje
+const allLangs = ([...usedLangs, ...unusedLangs] as any[]).map(l => ({
+  code: l.code,
+  nameEn: l.nameEn,
+  nameNative: l.nameNative,
+  type: l.type,
+  usageCount: Number(l.usageCount || 0) // Zajištění existence vlastnosti
+}));
 
 const labels = {
   code: 'ISO',
@@ -73,7 +81,7 @@ const labels = {
             </td>
             <td class="native">{l.nameNative}</td>
             <td class="type-cell"><span>{l.type}</span></td>
-            <td><strong>{l.usageCount || 0}</strong></td>
+            <td><strong>{l.usageCount}</strong></td>
           </tr>
         ))}
       </tbody>
@@ -82,7 +90,6 @@ const labels = {
 </StarlightPage>
 
 <style>
-  /* Reset Starlight marginů proti uskakování */
   .table-controls, .table-wrapper { margin-top: 0 !important; }
 
   .table-controls {
@@ -193,7 +200,6 @@ const labels = {
   if (searchInput && table && tableBody) {
     const rows = Array.from(tableBody.querySelectorAll('tr'));
 
-    // 1. Vyhledávání
     searchInput.addEventListener('input', () => {
       const term = searchInput.value.toLowerCase();
       rows.forEach(row => {
@@ -201,20 +207,31 @@ const labels = {
       });
     });
 
-    // 2. Řazení
     table.querySelectorAll('th[data-sort]').forEach(th => {
       th.addEventListener('click', () => {
         const col = th.getAttribute('data-sort');
         if (!col) return;
         const isAsc = th.classList.contains('asc');
+        
         const sortedRows = rows.sort((a, b) => {
           const dataA = JSON.parse(a.getAttribute('data-item') || '{}');
           const dataB = JSON.parse(b.getAttribute('data-item') || '{}');
           const valA = dataA[col];
           const valB = dataB[col];
-          if (typeof valA === 'number') return isAsc ? valB - valA : valA - valB;
-          return isAsc ? String(valB).localeCompare(String(valA)) : String(valA).localeCompare(String(valB));
+
+          // Oprava řazení pro čísla (usageCount)
+          if (col === 'usageCount') {
+            const nA = Number(valA) || 0;
+            const nB = Number(valB) || 0;
+            return isAsc ? nB - nA : nA - nB;
+          }
+
+          // Abecední řazení pro zbytek
+          return isAsc 
+            ? String(valB).localeCompare(String(valA)) 
+            : String(valA).localeCompare(String(valB));
         });
+
         table.querySelectorAll('th').forEach(h => h.classList.remove('asc', 'desc'));
         th.classList.toggle('asc', !isAsc);
         th.classList.toggle('desc', isAsc);
@@ -222,7 +239,6 @@ const labels = {
       });
     });
 
-    // 3. Export (JSON, CSV, XML, YAML)
     exportBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const type = btn.getAttribute('data-type');
@@ -248,7 +264,7 @@ const labels = {
         } else if (type === 'xml') {
           content = `<?xml version="1.0" encoding="UTF-8"?>\n<languages>\n` + 
             visibleData.map(obj => `  <language>\n${Object.entries(obj).map(([k, v]) => `    <${k}>${v}</${k}>`).join('\n')}\n  </language>`).join('\n') + 
-            `\n</languages>`;
+            `\n</currencies>`;
           mime = 'application/xml';
         }
 
