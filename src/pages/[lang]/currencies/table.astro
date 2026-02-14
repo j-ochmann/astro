@@ -7,12 +7,15 @@ import {
   useTranslations,
   type Country, 
 } from '@/content/config/i18n';
+
 export async function getStaticPaths() {
   return getI18nPaths();
 }
+
 const { lang } = Astro.params;
 const t = useTranslations(lang);
-// 1. Agregace dat o měnách ze všech zemí
+
+// 1. Agregace dat o měnách
 const allCountries = Object.values(countriesData) as Country[];
 const currencyMap = new Map<string, { code: string, countries: string[], usageCount: number }>();
 
@@ -23,8 +26,10 @@ allCountries.forEach(country => {
       currencyMap.set(code, { code, countries: [], usageCount: 0 });
     }
     const curr = currencyMap.get(code)!;
-    curr.countries.push(country.code);
-    curr.usageCount++;
+    if (!curr.countries.includes(country.code)) {
+      curr.countries.push(country.code);
+      curr.usageCount++;
+    }
   });
 });
 
@@ -34,26 +39,36 @@ const labels = {
   code: lang === 'cs' ? 'Kód měny' : 'Currency Code',
   usage: lang === 'cs' ? 'Počet zemí' : 'Countries Count',
   list: lang === 'cs' ? 'Používáno v' : 'Used in',
-  search: lang === 'cs' ? 'Hledat měnu...' : 'Search currency...'
+  search: lang === 'cs' ? 'Hledat měnu...' : 'Search currency...',
+  title: lang === 'cs' ? 'Tabulka měn' : 'Currencies Table'
 };
 ---
 
-<StarlightPage frontmatter={{ title: lang === 'cs' ? 'Přehled měn' : 'Currencies Overview', template: 'doc' }}>
+<StarlightPage frontmatter={{ title: labels.title, template: 'doc' }}>
   
   <div class="table-controls">
     <div class="search-box">
-      <input type="text" id="currencySearch" placeholder={labels.search} />
+      <input 
+        type="text" 
+        id="currencySearch" 
+        placeholder={labels.search} 
+        aria-label={labels.search}
+      />
     </div>
+    
     <div class="export-group">
+      <span class="export-label">Export:</span>
       <div class="export-buttons">
         <button class="export-btn" data-type="json">JSON</button>
         <button class="export-btn" data-type="csv">CSV</button>
+        <button class="export-btn" data-type="xml">XML</button>
+        <button class="export-btn" data-type="yaml">YAML</button>
       </div>
     </div>
   </div>
 
   <div class="table-wrapper">
-    <table class="currTable">
+    <table id="currencyTable">
       <thead>
         <tr>
           <th data-sort="code">{labels.code} <Icon name="lucide:arrow-up-down" /></th>
@@ -84,110 +99,182 @@ const labels = {
       </tbody>
     </table>
   </div>
-
 </StarlightPage>
 
 <style>
+  /* Reset Starlight marginů proti uskakování */
+  .table-controls, .table-wrapper { margin-top: 0 !important; }
+
   .table-controls {
-    display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;
-    background: var(--sl-color-gray-6); padding: 1rem; border: 1px solid var(--sl-color-hairline);
-    position: sticky; top: 0; z-index: 10; margin-bottom: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding: 1.25rem;
+    background: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-hairline);
   }
-  .search-box { flex: 1; min-width: 200px; }
+
+  .search-box { flex: 1; min-width: 250px; }
   .search-box input {
-    width: 100%; height: 2.2rem; padding: 0 1rem; background: var(--sl-color-bg);
-    color: var(--sl-color-white); border: 1px solid var(--sl-color-gray-4); border-radius: 4px;
+    width: 100%;
+    height: 2.2rem;
+    padding: 0 1rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-white);
+    border: 1px solid var(--sl-color-gray-4);
+    border-radius: 4px;
   }
-  .export-buttons { display: flex; gap: 1px; background: var(--sl-color-gray-4); border-radius: 4px; overflow: hidden; }
-  .export-btn { 
-    height: 2rem; border: none; padding: 0 0.75rem; background: var(--sl-color-gray-5); 
-    color: white; cursor: pointer; font-size: 0.7rem; font-weight: bold;
+
+  .export-group { display: flex; align-items: center; gap: 1rem; }
+  .export-label {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--sl-color-gray-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
+
+  .export-buttons {
+    display: flex;
+    background: var(--sl-color-gray-4);
+    border: 1px solid var(--sl-color-gray-4);
+    border-radius: 4px;
+    overflow: hidden;
+    gap: 1px;
+  }
+
+  .export-btn {
+    appearance: none;
+    border: none;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    padding: 0 0.85rem;
+    background: var(--sl-color-gray-5);
+    color: var(--sl-color-white);
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: background 0.2s ease;
+  }
+
   .export-btn:hover { background: var(--sl-color-accent-low); }
 
   .table-wrapper { overflow-x: auto; border: 1px solid var(--sl-color-hairline); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th { background: var(--sl-color-gray-6); padding: 0.75rem; text-align: left; cursor: pointer; border-bottom: 2px solid var(--sl-color-hairline); }
-  td { padding: 0.75rem; border-bottom: 1px solid var(--sl-color-hairline); vertical-align: middle; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 0; }
+  th {
+    background: var(--sl-color-gray-6);
+    padding: 1rem 0.75rem;
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--sl-color-hairline);
+  }
+
+  td { padding: 0.85rem 0.75rem; border-bottom: 1px solid var(--sl-color-hairline); vertical-align: middle; }
 
   .detail-link {
     display: inline-flex; align-items: center; gap: 0.4rem;
-    color: var(--sl-color-accent-high) !important; font-weight: bold; text-decoration: none;
+    color: var(--sl-color-accent-high) !important;
+    font-weight: 600; text-decoration: none !important;
   }
-  .detail-link:hover { text-decoration: underline; }
-  .detail-link svg { width: 12px; height: 12px; opacity: 0.6; }
+  .detail-link:hover { color: var(--sl-color-white) !important; }
+  .detail-link svg { width: 14px; height: 14px; opacity: 0.5; }
 
   .mono { font-family: var(--sl-font-mono); }
+  
   .flag-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .flag-list a { display: flex; align-items: center; transition: transform 0.1s ease; }
   .flag-list a:hover { transform: scale(1.2); }
 
-  /* Sort šipky */
+  th svg { width: 14px; height: 14px; margin-left: 4px; opacity: 0.4; transition: transform 0.2s; }
   th.asc svg { transform: rotate(180deg); opacity: 1; color: var(--sl-color-accent); }
   th.desc svg { transform: rotate(0deg); opacity: 1; color: var(--sl-color-accent); }
-  th svg { transition: transform 0.2s ease, opacity 0.2s ease; width: 14px; margin-left: 4px; opacity: 0.3; }
+
+  @media (max-width: 45rem) {
+    .table-controls { flex-direction: column; align-items: stretch; }
+  }
 </style>
 
 <script>
-  // Logika pro vyhledávání, řazení a export
   const searchInput = document.getElementById('currencySearch') as HTMLInputElement | null;
   const tableBody = document.getElementById('tableBody');
   const exportBtns = document.querySelectorAll('.export-btn');
 
-  // Search
-  searchInput?.addEventListener('input', () => {
-    const term = searchInput.value.toLowerCase();
-    tableBody?.querySelectorAll('tr').forEach(row => {
-      (row as HTMLElement).style.display = row.textContent?.toLowerCase().includes(term) ? '' : 'none';
-    });
-  });
+  if (tableBody) {
+    const rows = Array.from(tableBody.querySelectorAll('tr'));
 
-  // Sort
-  document.querySelectorAll('th[data-sort]').forEach(th => {
-    th.addEventListener('click', () => {
-      const col = th.getAttribute('data-sort') as string;
-      const rows = Array.from(tableBody?.querySelectorAll('tr') || []);
-      const isAsc = th.classList.contains('asc');
-
-      const sortedRows = rows.sort((a, b) => {
-        const dataA = JSON.parse(a.getAttribute('data-item') || '{}');
-        const dataB = JSON.parse(b.getAttribute('data-item') || '{}');
-        
-        if (typeof dataA[col] === 'number') {
-          return isAsc ? dataB[col] - dataA[col] : dataA[col] - dataB[col];
-        }
-        return isAsc ? dataB[col].localeCompare(dataA[col]) : dataA[col].localeCompare(dataB[col]);
+    // 1. Vyhledávání
+    searchInput?.addEventListener('input', () => {
+      const term = searchInput.value.toLowerCase();
+      rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
       });
-
-      th.closest('tr')?.querySelectorAll('th').forEach(h => h.classList.remove('asc', 'desc'));
-      th.classList.toggle('asc', !isAsc);
-      th.classList.toggle('desc', isAsc);
-      tableBody?.append(...sortedRows);
     });
-  });
 
-  // Export
-  exportBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const type = btn.getAttribute('data-type');
-      const data = Array.from(tableBody?.querySelectorAll('tr') || [])
-        .filter(r => (r as HTMLElement).style.display !== 'none')
-        .map(r => JSON.parse(r.getAttribute('data-item') || '{}'));
+    // 2. Řazení
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.getAttribute('data-sort');
+        if (!col) return;
+        const isAsc = th.classList.contains('asc');
 
-      if (type === 'json') {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'currencies.json';
-        a.click();
-      } else if (type === 'csv') {
-        const csv = ["Code,Usage", ...data.map(r => `${r.code},${r.usageCount}`)].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'currencies.csv';
-        a.click();
-      }
+        const sortedRows = rows.sort((a, b) => {
+          const dataA = JSON.parse(a.getAttribute('data-item') || '{}');
+          const dataB = JSON.parse(b.getAttribute('data-item') || '{}');
+          const valA = dataA[col];
+          const valB = dataB[col];
+          if (typeof valA === 'number') return isAsc ? valB - valA : valA - valB;
+          return isAsc ? String(valB).localeCompare(String(valA)) : String(valA).localeCompare(String(valB));
+        });
+
+        th.closest('tr')?.querySelectorAll('th').forEach(h => h.classList.remove('asc', 'desc'));
+        th.classList.toggle('asc', !isAsc);
+        th.classList.toggle('desc', isAsc);
+        tableBody.append(...sortedRows);
+      });
     });
-  });
+
+    // 3. Export
+    exportBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-type');
+        const visibleData = rows
+          .filter(r => r.style.display !== 'none')
+          .map(r => JSON.parse(r.getAttribute('data-item') || '{}'));
+
+        if (visibleData.length === 0) return;
+
+        let content = '';
+        let mime = 'text/plain';
+
+        if (type === 'json') {
+          content = JSON.stringify(visibleData, null, 2);
+          mime = 'application/json';
+        } else if (type === 'csv') {
+          content = ["Code,UsageCount,Countries", ...visibleData.map(r => `${r.code},${r.usageCount},"${r.countries.join(',')}"`)].join('\n');
+          mime = 'text/csv';
+        } else if (type === 'yaml') {
+          content = visibleData.map(obj => Object.entries(obj).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n')).join('\n---\n');
+          mime = 'text/yaml';
+        } else if (type === 'xml') {
+          content = `<?xml version="1.0" encoding="UTF-8"?>\n<currencies>\n` + 
+            visibleData.map(obj => `  <currency>\n${Object.entries(obj).map(([k, v]) => `    <${k}>${v}</${k}>`).join('\n')}\n  </currency>`).join('\n') + 
+            `\n</currencies>`;
+          mime = 'application/xml';
+        }
+
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `currencies_export.${type}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    });
+  }
 </script>
