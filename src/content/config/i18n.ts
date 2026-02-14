@@ -980,14 +980,9 @@ export const uiStrings = {
 }
 } as const;
 
-// Použití v komponentách:
-// const t = useTranslations(lang);
-// <h2>{t('geo.nav.languages')}</h2>
-
 export function useTranslations(lang: string) {
   const translations = uiStrings[lang as keyof typeof uiStrings] || uiStrings.en;
   const countryNames = countryTranslations[lang as keyof typeof countryTranslations] || countryTranslations.en;
-  
   // Pokud klíč neexistuje v UI strings ani v Country strings, vrátí klíč samotný
   return (key: string) => (translations as any)[key] || (countryNames as any)[key] || key;
 }
