@@ -3,86 +3,168 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { 
   getI18nPaths, 
   countriesData, 
-  languages, 
-  iso_639_3, 
-  useTranslations 
+  useTranslations,
+  getUsedLanguagesData,
+  getUnusedLanguagesData
 } from '@/content/config/i18n';
 
 export async function getStaticPaths() {
   const paths = getI18nPaths();
-  const allCodes = new Set([
-    ...Object.keys(languages),
-    ...Object.keys(iso_639_3)
-  ]);
+  // Spojíme všechna data, abychom měli cesty pro každý existující jazyk
+  const allAvailable = [...getUsedLanguagesData(), ...getUnusedLanguagesData()];
 
   return paths.flatMap(p => 
-    Array.from(allCodes).map(code => ({
-      params: { lang: p.params.lang, code: code.toLowerCase() }
+    allAvailable.map(l => ({
+      params: { lang: p.params.lang, code: l.code.toLowerCase() },
+      props: { lang: p.params.lang, languageInfo: l }
     }))
   );
 }
 
 const { lang, code } = Astro.params;
+const { languageInfo } = Astro.props;
 const t = useTranslations(lang);
 
-// Lookup jazyka
-const meta = (languages as any)[code] || (iso_639_3 as any)[code];
-const name = meta?.en || code.toUpperCase();
-const native = meta?.label || '—';
+const currentCodeUpper = code.toUpperCase();
 
-// Najít země, které tento jazyk používají
+// 1. Získat POUŽÍVANÉ jazyky pro navigaci (aby se nelistovalo tisíci prázdnými)
+// Seřadíme je podle anglického jména, stejně jako v tabulce
+const usedLangs = getUsedLanguagesData().sort((a, b) => a.nameEn.localeCompare(b.nameEn));
+
+// 2. Najít sousedy v navigaci
+const currentIndex = usedLangs.findIndex(l => l.code.toUpperCase() === currentCodeUpper);
+const prevLang = currentIndex > 0 ? usedLangs[currentIndex - 1] : null;
+const nextLang = currentIndex < usedLangs.length - 1 ? usedLangs[currentIndex + 1] : null;
+
+// 3. Najít země používající tento jazyk
 const relatedCountries = Object.values(countriesData).filter(c => 
-  c.language?.map(l => l.toLowerCase()).includes(code.toLowerCase())
+  c.language?.map(l => l.toUpperCase()).includes(currentCodeUpper)
 );
+
+// 4. Název pro nadpis (pokud jsme na jazyku, co není v usedLangs, vezmeme data z props)
+const displayName = languageInfo?.nameEn || currentCodeUpper;
 ---
 
-<StarlightPage frontmatter={{ title: `${name} (${code.toUpperCase()})`, template: 'doc' }}>
+<StarlightPage frontmatter={{ title: `${displayName} (${currentCodeUpper})`, template: 'doc' }}>
   
   <div class="meta-grid">
-    <div class="card">
+    <div class="meta-card">
       <span class="label">{lang === 'cs' ? 'Nativní název' : 'Native Name'}</span>
-      <span class="value">{native}</span>
+      <span class="value">{languageInfo?.nameNative || '—'}</span>
     </div>
-    <div class="card">
+    <div class="meta-card">
       <span class="label">ISO 639</span>
-      <span class="value mono">{code.toUpperCase()}</span>
+      <span class="value mono">{currentCodeUpper}</span>
     </div>
-    {meta?.type && (
-      <div class="card">
+    <div class="meta-card">
         <span class="label">Typ</span>
-        <span class="value">{meta.type === 'C' ? 'Constructed' : meta.type}</span>
-      </div>
-    )}
+        <span class="value">{languageInfo?.type || '—'}</span>
+    </div>
   </div>
 
   <h2 class="section-title">{lang === 'cs' ? 'Země používající tento jazyk' : 'Countries using this language'}</h2>
   
-  <div class="country-list">
+  <div class="country-grid">
     {relatedCountries.length > 0 ? (
       relatedCountries.map(country => (
-        <a href={`/${lang}/countries/${country.code.toLowerCase()}/`} class="country-link">
+        <a href={`/${lang}/countries/${country.code.toLowerCase()}/`} class="country-card">
           <span class:list={['fi', `fi-${country.code.toLowerCase()}`]}></span>
           <span>{t(country.code as any) !== country.code ? t(country.code as any) : country.name}</span>
         </a>
       ))
     ) : (
-      <p>{lang === 'cs' ? 'Žádné záznamy.' : 'No records found.'}</p>
+      <p class="no-records">{lang === 'cs' ? 'V atlasu zatím nejsou žádné země s tímto jazykem.' : 'No countries with this language in the atlas yet.'}</p>
     )}
   </div>
+
+  <div class="nav-grid">
+    {prevLang ? (
+      <a href={`/${lang}/languages/${prevLang.code.toLowerCase()}/`} class="nav-item prev">
+        <span class="nav-label">← {t('geo.nav.prev') || 'Předchozí'}</span>
+        <span class="nav-title">{prevLang.nameEn}</span>
+      </a>
+    ) : <div class="nav-empty" />}
+
+    <a href={`/${lang}/languages/`} class="nav-item meta-nav">
+      <span class="nav-label">Grid</span>
+      <span class="nav-title">Index</span>
+    </a>
+
+    <a href={`/${lang}/languages/table/`} class="nav-item meta-nav">
+      <span class="nav-label">Data</span>
+      <span class="nav-title">Tabulka</span>
+    </a>
+
+    {nextLang ? (
+      <a href={`/${lang}/languages/${nextLang.code.toLowerCase()}/`} class="nav-item next">
+        <span class="nav-label">{t('geo.nav.next') || 'Další'} →</span>
+        <span class="nav-title">{nextLang.nameEn}</span>
+      </a>
+    ) : <div class="nav-empty" />}
+  </div>
+
 </StarlightPage>
 
 <style>
-  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-  .card { padding: 1rem; background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline); border-radius: 0.5rem; display: flex; flex-direction: column; }
-  .label { font-size: 0.8rem; color: var(--sl-color-gray-3); text-transform: uppercase; }
-  .value { font-size: 1.2rem; font-weight: bold; }
-  .mono { font-family: var(--sl-font-mono); }
-  .section-title { margin-top: 2rem; border-bottom: 1px solid var(--sl-color-hairline); padding-bottom: 0.5rem; }
-  .country-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
-  .country-link { 
-    display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; 
-    background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline); border-radius: 0.5rem;
-    text-decoration: none; color: inherit !important; transition: all 0.2s;
+  /* Reset odskoků Starlight */
+  .meta-grid, .section-title, .country-grid { margin-top: 0 !important; }
+
+  .meta-grid { 
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+    gap: 1.5rem; margin-bottom: 2.5rem;
   }
-  .country-link:hover { border-color: var(--sl-color-accent); background: var(--sl-color-gray-5); transform: translateY(-2px); }
+  
+  .meta-card { 
+    margin-top: 0 !important; padding: 1.5rem; background: var(--sl-color-gray-6); 
+    border: 1px solid var(--sl-color-hairline); border-radius: 4px; 
+    display: flex; flex-direction: column; gap: 0.35rem;
+  }
+
+  .label { font-size: 0.7rem; color: var(--sl-color-accent-high); text-transform: uppercase; font-weight: bold; }
+  .value { font-size: 1.25rem; font-weight: 500; color: var(--sl-color-white); }
+  .mono { font-family: var(--sl-font-mono); }
+
+  .section-title { 
+    margin-bottom: 1.5rem !important; font-size: 0.9rem; color: var(--sl-color-gray-2); 
+    text-transform: uppercase; border-bottom: 1px solid var(--sl-color-gray-5); padding-bottom: 0.5rem; 
+  }
+
+  .country-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+    gap: 0.75rem;
+    margin-top: 0 !important;
+  }
+
+  .country-card { 
+    display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.8rem; 
+    background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline); border-radius: 4px;
+    text-decoration: none !important; color: var(--sl-color-white) !important; font-size: 0.9rem;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .country-card:hover { border-color: var(--sl-color-accent); background: var(--sl-color-gray-5); }
+
+  .no-records { color: var(--sl-color-gray-3); font-style: italic; margin-top: 1rem !important; }
+
+  /* Navigace */
+  .nav-grid { 
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; 
+    margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--sl-color-hairline);
+  }
+  .nav-item { 
+    display: flex; flex-direction: column; padding: 1rem; 
+    border: 1px solid var(--sl-color-hairline); border-radius: 0.5rem; 
+    text-decoration: none !important; transition: border-color 0.2s, background 0.2s;
+  }
+  .nav-item:hover { border-color: var(--sl-color-accent); background: var(--sl-color-gray-6); }
+  .nav-label { font-size: 0.7rem; color: var(--sl-color-gray-3); text-transform: uppercase; }
+  .nav-title { font-weight: bold; color: var(--sl-color-accent-high); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .next { text-align: right; }
+  .meta-nav { text-align: center; }
+  .nav-empty { visibility: hidden; }
+
+  @media (max-width: 50rem) { 
+    .nav-grid { grid-template-columns: 1fr 1fr; }
+    .country-grid { grid-template-columns: 1fr; }
+  }
 </style>

@@ -3,9 +3,9 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { 
   getI18nPaths, 
   countriesData, 
+  getAllLanguages, 
   useTranslations,
-  getUsedLanguagesData, // Použijeme tvou novou funkci
-  type Country 
+  getLanguageLabel 
 } from '@/content/config/i18n';
 
 export async function getStaticPaths() {
@@ -15,48 +15,53 @@ export async function getStaticPaths() {
 const { lang } = Astro.params;
 const t = useTranslations(lang);
 
-// Získáme už zpracovaná data o jazycích (včetně iso_639_3 a názvů)
-const usedLanguagesData = getUsedLanguagesData();
-const allCountries = Object.values(countriesData) as Country[];
+const allLanguages = getAllLanguages();
+const allCountries = Object.values(countriesData);
 
-const languageGroups = usedLanguagesData.map(langInfo => {
-  // langInfo už obsahuje nameEn nebo nameNative díky getLangInfo v i18n.ts
-  const label = langInfo.nameEn !== 'Unknown' ? langInfo.nameEn : langInfo.code;
+// Připravit data: Jazyk -> Seznam zemí
+const languageGroups = allLanguages.map(langCode => {
+  const users = allCountries.filter(c => c.language && c.language.includes(langCode));
   
-  // Najdeme země pro daný jazyk
-  const speakers = allCountries.filter(c => c.language && c.language.includes(langInfo.code));
-  
-  // Seřadíme země podle přeloženého názvu
-  speakers.sort((a, b) => {
-    const nameA = t(a.code as any) || a.name;
-    const nameB = t(b.code as any) || b.name;
+  // Seřadit země podle lokalizovaného názvu
+  users.sort((a, b) => {
+    const nameA = t(a.code as any) !== a.code ? t(a.code as any) : a.name;
+    const nameB = t(b.code as any) !== b.code ? t(b.code as any) : b.name;
     return nameA.localeCompare(nameB, lang);
   });
 
   return {
-    code: langInfo.code,
-    label: label,
-    countries: speakers
+    code: langCode,
+    label: getLanguageLabel(langCode, lang),
+    countries: users
   };
-}).sort((a, b) => a.label.localeCompare(b.label, lang));
+}).sort((a, b) => a.label.localeCompare(b.label, lang)); // Řazení skupin podle názvu jazyka
+
 ---
 
 <StarlightPage 
   frontmatter={{ 
     title: String(t('geo.nav.languages') || 'Jazyky'), 
-    template: 'doc'
+    template: 'doc',
+    description: 'Přehled světových jazyků a zemí, kde se jimi mluví.'
   }}
 >
-  <div class="languages-list">
+  <div class="languages-container">
     {languageGroups.map(group => (
-      <section class="lang-group">
-        <h2 id={group.code}>
-          {group.label} <span class="code">({group.code})</span>
-        </h2>
+      <section class="language-group">
+        <div class="group-header">
+          <h2 id={group.code.toLowerCase()}>
+            <a href={`/${lang}/languages/${group.code.toLowerCase()}/`} class="language-title-link">
+              {group.label}
+            </a>
+          </h2>
+          <span class="country-count">
+            {group.countries.length} {lang === 'cs' ? 'zemí' : 'countries'}
+          </span>
+        </div>
+        
         <div class="country-grid">
           {group.countries.map(country => {
-            const countryKey = country.code as any;
-            const displayName = t(countryKey) !== country.code ? t(countryKey) : country.name;
+            const displayName = t(country.code as any) !== country.code ? t(country.code as any) : country.name;
             return (
               <a href={`/${lang}/countries/${country.code.toLowerCase()}/`} class="country-card">
                 <span class:list={['fi', `fi-${country.code.toLowerCase()}`]}></span>
@@ -71,17 +76,91 @@ const languageGroups = usedLanguagesData.map(langInfo => {
 </StarlightPage>
 
 <style>
-  /* Styl zůstává stejný, je v pořádku */
-  .lang-group { margin-bottom: 3rem; }
-  h2 { border-bottom: 1px solid var(--sl-color-hairline); padding-bottom: 0.5rem; margin-bottom: 1rem; }
-  .code { font-size: 0.6em; color: var(--sl-color-gray-3); font-weight: normal; vertical-align: middle; }
-  .country-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; }
-  .country-card {
-    display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem;
-    background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline);
-    border-radius: 0.5rem; text-decoration: none; color: var(--sl-color-white) !important;
-    transition: all 0.2s ease; font-size: 0.9rem;
+  .languages-container {
+    margin-top: 0 !important;
   }
-  .country-card:hover { background: var(--sl-color-gray-5); border-color: var(--sl-color-accent); transform: translateY(-2px); }
-  .fi { flex-shrink: 0; }
+
+  .language-group {
+    margin-bottom: 3.5rem;
+    margin-top: 0 !important;
+  }
+
+  /* Hlavička s čistým proklikem */
+  .group-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--sl-color-gray-5);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  h2 {
+    margin-top: 0 !important;
+    border: none !important;
+  }
+
+  .language-title-link {
+    display: inline-block;
+    color: var(--sl-color-white) !important;
+    text-decoration: none !important;
+    font-size: 1.8rem;
+    transition: color 0.2s ease;
+  }
+
+  .language-title-link:hover {
+    color: var(--sl-color-accent-high) !important;
+  }
+
+  .country-count {
+    font-size: 0.85rem;
+    color: var(--sl-color-gray-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Grid zemí */
+  .country-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0 !important;
+  }
+
+  .country-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.8rem;
+    background: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-hairline);
+    border-radius: 4px;
+    text-decoration: none !important;
+    color: var(--sl-color-white) !important;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    font-size: 0.9rem;
+  }
+
+  .country-card:hover {
+    background: var(--sl-color-gray-5);
+    border-color: var(--sl-color-accent);
+  }
+
+  .fi {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 50rem) {
+    .country-grid {
+      grid-template-columns: 1fr;
+    }
+    .language-title-link {
+        font-size: 1.5rem;
+    }
+    .group-header {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
 </style>

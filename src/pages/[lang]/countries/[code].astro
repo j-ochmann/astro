@@ -27,10 +27,10 @@ export async function getStaticPaths() {
 const { country, lang } = Astro.props;
 const t = useTranslations(lang);
 
-// Logika pro sousední země (příprava)
+// Sousední země
 const neighbors = country.borders?.map(code => countriesData[code as keyof typeof countriesData]).filter(Boolean) || [];
 
-// Logika pro navigaci
+// Navigace
 const allCountryCodes = Object.keys(countriesData).sort();
 const currentIndex = allCountryCodes.indexOf(country.code);
 const prevCode = allCountryCodes[currentIndex - 1];
@@ -41,8 +41,10 @@ const translation = t(countryCodeUpper as any);
 const localizedName = (translation && translation !== countryCodeUpper) ? translation : country.name;
 const continentKey = `geo.continent.${country.continent.toLowerCase().replace(/\s+/g, '-')}` as any;
 
-// Odkaz na Wikipedii
 const wikipediaUrl = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(localizedName)}`;
+
+// Příprava časového pásma (předpokládáme, že v datech máš country.timezone, jinak defaultujeme na UTC)
+const timeZone = country.timezone || 'UTC';
 ---
 
 <StarlightPage frontmatter={{ 
@@ -77,7 +79,16 @@ const wikipediaUrl = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(lo
     <div class="stats-card">
       <h3>{t('geo.detail.basicInfo') || 'Základní informace'}</h3>
       <ul>
-        <li><strong>{t('geo.stats.capital') || 'Capital'}:</strong> <span>{country.capital ?? '—'}</span></li>
+        <li>
+            <strong>{t('geo.stats.capital') || 'Capital'}:</strong> 
+            <span class="capital-box">
+                {country.capital ?? '—'}
+                <span class="live-time" data-timezone={timeZone}>
+                    <span class="time-string">--:--:--</span>
+                    <span class="date-string">--. --. ----</span>
+                </span>
+            </span>
+        </li>
         <li><strong>{t('geo.stats.population') || 'Population'}:</strong> <span>{country.population.toLocaleString(lang)}</span></li>
         <li><strong>{t('geo.stats.continent') || 'Continent'}:</strong> <span>{t(continentKey) || country.continent}</span></li>
         <li><strong>{t('geo.stats.phone') || 'Phone'}:</strong> <span>{country.phone.map(p => `+${p}`).join(', ')}</span></li>
@@ -149,13 +160,38 @@ const wikipediaUrl = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(lo
 
 </StarlightPage>
 
-<style>
-  /* Fix uskakování */
-  .stats-grid, .country-hero { margin-top: 0 !important; }
+<script>
+  function updateTime() {
+    const timeElements = document.querySelectorAll('.live-time');
+    timeElements.forEach(el => {
+      const tz = el.getAttribute('data-timezone') || 'UTC';
+      const now = new Date();
+      
+      try {
+        const timeStr = now.toLocaleTimeString('cs-CZ', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const dateStr = now.toLocaleDateString('cs-CZ', { timeZone: tz, day: 'numeric', month: 'long', year: 'numeric' });
+        
+        const timeSpan = el.querySelector('.time-string');
+        const dateSpan = el.querySelector('.date-string');
+        
+        if (timeSpan) timeSpan.textContent = timeStr;
+        if (dateSpan) dateSpan.textContent = dateStr;
+      } catch (e) {
+        console.error("Invalid timezone:", tz);
+      }
+    });
+  }
 
+  // Spustit hned a pak každou sekundu
+  updateTime();
+  setInterval(updateTime, 1000);
+</script>
+
+<style>
   .country-hero {
     display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start;
     gap: 2rem; margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--sl-color-hairline);
+    margin-top: 0 !important;
   }
   .names-stack { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
   .native-name { font-size: 1.25rem; color: var(--sl-color-gray-2); margin: 0 !important; }
@@ -163,60 +199,34 @@ const wikipediaUrl = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(lo
   .secondary-name, .code-line { font-size: 1rem; color: var(--sl-color-gray-3); margin: 0 !important; }
   .mono { font-family: var(--sl-font-mono); color: var(--sl-color-accent); font-weight: bold; }
   
-  .wiki-link { 
-    font-size: 0.85rem; color: var(--sl-color-accent-high) !important; 
-    text-decoration: none; margin-top: 0.5rem; width: fit-content;
-  }
+  .wiki-link { font-size: 0.85rem; color: var(--sl-color-accent-high) !important; text-decoration: none; margin-top: 0.5rem; width: fit-content; }
   .wiki-link:hover { text-decoration: underline; }
 
-  .large-flag { 
-    display: block; width: 240px; height: auto; aspect-ratio: 4/3; 
-    border: 1px solid var(--sl-color-gray-5); background-size: cover;
-  }
+  .large-flag { display: block; width: 240px; height: auto; aspect-ratio: 4/3; border: 1px solid var(--sl-color-gray-5); background-size: cover; }
 
-  .stats-grid { 
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-    gap: 1.5rem; align-items: stretch; 
-  }
-  .stats-card { 
-    margin-top: 0 !important; display: flex; flex-direction: column; 
-    background: var(--sl-color-gray-6); padding: 1.5rem; 
-    border: 1px solid var(--sl-color-hairline); border-radius: 4px; 
-  }
-  .stats-card h3 { 
-    margin: 0 0 1rem 0 !important; font-size: 0.9rem; color: var(--sl-color-gray-2); 
-    text-transform: uppercase; border-bottom: 1px solid var(--sl-color-gray-5); padding-bottom: 0.5rem; 
-  }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; align-items: stretch; margin-top: 0 !important; }
+  .stats-card { margin-top: 0 !important; display: flex; flex-direction: column; background: var(--sl-color-gray-6); padding: 1.5rem; border: 1px solid var(--sl-color-hairline); border-radius: 4px; }
+  .stats-card h3 { margin: 0 0 1rem 0 !important; font-size: 0.9rem; color: var(--sl-color-gray-2); text-transform: uppercase; border-bottom: 1px solid var(--sl-color-gray-5); padding-bottom: 0.5rem; }
   .stats-card ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1.25rem; }
   .stats-card li { display: flex; flex-direction: column; gap: 0.35rem; margin: 0 !important; }
   .stats-card strong { color: var(--sl-color-accent-high); font-size: 0.7rem; text-transform: uppercase; }
 
+  .capital-box { display: flex; flex-direction: column; gap: 0.25rem; }
+  .live-time { display: flex; flex-direction: column; font-family: var(--sl-font-mono); line-height: 1.2; }
+  .time-string { font-size: 1.1rem; color: var(--sl-color-white); font-weight: bold; }
+  .date-string { font-size: 0.75rem; color: var(--sl-color-gray-3); }
+
   .list-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem; }
-  .tag { 
-    display: inline-block; background: var(--sl-color-gray-5); padding: 0.25rem 0.75rem; 
-    font-size: 0.85rem; border-radius: 3px; color: var(--sl-color-white) !important; 
-    text-decoration: none !important; transition: background 0.2s; 
-  }
+  .tag { display: inline-block; background: var(--sl-color-gray-5); padding: 0.25rem 0.75rem; font-size: 0.85rem; border-radius: 3px; color: var(--sl-color-white) !important; text-decoration: none !important; transition: background 0.2s; }
   .tag:hover { background: var(--sl-color-gray-4); }
 
   .neighbors-section { margin-top: 3rem; }
   .neighbors-section h3 { font-size: 0.9rem; text-transform: uppercase; color: var(--sl-color-gray-2); margin-bottom: 1rem !important; }
   .neighbor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
-  .neighbor-link { 
-    display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; 
-    background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline); 
-    border-radius: 4px; text-decoration: none; color: inherit !important; font-size: 0.85rem;
-  }
+  .neighbor-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline); border-radius: 4px; text-decoration: none; color: inherit !important; font-size: 0.85rem; }
 
-  .nav-grid { 
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; 
-    margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--sl-color-hairline);
-  }
-  .nav-item { 
-    display: flex; flex-direction: column; padding: 1rem; 
-    border: 1px solid var(--sl-color-hairline); border-radius: 0.5rem; 
-    text-decoration: none !important; transition: border-color 0.2s;
-  }
+  .nav-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--sl-color-hairline); }
+  .nav-item { display: flex; flex-direction: column; padding: 1rem; border: 1px solid var(--sl-color-hairline); border-radius: 0.5rem; text-decoration: none !important; transition: border-color 0.2s; }
   .nav-item:hover { border-color: var(--sl-color-accent); background: var(--sl-color-gray-6); }
   .nav-label { font-size: 0.7rem; color: var(--sl-color-gray-3); text-transform: uppercase; }
   .nav-title { font-weight: bold; color: var(--sl-color-accent-high); }
@@ -225,7 +235,6 @@ const wikipediaUrl = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(lo
 
   @media (max-width: 50rem) { 
     .country-hero { flex-direction: column-reverse; gap: 1.5rem; }
-    .flag-container { width: 100%; }
     .large-flag { width: 100%; height: auto; }
     .nav-grid { grid-template-columns: 1fr 1fr; }
     .neighbor-grid { grid-template-columns: 1fr; }
