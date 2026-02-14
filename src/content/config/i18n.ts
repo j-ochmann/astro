@@ -37,9 +37,9 @@ export function getFlagCode(lang_id: string) {
 }
 
 export const languages = {
-  aa: { order:   1, iso_639_1: 'aa', en: 'Afar',        label: 'Afar' },
+  aa: { order:   1, iso_639_1: 'aa', en: 'Afar',        label: 'Qafár af' },
   ab: { order:   2, iso_639_1: 'ab', en: 'Abkhazian',   label: 'Аҧсуа' },
-  ae: { order:   3, iso_639_1: 'ae', en: 'Avestan',     label: 'Avesta' },
+  ae: { order:   3, iso_639_1: 'ae', en: 'Avestan',     label: 'Avesta', type: 'H' },
   af: { order:   4, iso_639_1: 'af', en: 'Afrikaans',   label: 'Afrikaans' },
   ak: { order:   5, iso_639_1: 'ak', en: 'Akan',        label: 'Akana' },
   am: { order:   6, iso_639_1: 'am', en: 'Amharic',     label: 'አማርኛ' },
@@ -64,7 +64,7 @@ export const languages = {
   co: { order:  25, iso_639_1: 'co', en: 'Corsican',    label: 'Corsu' },
   cr: { order:  26, iso_639_1: 'cr', en: 'Cree',        label: 'Nehiyawewin' },
   cs: { order:  27, iso_639_1: 'cs', en: 'Czech',       label: 'Čeština' },
-  cu: { order:  28, iso_639_1: 'cu', en: 'Church Slavic',    label: 'Словѣньскъ' },
+  cu: { order:  28, iso_639_1: 'cu', en: 'Church Slavic',    label: 'Словѣньскъ', type: 'H' },
   cv: { order:  29, iso_639_1: 'cv', en: 'Chuvash',     label: 'Чӑваш' },
   cy: { order:  30, iso_639_1: 'cy', en: 'Welsh',       label: 'Cymraeg' },
   da: { order:  31, iso_639_1: 'da', en: 'Danish',      label: 'Dansk' },
@@ -74,7 +74,7 @@ export const languages = {
   ee: { order:  35, iso_639_1: 'ee', en: 'Ewe',         label: 'Eʋegbe' },
   el: { order:  36, iso_639_1: 'el', en: 'Greek',       label: 'Ελληνικά' },
   en: { order:  37, iso_639_1: 'en', en: 'English',     label: 'English' },
-  eo: { order:  38, iso_639_1: 'eo', en: 'Esperanto',   label: 'Esperanto' },
+  eo: { order:  38, iso_639_1: 'eo', en: 'Esperanto',   label: 'Esperanto', type: 'C' },
   es: { order:  39, iso_639_1: 'es', en: 'Spanish',     label: 'Español' },
   et: { order:  40, iso_639_1: 'et', en: 'Estonian',    label: 'Eesti' },
   eu: { order:  41, iso_639_1: 'eu', en: 'Basque',      label: 'Euskara' },
@@ -100,13 +100,13 @@ export const languages = {
   hu: { order:  61, iso_639_1: 'hu', en: 'Hungarian',   label: 'Magyar' },
   hy: { order:  62, iso_639_1: 'hy', en: 'Armenian',    label: 'Հայերեն' },
   hz: { order:  63, iso_639_1: 'hz', en: 'Herero',      label: 'Otjiherero' },
-  ia: { order:  64, iso_639_1: 'ia', en: 'Interlingua', label: 'Interlingua' },
+  ia: { order:  64, iso_639_1: 'ia', en: 'Interlingua', label: 'Interlingua', type: 'C' },
   id: { order:  65, iso_639_1: 'id', en: 'Indonesian',  label: 'Bahasa Indonesia' },
-  ie: { order:  66, iso_639_1: 'ie', en: 'Interlingue', label: 'Interlingue' },
+  ie: { order:  66, iso_639_1: 'ie', en: 'Interlingue', label: 'Interlingue', type: 'C' },
   ig: { order:  67, iso_639_1: 'ig', en: 'Igbo',        label: 'Asụsụ Igbo' },
   ii: { order:  68, iso_639_1: 'ii', en: 'Sichuan Yi',  label: 'ꆈꌠ꒿' },
   ik: { order:  69, iso_639_1: 'ik', en: 'Inupiaq',     label: 'Iñupiaq' },
-  io: { order:  70, iso_639_1: 'io', en: 'Ido',         label: 'Ido' },
+  io: { order:  70, iso_639_1: 'io', en: 'Ido',         label: 'Ido', type: 'C' },
   is: { order:  71, iso_639_1: 'is', en: 'Icelandic',   label: 'Íslenska' },
   it: { order:  72, iso_639_1: 'it', en: 'Italian',     label: 'Italiano' },
   iu: { order:  73, iso_639_1: 'iu', en: 'Inuktitut',   label: 'ᐃᓄᒃᑎᑐᑦ' },
@@ -127,7 +127,7 @@ export const languages = {
   kv: { order:  88, iso_639_1: 'kv', en: 'Komi',        label: 'Коми' },
   kw: { order:  89, iso_639_1: 'kw', en: 'Cornish',     label: 'Kernewek' },
   ky: { order:  90, iso_639_1: 'ky', en: 'Kirghiz',     label: 'Кыргызча' },
-  la: { order:  91, iso_639_1: 'la', en: 'Latin',       label: 'Latina' },
+  la: { order:  91, iso_639_1: 'la', en: 'Latin',       label: 'Latina', type: 'H' },
   lb: { order:  92, iso_639_1: 'lb', en: 'Luxembourgish', label: 'Lëtzebuergesch' },
   lg: { order:  93, iso_639_1: 'lg', en: 'Ganda',         label: 'Luganda' },
   li: { order:  94, iso_639_1: 'li', en: 'Limburgish',    label: 'Limburgs' },
@@ -163,7 +163,7 @@ export const languages = {
   or: { order: 124, iso_639_1: 'or', en: 'Oriya',        label: 'ଓଡ଼ିଆ' },
   os: { order: 125, iso_639_1: 'os', en: 'Ossetian',     label: 'Ирон' },
   pa: { order: 126, iso_639_1: 'pa', en: 'Panjabi',      label: 'ਪੰਜਾਬੀ' },
-  pi: { order: 127, iso_639_1: 'pi', en: 'Pali',         label: 'पाळि' },
+  pi: { order: 127, iso_639_1: 'pi', en: 'Pali',         label: 'पाळि', type: 'H' },
   pl: { order: 128, iso_639_1: 'pl', en: 'Polish',       label: 'Polski' },
   ps: { order: 129, iso_639_1: 'ps', en: 'Pashto',       label: 'پښتو' },
   pt: { order: 130, iso_639_1: 'pt', en: 'Portuguese',   label: 'Português' },
@@ -173,7 +173,7 @@ export const languages = {
   ro: { order: 134, iso_639_1: 'ro', en: 'Romanian',     label: 'Română' },
   ru: { order: 135, iso_639_1: 'ru', en: 'Russian',      label: 'Русский' },
   rw: { order: 136, iso_639_1: 'rw', en: 'Kinyarwanda',  label: 'Ikinyarwanda' },
-  sa: { order: 137, iso_639_1: 'sa', en: 'Sanskrit',     label: 'संस्कृतम्' },
+  sa: { order: 137, iso_639_1: 'sa', en: 'Sanskrit',     label: 'संस्कृतम्', type: 'H' },
   sc: { order: 138, iso_639_1: 'sc', en: 'Sardinian',    label: 'Sardu' },
   sd: { order: 139, iso_639_1: 'sd', en: 'Sindhi',       label: 'سنڌي' },
   se: { order: 140, iso_639_1: 'se', en: 'Northern Sami',   label: 'Davvisámegiella' },
@@ -211,7 +211,7 @@ export const languages = {
   uz: { order: 172, iso_639_1: 'uz', en: 'Uzbek',        label: 'Oʻzbekcha' },
   ve: { order: 173, iso_639_1: 've', en: 'Venda',        label: 'Tshivenda' },
   vi: { order: 174, iso_639_1: 'vi', en: 'Vietnamese',   label: 'Tiếng Việt' },
-  vo: { order: 175, iso_639_1: 'vo', en: 'Volapük',      label: 'Volapük' },
+  vo: { order: 175, iso_639_1: 'vo', en: 'Volapük',      label: 'Volapük', type: 'C' },
   wa: { order: 176, iso_639_1: 'wa', en: 'Walloon',      label: 'Walon' },
   wo: { order: 177, iso_639_1: 'wo', en: 'Wolof',        label: 'Wollof' },
   xh: { order: 178, iso_639_1: 'xh', en: 'Xhosa',        label: 'isiXhosa' },
@@ -222,11 +222,121 @@ export const languages = {
   zu: { order: 183, iso_639_1: 'zu', en: 'Zulu',         label: 'isiZulu' }
 };
 
+
+export const iso_639_3 = {
+//"aar":{"order":1,"iso_639_3":"aar","en":"Afar","label":"Qafár af"},
+"acf":{"order":2,"iso_639_3":"acf","en":"Saint Lucian Creole French","label":"Kwéyòl"},
+"arz":{"order":3,"iso_639_3":"arz","en":"Egyptian Arabic","label":"مصرى"},
+"bci":{"order":4,"iso_639_3":"bci","en":"Baoulé","label":"Baule"},
+"bem":{"order":5,"iso_639_3":"bem","en":"Bemba","label":"ChiBemba"},
+"bfa":{"order":6,"iso_639_3":"bfa","en":"Bari","label":"Bari"},
+"cal":{"order":7,"iso_639_3":"cal","en":"Carolinian","label":"Refaluwasch"},
+"chk":{"order":8,"iso_639_3":"chk","en":"Chuukese","label":"Fosun Chuuk"},
+"cjy":{"order":9,"iso_639_3":"cjy","en":"Jinyu Chinese","label":"晋语"},
+"cpe":{"order":10,"iso_639_3":"cpe","en":"English-based creoles and pidgins","label":"English-based creoles"},
+"cre":{"order":11,"iso_639_3":"cre","en":"Cree","label":"Nēhiyawēwin"},
+"crs":{"order":12,"iso_639_3":"crs","en":"Seselwa Creole French","label":"Seselwa"},
+"dhv":{"order":13,"iso_639_3":"dhv","en":"Dehu","label":"Drehu"},
+"din":{"order":14,"iso_639_3":"din","en":"Dinka","label":"Thuɔŋjäŋ"},
+"dje":{"order":15,"iso_639_3":"dje","en":"Zarma","label":"Zarmaciine"},
+"dsb":{"order":16,"iso_639_3":"dsb","en":"Lower Sorbian","label":"Dolnoserbski"},
+"dua":{"order":17,"iso_639_3":"dua","en":"Duala","label":"Dualá"},
+"dyu":{"order":18,"iso_639_3":"dyu","en":"Dyula","label":"Julakan"},
+"ewo":{"order":19,"iso_639_3":"ewo","en":"Ewondo","label":"Kolo"},
+"fng":{"order":20,"iso_639_3":"fng","en":"Fanagalo","label":"Fanagalo"},
+"fon":{"order":21,"iso_639_3":"fon","en":"Fon","label":"Fongbe"},
+"fud":{"order":22,"iso_639_3":"fud","en":"Futunan","label":"Faka futuna"},
+"fuf":{"order":23,"iso_639_3":"fuf","en":"Pular","label":"Pular"},
+"gag":{"order":24,"iso_639_3":"gag","en":"Gagauz","label":"Gagauz dili"},
+"gan":{"order":25,"iso_639_3":"gan","en":"Gan Chinese","label":"贛語"},
+"gcf":{"order":26,"iso_639_3":"gcf","en":"Guadeloupean Creole French","label":"Kréyòl gwadloupéyen"},
+"gcl":{"order":27,"iso_639_3":"gcl","en":"Grenadian Creole English","label":"Grenadian Creole"},
+"gcr":{"order":28,"iso_639_3":"gcr","en":"Guianese Creole French","label":"Kréyòl gwiyanyé"},
+"gil":{"order":29,"iso_639_3":"gil","en":"Kiribati","label":"Taetae ni Kiribati"},
+"grn":{"order":30,"iso_639_3":"grn","en":"Guarani","label":"Avañe'ẽ"},
+"gsw":{"order":31,"iso_639_3":"gsw","en":"Swiss German","label":"Schwiizertüütsch"},
+"guc":{"order":32,"iso_639_3":"guc","en":"Wayuu","label":"Wayuunaiki"},
+"gun":{"order":33,"iso_639_3":"gun","en":"Mbyá Guaraní","label":"Mbyá"},
+"gyn":{"order":34,"iso_639_3":"gyn","en":"Guyanese Creole English","label":"Guyanese Creole"},
+"hak":{"order":35,"iso_639_3":"hak","en":"Hakka Chinese","label":"客家語"},
+"haw":{"order":36,"iso_639_3":"haw","en":"Hawaiian","label":"ʻŌlelo Hawaiʻi"},
+"hmo":{"order":37,"iso_639_3":"hmo","en":"Hiri Motu","label":"Hiri Motu"},
+"hsn":{"order":38,"iso_639_3":"hsn","en":"Xiang Chinese","label":"湘語"},
+"iku":{"order":39,"iso_639_3":"iku","en":"Inuktitut","label":"Inuktitut"},
+"jam":{"order":40,"iso_639_3":"jam","en":"Jamaican Patois","label":"Patois"},
+"jax":{"order":41,"iso_639_3":"jax","en":"Malay (individual language)","label":"Bahasa Melayu Jambi"},
+"jer":{"order":42,"iso_639_3":"jer","en":"Jere","label":"Jere"},
+"jiv":{"order":43,"iso_639_3":"jiv","en":"Shuar","label":"Shuar chicham"},
+"kar":{"order":44,"iso_639_3":"kar","en":"Karen languages","label":"Pwo Karen"},
+"kbp":{"order":45,"iso_639_3":"kbp","en":"Kabiyè","label":"Kabiyɛ"},
+"kea":{"order":46,"iso_639_3":"kea","en":"Kabuverdianu","label":"Kabuverdianu"},
+"kek":{"order":47,"iso_639_3":"kek","en":"Q'eqchi'","label":"Q'eqchi'"},
+"kgp":{"order":48,"iso_639_3":"kgp","en":"Kaingang","label":"Kanhgág"},
+"kna":{"order":49,"iso_639_3":"kna","en":"Dera","label":"Dera"},
+"kri":{"order":50,"iso_639_3":"kri","en":"Krio","label":"Krio"},
+"kua":{"order":51,"iso_639_3":"kua","en":"Kuanyama","label":"Oshikwanyama"},
+"kxd":{"order":52,"iso_639_3":"kxd","en":"Brunei Malay","label":"Bahasa Melayu Brunei"},
+"lir":{"order":53,"iso_639_3":"lir","en":"Liberian English","label":"Liberian English"},
+"loz":{"order":54,"iso_639_3":"loz","en":"Lozi","label":"Silozi"},
+"lug":{"order":55,"iso_639_3":"lug","en":"Ganda","label":"Luganda"},
+"mai":{"order":56,"iso_639_3":"mai","en":"Maithili","label":"मैथिली"},
+"man":{"order":57,"iso_639_3":"man","en":"Mandingo","label":"Mandinka"},
+"mcf":{"order":58,"iso_639_3":"mcf","en":"Matsés","label":"Matsés"},
+"mey":{"order":59,"iso_639_3":"mey","en":"Hassaniya Arabic","label":"Hassaniya"},
+"mfe":{"order":60,"iso_639_3":"mfe","en":"Mauritian Creole","label":"Morisyen"},
+"mkw":{"order":61,"iso_639_3":"mkw","en":"Kituba (Congo)","label":"Kituba"},
+"mnk":{"order":62,"iso_639_3":"mnk","en":"Mandinka","label":"Mandinka"},
+"mwl":{"order":63,"iso_639_3":"mwl","en":"Mirandese","label":"Mirandés"},
+"nah":{"order":64,"iso_639_3":"nah","en":"Nahuatl languages","label":"Nāhuatl"},
+"nan":{"order":65,"iso_639_3":"nan","en":"Min Nan Chinese","label":"閩南語"},
+"nep":{"order":66,"iso_639_3":"nep","en":"Nepali","label":"नेपाली"},
+"niu":{"order":67,"iso_639_3":"niu","en":"Niuean","label":"ko e vagahau Niuē"},
+"nrf":{"order":68,"iso_639_3":"nrf","en":"Jèrriais","label":"Jèrriais"},
+"nus":{"order":69,"iso_639_3":"nus","en":"Nuer","label":"Thok Naath"},
+"pan":{"order":70,"iso_639_3":"pan","en":"Punjabi","label":"ਪੰਜਾਬੀ"},
+"pap":{"order":71,"iso_639_3":"pap","en":"Papiamento","label":"Papiamentu"},
+"pau":{"order":72,"iso_639_3":"pau","en":"Palauan","label":"Belauan"},
+"pbb":{"order":73,"iso_639_3":"pbb","en":"Páez","label":"Nasa Yuwe"},
+"pih":{"order":74,"iso_639_3":"pih","en":"Norfolk","label":"Norf'k"},
+"pis":{"order":75,"iso_639_3":"pis","en":"Pijin","label":"Pijin"},
+"pon":{"order":76,"iso_639_3":"pon","en":"Pohnpeian","label":"Mahsen en Pohnpei"},
+"pov":{"order":77,"iso_639_3":"pov","en":"Upper Guinea Crioulo","label":"Kriol"},
+"quc":{"order":78,"iso_639_3":"quc","en":"K'iche'","label":"K'iche'"},
+"rar":{"order":79,"iso_639_3":"rar","en":"Rarotongan","label":"Māori Kūki 'Āirani"},
+"rcf":{"order":80,"iso_639_3":"rcf","en":"Réunion Creole French","label":"Kréol réyoné"},
+"shn":{"order":81,"iso_639_3":"shn","en":"Shan","label":"လိၵ်ႈတႆး"},
+"shu":{"order":82,"iso_639_3":"shu","en":"Chadian Arabic","label":"Chadian Arabic"},
+"smo":{"order":83,"iso_639_3":"smo","en":"Samoan","label":"Gagana Samoa"},
+"srn":{"order":84,"iso_639_3":"srn","en":"Sranan Tongo","label":"Sranan Tongo"},
+"svc":{"order":85,"iso_639_3":"svc","en":"Vincentian Creole English","label":"Vincentian Creole"},
+"swb":{"order":86,"iso_639_3":"swb","en":"Comorian","label":"Shimaore"},
+"tet":{"order":87,"iso_639_3":"tet","en":"Tetum","label":"Tetun"},
+"tkl":{"order":88,"iso_639_3":"tkl","en":"Tokelauan","label":"Gagana Tokelau"},
+"tpi":{"order":89,"iso_639_3":"tpi","en":"Tok Pisin","label":"Tok Pisin"},
+"tsj":{"order":90,"iso_639_3":"tsj","en":"Tshangla","label":"Tshangla"},
+"tso":{"order":91,"iso_639_3":"tso","en":"Tsonga","label":"Xitsonga"},
+"tto":{"order":92,"iso_639_3":"tto","en":"Tobagonian Creole English","label":"Tobagonian Creole"},
+"tvl":{"order":93,"iso_639_3":"tvl","en":"Tuvaluan","label":"Te Ggana Tuvalu"},
+"vmw":{"order":94,"iso_639_3":"vmw","en":"Makhuwa","label":"Emakhuwa"},
+"wls":{"order":95,"iso_639_3":"wls","en":"Wallisian","label":"Faka'uvea"},
+"wuu":{"order":96,"iso_639_3":"wuu","en":"Wu Chinese","label":"吳語"},
+"yap":{"order":97,"iso_639_3":"yap","en":"Yapese","label":"Thin nu Wa'ab"},
+"yor":{"order":98,"iso_639_3":"yor","en":"Yoruba","label":"Yorùbá"},
+"yua":{"order":99,"iso_639_3":"yua","en":"Yucatec Maya","label":"Maaya t'aan"},
+"yue":{"order":100,"iso_639_3":"yue","en":"Cantonese","label":"粵語"},
+"zdj":{"order":101,"iso_639_3":"zdj","en":"Ngazidja Comorian","label":"Shingazidja"},
+"zgh":{"order":102,"iso_639_3":"zgh","en":"Standard Moroccan Tamazight","label":"ⵜⴰⵎⴰⵣⵉⵖⵜ ⵜⴰⵏⴰⵡⴰⵢⵜ"}
+}
+
 export const getLanguageLabel = (code: string, lang: string) => {
-  const l = (languages as any)[code];
-  if (!l) return code;
-  // Pro češtinu můžeme časem přidat český název, zatím bereme 'en' nebo 'label'
-  return `${l.en} (${code.toUpperCase()})`;
+  let l = (languages as any)[code]; // 1. Zkusí ISO 639-1 (2-písmenné kódy) 
+  if (!l) { // 2. Zkusí ISO 639-3 (3-písmenné kódy)
+    l = (iso_639_3 as any)[code];
+  }
+  if (!l) return code.toLowerCase(); // 3. Fallback kód
+  const name = l.en || l.label || code; // 4. Výběr názvu může rozšířit o češtinu
+  // Vrací formát: "Afar (AA)" nebo "Egyptian Arabic (ARZ)"
+  return `${name} (${code.toLowerCase()})`;
 };
 
 // číselník měn
@@ -1071,7 +1181,7 @@ export const countries = {
       "population": 176800000,
       "phone": [880],
       "currency": ["BDT"],
-      "language": ["bn"]
+      "language": ["bn","ctg","syl"]
    },
    "BE": {
       "code": "BE",
@@ -1082,7 +1192,7 @@ export const countries = {
       "population": 11750000,
       "phone": [32],
       "currency": ["EUR"],
-      "language": ["nl","fr","de"]
+      "language": ["nl","fr","de","wa"]
    },
    "BF": {
       "code": "BF",
@@ -1279,7 +1389,7 @@ export const countries = {
       "population": 41200000,
       "phone": [1],
       "currency": ["CAD"],
-      "language": ["en","fr","iku","cre"]
+      "language": ["en","fr","iu","cr","oj"]
    },
    "CC": {
       "code": "CC",
@@ -1389,7 +1499,7 @@ export const countries = {
       "population": 1409000000,
       "phone": [86],
       "currency": ["CNY"],
-      "language": ["zh","bo","ug","za","yue","wuu","nan","hak","cjy","gan","hsn"]
+      "language": ["zh","bo","ug","za","ii","yue","wuu","nan","hak","cjy","gan","hsn"]
    },
    "CO": {
       "code": "CO",
@@ -1477,7 +1587,7 @@ export const countries = {
       "population": 10870000,
       "phone": [420],
       "currency": ["CZK"],
-      "language": ["cs"]
+      "language": ["cs","sk","szl","cse","rom","rmy"]
    },
    "DE": {
       "code": "DE",
@@ -1600,7 +1710,7 @@ export const countries = {
       "population": 3850000,
       "phone": [291],
       "currency": ["ERN"],
-      "language": ["ti","ar","en","aar"]
+      "language": ["ti","ar","en","aa"]
    },
    "ES": {
       "code": "ES",
@@ -1611,7 +1721,7 @@ export const countries = {
       "population": 47600000,
       "phone": [34],
       "currency": ["EUR"],
-      "language": ["es","eu","ca","gl","oc"]
+      "language": ["es","eu","ca","gl","oc","an","ast"]
    },
    "ET": {
       "code": "ET",
@@ -1688,7 +1798,7 @@ export const countries = {
       "population": 65000000,
       "phone": [33],
       "currency": ["EUR"],
-      "language": ["fr","br","oc"]
+      "language": ["fr","br","oc","co"]
    },
    "GA": {
       "code": "GA",
@@ -1710,7 +1820,7 @@ export const countries = {
       "population": 68300000,
       "phone": [44],
       "currency": ["GBP"],
-      "language": ["en","cy","gd"]
+      "language": ["en","cy","gd","kw"]
    },
    "GD": {
       "code": "GD",
@@ -1765,7 +1875,7 @@ export const countries = {
       "population": 35700000,
       "phone": [233],
       "currency": ["GHS"],
-      "language": ["en","ak","ee"]
+      "language": ["en","ak","ee","tw"]
    },
    "GI": {
       "code": "GI",
@@ -1973,7 +2083,7 @@ export const countries = {
       "population": 286900000,
       "phone": [62],
       "currency": ["IDR"],
-      "language": ["id"]
+      "language": ["id","jv","su"]
    },
    "IE": {
       "code": "IE",
@@ -1995,7 +2105,7 @@ export const countries = {
       "population": 10300000,
       "phone": [972],
       "currency": ["ILS"],
-      "language": ["he","ar"]
+      "language": ["he","ar","yi"]
    },
    "IM": {
       "code": "IM",
@@ -2017,7 +2127,7 @@ export const countries = {
       "population": 1471000000,
       "phone": [91],
       "currency": ["INR"],
-      "language": ["hi","en","bn","ta"]
+      "language": ["hi","en","bn","ta","te","mr","pa","gu","ml","kn","ks","or","as","bgc","bho","mai","mny","hne"]
    },
    "IO": {
       "code": "IO",
@@ -2050,7 +2160,7 @@ export const countries = {
       "population": 92800000,
       "phone": [98],
       "currency": ["IRR"],
-      "language": ["fa"]
+      "language": ["fa","mzn"]
    },
    "IS": {
       "code": "IS",
@@ -2072,7 +2182,7 @@ export const countries = {
       "population": 58700000,
       "phone": [39],
       "currency": ["EUR"],
-      "language": ["it"]
+      "language": ["it","sc"]
    },
    "JE": {
       "code": "JE",
@@ -2127,7 +2237,7 @@ export const countries = {
       "population": 57200000,
       "phone": [254],
       "currency": ["KES"],
-      "language": ["en","sw"]
+      "language": ["en","sw","ki"]
    },
    "KG": {
       "code": "KG",
@@ -2621,7 +2731,7 @@ export const countries = {
       "population": 3150000,
       "phone": [264],
       "currency": ["NAD","ZAR"],
-      "language": ["en","af","kua"]
+      "language": ["en","af","hz","kj","ng"]
    },
    "NC": {
       "code": "NC",
@@ -2643,7 +2753,7 @@ export const countries = {
       "population": 28400000,
       "phone": [227],
       "currency": ["XOF"],
-      "language": ["fr","ha","dje"]
+      "language": ["fr","ha","kr","dje"]
    },
    "NF": {
       "code": "NF",
@@ -2665,7 +2775,7 @@ export const countries = {
       "population": 240200000,
       "phone": [234],
       "currency": ["NGN"],
-      "language": ["en","ha","yo","ig"]
+      "language": ["en","ha","yo","ig","kr"]
    },
    "NI": {
       "code": "NI",
@@ -2687,7 +2797,7 @@ export const countries = {
       "population": 18100000,
       "phone": [31],
       "currency": ["EUR"],
-      "language": ["nl","fy"]
+      "language": ["nl","fy","li"]
    },
    "NO": {
       "code": "NO",
@@ -2797,7 +2907,7 @@ export const countries = {
       "population": 11000000,
       "phone": [675],
       "currency": ["PGK"],
-      "language": ["en","tpi","hmo"]
+      "language": ["en","tpi","ho"]
    },
    "PH": {
       "code": "PH",
@@ -2819,7 +2929,7 @@ export const countries = {
       "population": 257400000,
       "phone": [92],
       "currency": ["PKR"],
-      "language": ["en","ur","pan"]
+      "language": ["en","ur","pa","sd","pan","pnb","bal"]
    },
    "PL": {
       "code": "PL",
@@ -2830,7 +2940,7 @@ export const countries = {
       "population": 40100000,
       "phone": [48],
       "currency": ["PLN"],
-      "language": ["pl"]
+      "language": ["pl","szl"]
    },
    "PM": {
       "code": "PM",
@@ -2963,7 +3073,7 @@ export const countries = {
       "population": 143500000,
       "phone": [7],
       "currency": ["RUB"],
-      "language": ["ru","tt","ce"]
+      "language": ["ru","tt","ce","ba","cv","os","av","kv"]
    },
    "RW": {
       "code": "RW",
@@ -3084,7 +3194,7 @@ export const countries = {
       "population": 5420000,
       "phone": [421],
       "currency": ["EUR"],
-      "language": ["sk"]
+      "language": ["sk","cs"]
    },
    "SL": {
       "code": "SL",
@@ -3403,7 +3513,7 @@ export const countries = {
       "population": 51000000,
       "phone": [256],
       "currency": ["UGX"],
-      "language": ["en","sw","lug"]
+      "language": ["en","sw","lg"]
    },
    "UM": {
       "code": "UM",
@@ -3424,7 +3534,7 @@ export const countries = {
       "population": 348300000,
       "phone": [1],
       "currency": ["USD","USN","USS"],
-      "language": ["en","es","haw"]
+      "language": ["en","es","nv","yi","ik","haw"]
    },
    "UY": {
       "code": "UY",
@@ -3663,3 +3773,51 @@ export const getAllCapitals = (): string[] => {
     .filter((cap): cap is string => !!cap)
     .sort();
 };
+
+// Pomocná funkce pro získání metadat jazyka s fallbackem
+function getLangInfo(code: string) {
+  const meta = (languages as any)[code] || (iso_639_3 as any)[code];
+  
+  return {
+    code,
+    nameEn: meta?.en || 'Unknown',
+    nameNative: meta?.label || '—',
+    type: meta?.type || '—', // Přidáno: získáme typ (např. 'C') nebo vrátíme pomlčku
+    isKnown: !!meta
+  };
+}
+// 1. Funkce pro jazyky přiřazené státům
+export function getUsedLanguagesData() {
+  const usedCodes = new Set<string>();
+  Object.values(countriesData).forEach(c => {
+    c.language?.forEach(l => usedCodes.add(l));
+  });
+
+  return Array.from(usedCodes).map(code => {
+    const info = getLangInfo(code);
+    const countriesUsing = Object.values(countriesData)
+      .filter(c => c.language?.includes(code))
+      .map(c => c.code);
+
+    return {
+      ...info,
+      usageCount: countriesUsing.length,
+      countries: countriesUsing
+    };
+  });
+}
+// 2. Funkce pro jazyky, které žádný stát nepoužívá
+export function getUnusedLanguagesData() {
+  const usedCodes = new Set<string>();
+  Object.values(countriesData).forEach(c => {
+    c.language?.forEach(l => usedCodes.add(l));
+  });
+
+  return Object.keys(languages)
+    .filter(code => !usedCodes.has(code))
+    .map(code => ({
+      ...getLangInfo(code),
+      usageCount: 0,
+      countries: []
+    }));
+}

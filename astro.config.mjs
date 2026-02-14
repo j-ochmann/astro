@@ -140,6 +140,11 @@ export default defineConfig({
               link: '/countries/languages/' 
             },
             { 
+              label: 'Languages Table', 
+              translations: { cs: 'Tabulka jazyků' },
+              link: '/countries/languages/table/'
+            },
+            { 
               label: 'Currencies', 
               translations: { cs: 'Měny' },
               link: '/countries/currencies/' 
