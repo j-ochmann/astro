@@ -102,7 +102,7 @@ const labels = {
 </StarlightPage>
 
 <style>
-  /* Reset Starlight marginů proti uskakování */
+  /* Identické zarovnání jako u států a jazyků */
   .table-controls, .table-wrapper { margin-top: 0 !important; }
 
   .table-controls {
@@ -127,6 +127,7 @@ const labels = {
     border: 1px solid var(--sl-color-gray-4);
     border-radius: 4px;
   }
+  .search-box input:focus { outline: 2px solid var(--sl-color-accent); border-color: transparent; }
 
   .export-group { display: flex; align-items: center; gap: 1rem; }
   .export-label {
@@ -160,11 +161,11 @@ const labels = {
     font-weight: 600;
     transition: background 0.2s ease;
   }
-
   .export-btn:hover { background: var(--sl-color-accent-low); }
 
   .table-wrapper { overflow-x: auto; border: 1px solid var(--sl-color-hairline); }
   table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 0; }
+  
   th {
     background: var(--sl-color-gray-6);
     padding: 1rem 0.75rem;
@@ -184,18 +185,19 @@ const labels = {
   .detail-link:hover { color: var(--sl-color-white) !important; }
   .detail-link svg { width: 14px; height: 14px; opacity: 0.5; }
 
-  .mono { font-family: var(--sl-font-mono); }
+  .mono { font-family: var(--sl-font-mono); color: var(--sl-color-accent-high); font-weight: 600; }
   
   .flag-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .flag-list a { display: flex; align-items: center; transition: transform 0.1s ease; }
   .flag-list a:hover { transform: scale(1.2); }
 
-  th svg { width: 14px; height: 14px; margin-left: 4px; opacity: 0.4; transition: transform 0.2s; }
+  th svg { width: 14px; height: 14px; margin-left: 4px; opacity: 0.4; }
   th.asc svg { transform: rotate(180deg); opacity: 1; color: var(--sl-color-accent); }
   th.desc svg { transform: rotate(0deg); opacity: 1; color: var(--sl-color-accent); }
 
   @media (max-width: 45rem) {
     .table-controls { flex-direction: column; align-items: stretch; }
+    .export-group { justify-content: space-between; }
   }
 </style>
 
@@ -207,7 +209,6 @@ const labels = {
   if (tableBody) {
     const rows = Array.from(tableBody.querySelectorAll('tr'));
 
-    // 1. Vyhledávání
     searchInput?.addEventListener('input', () => {
       const term = searchInput.value.toLowerCase();
       rows.forEach(row => {
@@ -215,7 +216,6 @@ const labels = {
       });
     });
 
-    // 2. Řazení
     document.querySelectorAll('th[data-sort]').forEach(th => {
       th.addEventListener('click', () => {
         const col = th.getAttribute('data-sort');
@@ -238,7 +238,6 @@ const labels = {
       });
     });
 
-    // 3. Export
     exportBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const type = btn.getAttribute('data-type');
