@@ -1,0 +1,193 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { Icon } from 'astro-icon/components';
+import { 
+  getI18nPaths, 
+  countriesData, 
+  useTranslations,
+  type Country, 
+} from '@/content/config/i18n';
+export async function getStaticPaths() {
+  return getI18nPaths();
+}
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+// 1. Agregace dat o měnách ze všech zemí
+const allCountries = Object.values(countriesData) as Country[];
+const currencyMap = new Map<string, { code: string, countries: string[], usageCount: number }>();
+
+allCountries.forEach(country => {
+  country.currency?.forEach(currCode => {
+    const code = currCode.toUpperCase();
+    if (!currencyMap.has(code)) {
+      currencyMap.set(code, { code, countries: [], usageCount: 0 });
+    }
+    const curr = currencyMap.get(code)!;
+    curr.countries.push(country.code);
+    curr.usageCount++;
+  });
+});
+
+const currencies = Array.from(currencyMap.values()).sort((a, b) => a.code.localeCompare(b.code));
+
+const labels = {
+  code: lang === 'cs' ? 'Kód měny' : 'Currency Code',
+  usage: lang === 'cs' ? 'Počet zemí' : 'Countries Count',
+  list: lang === 'cs' ? 'Používáno v' : 'Used in',
+  search: lang === 'cs' ? 'Hledat měnu...' : 'Search currency...'
+};
+---
+
+<StarlightPage frontmatter={{ title: lang === 'cs' ? 'Přehled měn' : 'Currencies Overview', template: 'doc' }}>
+  
+  <div class="table-controls">
+    <div class="search-box">
+      <input type="text" id="currencySearch" placeholder={labels.search} />
+    </div>
+    <div class="export-group">
+      <div class="export-buttons">
+        <button class="export-btn" data-type="json">JSON</button>
+        <button class="export-btn" data-type="csv">CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="currTable">
+      <thead>
+        <tr>
+          <th data-sort="code">{labels.code} <Icon name="lucide:arrow-up-down" /></th>
+          <th data-sort="usageCount">{labels.usage} <Icon name="lucide:arrow-up-down" /></th>
+          <th>{labels.list}</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        {currencies.map(curr => (
+          <tr data-item={JSON.stringify(curr)}>
+            <td class="mono">
+              <a href={`/${lang}/currencies/${curr.code.toLowerCase()}/`} class="detail-link">
+                {curr.code} <Icon name="lucide:external-link" />
+              </a>
+            </td>
+            <td><strong>{curr.usageCount}</strong></td>
+            <td>
+              <div class="flag-list">
+                {curr.countries.map(cCode => (
+                  <a href={`/${lang}/countries/${cCode.toLowerCase()}/`} title={t(cCode as any) || cCode}>
+                    <span class:list={['fi', `fi-${cCode.toLowerCase()}`]}></span>
+                  </a>
+                ))}
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+</StarlightPage>
+
+<style>
+  .table-controls {
+    display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;
+    background: var(--sl-color-gray-6); padding: 1rem; border: 1px solid var(--sl-color-hairline);
+    position: sticky; top: 0; z-index: 10; margin-bottom: 1rem;
+  }
+  .search-box { flex: 1; min-width: 200px; }
+  .search-box input {
+    width: 100%; height: 2.2rem; padding: 0 1rem; background: var(--sl-color-bg);
+    color: var(--sl-color-white); border: 1px solid var(--sl-color-gray-4); border-radius: 4px;
+  }
+  .export-buttons { display: flex; gap: 1px; background: var(--sl-color-gray-4); border-radius: 4px; overflow: hidden; }
+  .export-btn { 
+    height: 2rem; border: none; padding: 0 0.75rem; background: var(--sl-color-gray-5); 
+    color: white; cursor: pointer; font-size: 0.7rem; font-weight: bold;
+  }
+  .export-btn:hover { background: var(--sl-color-accent-low); }
+
+  .table-wrapper { overflow-x: auto; border: 1px solid var(--sl-color-hairline); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { background: var(--sl-color-gray-6); padding: 0.75rem; text-align: left; cursor: pointer; border-bottom: 2px solid var(--sl-color-hairline); }
+  td { padding: 0.75rem; border-bottom: 1px solid var(--sl-color-hairline); vertical-align: middle; }
+
+  .detail-link {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    color: var(--sl-color-accent-high) !important; font-weight: bold; text-decoration: none;
+  }
+  .detail-link:hover { text-decoration: underline; }
+  .detail-link svg { width: 12px; height: 12px; opacity: 0.6; }
+
+  .mono { font-family: var(--sl-font-mono); }
+  .flag-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .flag-list a { display: flex; align-items: center; transition: transform 0.1s ease; }
+  .flag-list a:hover { transform: scale(1.2); }
+
+  /* Sort šipky */
+  th.asc svg { transform: rotate(180deg); opacity: 1; color: var(--sl-color-accent); }
+  th.desc svg { transform: rotate(0deg); opacity: 1; color: var(--sl-color-accent); }
+  th svg { transition: transform 0.2s ease, opacity 0.2s ease; width: 14px; margin-left: 4px; opacity: 0.3; }
+</style>
+
+<script>
+  // Logika pro vyhledávání, řazení a export
+  const searchInput = document.getElementById('currencySearch') as HTMLInputElement | null;
+  const tableBody = document.getElementById('tableBody');
+  const exportBtns = document.querySelectorAll('.export-btn');
+
+  // Search
+  searchInput?.addEventListener('input', () => {
+    const term = searchInput.value.toLowerCase();
+    tableBody?.querySelectorAll('tr').forEach(row => {
+      (row as HTMLElement).style.display = row.textContent?.toLowerCase().includes(term) ? '' : 'none';
+    });
+  });
+
+  // Sort
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.getAttribute('data-sort') as string;
+      const rows = Array.from(tableBody?.querySelectorAll('tr') || []);
+      const isAsc = th.classList.contains('asc');
+
+      const sortedRows = rows.sort((a, b) => {
+        const dataA = JSON.parse(a.getAttribute('data-item') || '{}');
+        const dataB = JSON.parse(b.getAttribute('data-item') || '{}');
+        
+        if (typeof dataA[col] === 'number') {
+          return isAsc ? dataB[col] - dataA[col] : dataA[col] - dataB[col];
+        }
+        return isAsc ? dataB[col].localeCompare(dataA[col]) : dataA[col].localeCompare(dataB[col]);
+      });
+
+      th.closest('tr')?.querySelectorAll('th').forEach(h => h.classList.remove('asc', 'desc'));
+      th.classList.toggle('asc', !isAsc);
+      th.classList.toggle('desc', isAsc);
+      tableBody?.append(...sortedRows);
+    });
+  });
+
+  // Export
+  exportBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.getAttribute('data-type');
+      const data = Array.from(tableBody?.querySelectorAll('tr') || [])
+        .filter(r => (r as HTMLElement).style.display !== 'none')
+        .map(r => JSON.parse(r.getAttribute('data-item') || '{}'));
+
+      if (type === 'json') {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'currencies.json';
+        a.click();
+      } else if (type === 'csv') {
+        const csv = ["Code,Usage", ...data.map(r => `${r.code},${r.usageCount}`)].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'currencies.csv';
+        a.click();
+      }
+    });
+  });
+</script>
