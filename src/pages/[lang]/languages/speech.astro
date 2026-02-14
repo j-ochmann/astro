@@ -91,8 +91,8 @@ const allLangs = [...usedLangs, ...unusedLangs].sort((a, b) => a.nameEn.localeCo
 
 <script>
   const synth = window.speechSynthesis;
-  
-  function initVoiceDebug() {
+
+  function updateTable() {
     const voices = synth.getVoices();
     const summaryEl = document.getElementById('voice-summary');
     const rows = document.querySelectorAll('tr[data-lang-code]');
@@ -101,49 +101,75 @@ const allLangs = [...usedLangs, ...unusedLangs].sort((a, b) => a.nameEn.localeCo
       summaryEl.innerHTML = `Nalezeno celkem <strong>${voices.length}</strong> systémových hlasů.`;
     }
 
+    if (voices.length === 0) return; // Ještě nemáme hlasy, počkáme na další event
+
     rows.forEach(row => {
       const code = row.getAttribute('data-lang-code');
       const infoCell = row.querySelector('.voice-info');
       const btn = row.querySelector('.test-btn') as HTMLButtonElement;
       
-      // Hledáme hlas, který začíná na náš kód (např. "cs", "en", "fr")
-      const matchingVoice = voices.find(v => 
-        v.lang.toLowerCase().replace('_', '-').startsWith(code || '')
-      );
+      // Vyčištění kódu pro porovnání (např. cs-CZ -> cs)
+      const cleanCode = code?.toLowerCase().split('-')[0];
 
-      if (matchingVoice && infoCell) {
-        infoCell.innerHTML = `<span class="has-voice">ANO</span> (${matchingVoice.name})`;
-      } else if (infoCell) {
-        infoCell.innerHTML = `<span class="no-voice">NE</span>`;
+      const matchingVoices = voices.filter(v => {
+        const vLang = v.lang.toLowerCase().replace('_', '-');
+        return vLang === code || vLang.startsWith(cleanCode + '-');
+      });
+
+      if (matchingVoices.length > 0) {
+        if (infoCell) {
+          infoCell.innerHTML = `<span style="color: #4ade80; font-weight: bold;">ANO (${matchingVoices.length})</span><br><small>${matchingVoices[0].name}</small>`;
+        }
+        if (btn) {
+          btn.disabled = false; // AKTIVACE TLAČÍTKA
+          btn.style.opacity = "1";
+          btn.style.cursor = "pointer";
+        }
+      } else {
+        if (infoCell) infoCell.innerHTML = `<span style="color: #f87171;">NE</span>`;
         if (btn) btn.disabled = true;
       }
     });
   }
 
-  // Chrome načítá hlasy asynchronně, Firefox hned. Musíme ošetřit oba případy.
-  if (speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = initVoiceDebug;
+  // 1. Zkusíme hned
+  updateTable();
+
+  // 2. Chrome/Android vyžaduje tento event, hlasy se načítají asynchronně
+  if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = updateTable;
   }
-  initVoiceDebug();
 
-  // Logika přehrávání
-  document.querySelectorAll('.test-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const b = btn as HTMLButtonElement;
-      const text = b.getAttribute('data-text') || '';
-      const code = b.getAttribute('data-code') || 'en';
-      
-      synth.cancel(); // Zastavit předchozí pokusy
+  // 3. Brutální fallback pro jistotu (některé prohlížeče event neposílají správně)
+  setTimeout(updateTable, 500);
+  setTimeout(updateTable, 2000);
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = code;
-      
-      // Najdeme nejlepší hlas pro tento pokus
-      const voices = synth.getVoices();
-      const voice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(code.toLowerCase()));
-      if (voice) utterance.voice = voice;
+  // Obsluha kliknutí (delegace)
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.test-btn') as HTMLButtonElement;
+    if (!btn || btn.disabled) return;
 
-      synth.speak(utterance);
-    });
+    const text = btn.getAttribute('data-text') || '';
+    const code = btn.getAttribute('data-code')?.toLowerCase() || 'en';
+    
+    synth.cancel(); 
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = code;
+    
+    const voices = synth.getVoices();
+    // Najdeme hlas pro daný kód
+    const voice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(code.split('-')[0]));
+    
+    if (voice) {
+      utterance.voice = voice;
+    }
+
+    // Pro jistotu nastavíme i parametry, které občas pomůžou na Linuxu
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    synth.speak(utterance);
   });
 </script>
