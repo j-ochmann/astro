@@ -3,9 +3,8 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { Icon } from 'astro-icon/components';
 import { 
   getI18nPaths, 
-  useTranslations,
-  getUsedLanguagesData,
-  getUnusedLanguagesData
+  getUsedLanguagesData, 
+  getUnusedLanguagesData 
 } from '@/content/config/i18n';
 
 export async function getStaticPaths() {
@@ -13,262 +12,250 @@ export async function getStaticPaths() {
 }
 
 const { lang } = Astro.params;
-const t = useTranslations(lang);
 
 const usedLangs = getUsedLanguagesData();
 const unusedLangs = getUnusedLanguagesData();
-
-// Sjednocení dat pro testování
 const allLangs = ([...usedLangs, ...unusedLangs] as any[]).map(l => ({
   code: l.code,
   nameEn: l.nameEn,
   nameNative: l.nameNative,
-  usageCount: l.usageCount || 0
+  usageCount: l.usageCount || 0,
+  isoLength: l.code.length
 })).sort((a, b) => b.usageCount - a.usageCount);
-
-const labels = {
-  title: lang === 'cs' ? 'Diagnostika hlasů TTS' : 'TTS Voice Diagnostics',
-  description: lang === 'cs' ? 'Test dostupnosti systémových hlasů pro atlas.' : 'System voice availability test.',
-  systemVoices: lang === 'cs' ? 'Hlasy nalezené v systému:' : 'Voices found in system:',
-  tableCode: 'ISO',
-  tableName: lang === 'cs' ? 'Jazyk' : 'Language',
-  tableVoice: lang === 'cs' ? 'Dostupný hlas' : 'Available Voice',
-  tableAction: lang === 'cs' ? 'Test' : 'Test'
-};
 ---
 
-<StarlightPage frontmatter={{ title: labels.title, template: 'doc' }}>
+<StarlightPage frontmatter={{ title: 'TTS Diagnostics Pro', template: 'doc' }}>
   
-  <div class="voice-debug-header">
-    <p>{labels.description}</p>
-    <div id="voice-summary" class="summary-box">
-      <div class="spinner"></div> Načítám systémové hlasy...
-    </div>
-  </div>
-
-  <div class="table-wrapper">
-    <table id="ttsTestTable">
-      <thead>
-        <tr>
-          <th>{labels.tableCode}</th>
-          <th>{labels.tableName}</th>
-          <th>{labels.tableVoice}</th>
-          <th>{labels.tableAction}</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody">
-        {allLangs.map(l => (
-          <tr data-lang-code={l.code.toLowerCase()}>
-            <td class="mono">{l.code}</td>
-            <td>
-              <span class="en-name">{l.nameEn}</span><br/>
-              <small class="native-name">{l.nameNative}</small>
-            </td>
-            <td class="voice-info">---</td>
-            <td>
-              <button 
-                class="test-btn" 
-                data-code={l.code} 
-                data-text={l.nameNative}
-                disabled
-              >
-                <Icon name="line-md:play-filled" />
-              </button>
-            </td>
+  <section class="debug-section">
+    <h2>1. Systémové hlasy (Prohlížeč)</h2>
+    <p>Toto jsou hlasy, které váš systém aktuálně reportuje jako dostupné.</p>
+    <div class="table-wrapper">
+      <table id="systemVoicesTable">
+        <thead>
+          <tr>
+            <th>Jazyk (Lang)</th>
+            <th>Název hlasu (Name)</th>
+            <th>Local Service</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody id="systemVoicesBody">
+          <tr><td colspan="3">Načítám hlasy ze systému...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="debug-section">
+    <h2>2. Testování vašich jazyků</h2>
+    
+    <div class="controls-grid">
+      <div class="search-box">
+        <input type="text" id="langSearch" placeholder="Hledat jazyk..." />
+      </div>
+      <div class="filter-group">
+        <label><input type="checkbox" id="filterISO2" checked /> ISO 639-1 (2 chars)</label>
+        <label><input type="checkbox" id="filterISO3" checked /> ISO 639-3 (3 chars)</label>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="myLangsTable">
+        <thead>
+          <tr>
+            <th data-sort="code">ISO <Icon name="lucide:arrow-up-down" /></th>
+            <th data-sort="nameEn">Název <Icon name="lucide:arrow-up-down" /></th>
+            <th data-sort="usageCount">Země <Icon name="lucide:arrow-up-down" /></th>
+            <th>Status</th>
+            <th>Test</th>
+          </tr>
+        </thead>
+        <tbody id="myLangsBody">
+          {allLangs.map(l => (
+            <tr data-item={JSON.stringify(l)} data-iso={l.isoLength}>
+              <td class="mono">{l.code}</td>
+              <td>
+                <strong>{l.nameEn}</strong><br/>
+                <small>{l.nameNative}</small>
+              </td>
+              <td>{l.usageCount}</td>
+              <td class="status-cell">---</td>
+              <td>
+                <button class="play-btn" data-code={l.code} data-text={l.nameNative} disabled>
+                  <Icon name="line-md:play-filled" />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
 </StarlightPage>
 
 <style is:global>
-  .voice-debug-header {
-    margin-bottom: 2rem;
-  }
+  .debug-section { margin-bottom: 3rem; }
+  .debug-section h2 { margin-bottom: 1rem; border-bottom: 1px solid var(--sl-color-hairline); padding-bottom: 0.5rem; }
 
-  .summary-box {
-    padding: 1.25rem;
-    background: var(--sl-color-gray-6);
-    border: 1px solid var(--sl-color-hairline);
-    border-left: 4px solid var(--sl-color-accent);
-    border-radius: 4px;
-  }
-
-  .debug-voice-list {
+  .controls-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    max-height: 150px;
-    overflow-y: auto;
-    font-size: 0.75rem;
-  }
-
-  .debug-voice-list span {
-    background: var(--sl-color-bg);
-    padding: 2px 8px;
-    border: 1px solid var(--sl-color-gray-5);
-    border-radius: 12px;
-    white-space: nowrap;
-  }
-
-  .debug-voice-list code {
-    color: var(--sl-color-accent-high);
-  }
-
-  .table-wrapper {
-    overflow-x: auto;
-    border: 1px solid var(--sl-color-hairline);
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.875rem;
-  }
-
-  th, td {
-    padding: 0.85rem 0.75rem;
-    border-bottom: 1px solid var(--sl-color-hairline);
-    text-align: left;
-  }
-
-  th { background: var(--sl-color-gray-6); }
-
-  .mono { font-family: var(--sl-font-mono); font-weight: bold; }
-  .native-name { opacity: 0.6; font-style: italic; }
-  
-  .test-btn {
-    appearance: none;
-    background: var(--sl-color-accent);
-    color: white;
-    border: none;
-    width: 32px;
-    height: 32px;
-    display: flex;
+    gap: 1.5rem;
+    background: var(--sl-color-gray-6);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 4px;
     align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    cursor: pointer;
-    opacity: 0.3;
-    transition: all 0.2s ease;
   }
 
-  .test-btn:not(:disabled) {
-    opacity: 1;
+  .search-box input {
+    background: var(--sl-color-bg);
+    color: white;
+    border: 1px solid var(--sl-color-gray-4);
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    min-width: 200px;
   }
 
-  .test-btn:not(:disabled):hover {
-    transform: scale(1.1);
-    background: var(--sl-color-accent-high);
+  .filter-group { display: flex; gap: 1rem; font-size: 0.9rem; }
+  .filter-group label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+
+  .table-wrapper { 
+    overflow-x: auto; 
+    border: 1px solid var(--sl-color-hairline);
+    background: var(--sl-color-bg);
   }
 
-  .has-voice { color: #4ade80; font-weight: bold; }
-  .no-voice { color: #f87171; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--sl-color-hairline); text-align: left; }
+  th { background: var(--sl-color-gray-6); cursor: pointer; white-space: nowrap; }
+  
+  .mono { font-family: var(--sl-font-mono); color: var(--sl-color-accent-high); font-weight: bold; }
+  .status-cell { font-weight: bold; }
+  .status-ok { color: #4ade80; }
+  .status-err { color: #f87171; }
 
-  .spinner {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid var(--sl-color-gray-4);
-    border-top-color: var(--sl-color-accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-right: 0.5rem;
+  .play-btn {
+    background: var(--sl-color-accent);
+    color: white; border: none; border-radius: 50%;
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0.2; transition: 0.2s;
   }
+  .play-btn:not(:disabled) { opacity: 1; }
+  .play-btn:not(:disabled):hover { transform: scale(1.1); }
 
-  @keyframes spin { to { transform: rotate(360deg); } }
+  th svg { width: 12px; height: 12px; opacity: 0.5; vertical-align: middle; }
 </style>
 
 <script>
   const synth = window.speechSynthesis;
-
-  function updateUI() {
+  
+  function updateAll() {
     const voices = synth.getVoices();
-    const summaryEl = document.getElementById('voice-summary');
-    const rows = document.querySelectorAll('tr[data-lang-code]');
-
-    if (!summaryEl) return;
-
-    if (voices.length === 0) {
-      summaryEl.innerHTML = `<div class="spinner"></div> Čekám na systémové hlasy (pokus č. ${Math.round(performance.now()/1000)}s)...`;
-      return;
+    
+    // 1. Aktualizace systémové tabulky
+    const sysBody = document.getElementById('systemVoicesBody');
+    if (sysBody && voices.length > 0) {
+      sysBody.innerHTML = voices.map(v => `
+        <tr>
+          <td><code class="mono">${v.lang}</code></td>
+          <td>${v.name}</td>
+          <td>${v.localService ? '✅' : '🌐'}</td>
+        </tr>
+      `).join('');
     }
 
-    // 1. Vykreslení seznamu všech hlasů pro vizuální kontrolu
-    let listHtml = `<p>Nalezeno celkem <strong>${voices.length}</strong> hlasů:</p>`;
-    listHtml += `<div class="debug-voice-list">`;
-    voices.forEach(v => {
-      listHtml += `<span><code>${v.lang}</code> ${v.name}</span>`;
-    });
-    listHtml += `</div>`;
-    summaryEl.innerHTML = listHtml;
-
-    // 2. Propojení s tabulkou
+    // 2. Propojení s vašimi jazyky
+    const rows = Array.from(document.querySelectorAll('#myLangsBody tr'));
     rows.forEach(row => {
-      const code = row.getAttribute('data-lang-code');
-      const infoCell = row.querySelector('.voice-info');
-      const btn = row.querySelector('.test-btn') as HTMLButtonElement;
+      const data = JSON.parse(row.getAttribute('data-item') || '{}');
+      const statusCell = row.querySelector('.status-cell');
+      const btn = row.querySelector('.play-btn') as HTMLButtonElement;
       
-      if (!code) return;
-
-      // Hledáme shodu (např. 'cs' odpovídá 'cs-CZ')
-      const cleanCode = code.split('-')[0];
+      const cleanCode = data.code.toLowerCase().split('-')[0];
       const match = voices.find(v => {
         const vLang = v.lang.toLowerCase().replace('_', '-');
-        return vLang === code || vLang.startsWith(cleanCode + '-');
+        return vLang === data.code.toLowerCase() || vLang.startsWith(cleanCode + '-');
       });
 
-      if (match && infoCell && btn) {
-        infoCell.innerHTML = `<span class="has-voice">ANO</span><br/><small>${match.name}</small>`;
-        btn.disabled = false;
-      } else if (infoCell && btn) {
-        infoCell.innerHTML = `<span class="no-voice">NE</span>`;
-        btn.disabled = true;
+      if (match) {
+        if (statusCell) statusCell.innerHTML = `<span class="status-ok">OK</span>`;
+        if (btn) btn.disabled = false;
+      } else {
+        if (statusCell) statusCell.innerHTML = `<span class="status-err">NE</span>`;
+        if (btn) btn.disabled = true;
       }
+    });
+
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const term = (document.getElementById('langSearch') as HTMLInputElement)?.value.toLowerCase();
+    const showISO2 = (document.getElementById('filterISO2') as HTMLInputElement)?.checked;
+    const showISO3 = (document.getElementById('filterISO3') as HTMLInputElement)?.checked;
+    const rows = document.querySelectorAll('#myLangsBody tr');
+
+    rows.forEach(row => {
+      const r = row as HTMLElement;
+      const isoLen = parseInt(r.getAttribute('data-iso') || '0');
+      const text = r.innerText.toLowerCase();
+      
+      const matchesSearch = text.includes(term);
+      const matchesISO = (isoLen === 2 && showISO2) || (isoLen === 3 && showISO3);
+      
+      r.style.display = (matchesSearch && matchesISO) ? '' : 'none';
     });
   }
 
-  // Inicializace
-  if (typeof speechSynthesis !== 'undefined') {
-    // Pro Chrome/Android
-    speechSynthesis.onvoiceschanged = updateUI;
-    // Pro Safari/Firefox/Debian
-    updateUI();
-    
-    // Pojistky pro asynchronní načítání
-    setTimeout(updateUI, 500);
-    setTimeout(updateUI, 2000);
-    setTimeout(updateUI, 5000);
-  }
+  // Event Listeners pro filtry
+  document.getElementById('langSearch')?.addEventListener('input', applyFilters);
+  document.getElementById('filterISO2')?.addEventListener('change', applyFilters);
+  document.getElementById('filterISO3')?.addEventListener('change', applyFilters);
 
-  // Klikací logika
+  // Řazení tabulky
+  document.querySelectorAll('#myLangsTable th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.getAttribute('data-sort');
+      const body = document.getElementById('myLangsBody');
+      const rows = Array.from(body?.querySelectorAll('tr') || []);
+      const isAsc = th.classList.contains('asc');
+
+      const sorted = rows.sort((a, b) => {
+        const valA = JSON.parse(a.getAttribute('data-item') || '{}')[col!];
+        const valB = JSON.parse(b.getAttribute('data-item') || '{}')[col!];
+        return isAsc 
+          ? (typeof valA === 'number' ? valB - valA : String(valB).localeCompare(String(valA)))
+          : (typeof valA === 'number' ? valA - valB : String(valA).localeCompare(String(valB)));
+      });
+
+      th.classList.toggle('asc', !isAsc);
+      body?.append(...sorted);
+    });
+  });
+
+  // TTS Playback
   document.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest('.test-btn') as HTMLButtonElement;
+    const btn = (e.target as HTMLElement).closest('.play-btn') as HTMLButtonElement;
     if (!btn || btn.disabled) return;
 
     const text = btn.getAttribute('data-text') || '';
-    const code = btn.getAttribute('data-code')?.toLowerCase() || 'en';
+    const code = btn.getAttribute('data-code') || 'en';
     
     synth.cancel();
-
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = code;
-
-    // Výběr nejlepšího hlasu pro konkrétní test
+    
     const voices = synth.getVoices();
-    const cleanCode = code.split('-')[0];
-    const voice = voices.find(v => {
-      const vLang = v.lang.toLowerCase().replace('_', '-');
-      return vLang === code || vLang.startsWith(cleanCode + '-');
-    });
-
+    const voice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(code.toLowerCase().split('-')[0]));
     if (voice) utterance.voice = voice;
-
-    // Logování pro ladění v konzoli (F12)
-    console.log(`TTS Test: [${code}] "${text}" pomocí [${voice?.name || 'default'}]`);
     
     synth.speak(utterance);
   });
+
+  // Init
+  if (typeof speechSynthesis !== 'undefined') {
+    speechSynthesis.onvoiceschanged = updateAll;
+    updateAll();
+    setTimeout(updateAll, 1000);
+  }
 </script>
