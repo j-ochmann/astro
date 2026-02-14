@@ -24,13 +24,13 @@ const allLangs = ([...usedLangs, ...unusedLangs] as any[]).map(l => ({
 })).sort((a, b) => b.usageCount - a.usageCount);
 ---
 
-<StarlightPage frontmatter={{ title: 'TTS Diagnostics Pro', template: 'doc' }}>
+<StarlightPage frontmatter={{ title: 'TTS Diagnostics', template: 'doc' }}>
   
   <section class="debug-section">
     <div class="section-header">
-      <h2>1. Systémové hlasy (Prohlížeč)</h2>
+      <h2>1. System Voices</h2>
       <button id="playAllVoices" class="action-btn">
-        <Icon name="line-md:play-filled" /> Přehrát všechny hlasy (Loop)
+        <Icon name="line-md:play-filled" /> Play All
       </button>
     </div>
     <div class="table-wrapper">
@@ -301,7 +301,7 @@ const allLangs = ([...usedLangs, ...unusedLangs] as any[]).map(l => ({
     if (voices.length === 0) return;
     isLooping = true;
     const btn = document.getElementById('playAllVoices');
-    if (btn) btn.innerHTML = '⏹ Zastavit smyčku';
+    if (btn) btn.innerHTML = '⏹ Stop';
 
     for (let i = 0; i < voices.length; i++) {
       if (!isLooping) break;
@@ -319,7 +319,7 @@ const allLangs = ([...usedLangs, ...unusedLangs] as any[]).map(l => ({
       });
     }
     isLooping = false;
-    if (btn) btn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="margin-right:8px"><path d="M8 5v14l11-7z"/></svg> Přehrát všechny hlasy (Loop)';
+    if (btn) btn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="margin-right:8px"><path d="M8 5v14l11-7z"/></svg> Play All';
     document.querySelectorAll('#systemVoicesBody tr').forEach(r => (r as HTMLElement).style.background = '');
   }
 
