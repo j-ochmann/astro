@@ -17,7 +17,7 @@ const t = useTranslations(lang);
 
 const usedLangs = getUsedLanguagesData();
 const unusedLangs = getUnusedLanguagesData();
-const allLangs = [...usedLangs, ...unusedLangs];
+const allLangs = [...usedLangs, ...unusedLangs] as any[];
 
 const labels = {
   code: 'ISO',
