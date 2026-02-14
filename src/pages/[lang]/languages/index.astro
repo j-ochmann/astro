@@ -1,13 +1,11 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-// Přidáme import typu Country
 import { 
   getI18nPaths, 
   countriesData, 
-  getAllLanguages, 
-  languages, 
   useTranslations,
-  type Country // Importuj interface, který jsi definoval v i18n.ts
+  getUsedLanguagesData, // Použijeme tvou novou funkci
+  type Country 
 } from '@/content/config/i18n';
 
 export async function getStaticPaths() {
@@ -17,30 +15,27 @@ export async function getStaticPaths() {
 const { lang } = Astro.params;
 const t = useTranslations(lang);
 
-const allUsedLanguages = getAllLanguages();
-const allCountries = Object.values(countriesData) as Country[]; // Explicitní přetypování
+// Získáme už zpracovaná data o jazycích (včetně iso_639_3 a názvů)
+const usedLanguagesData = getUsedLanguagesData();
+const allCountries = Object.values(countriesData) as Country[];
 
-const languageGroups = allUsedLanguages.map(langCode => {
-  const langMeta = languages[langCode as keyof typeof languages];
-  const label = langMeta ? (langMeta.label || langMeta.en) : langCode;
+const languageGroups = usedLanguagesData.map(langInfo => {
+  // langInfo už obsahuje nameEn nebo nameNative díky getLangInfo v i18n.ts
+  const label = langInfo.nameEn !== 'Unknown' ? langInfo.nameEn : langInfo.code;
   
-  // speakers je nyní pole typu Country[]
-  const speakers = allCountries.filter(c => c.language && c.language.includes(langCode));
+  // Najdeme země pro daný jazyk
+  const speakers = allCountries.filter(c => c.language && c.language.includes(langInfo.code));
   
-  speakers.sort((a: Country, b: Country) => {
-    // Přetypování na any u t() potlačí chybu, pokud t() očekává jen specifické klíče
-    const translationA = t(a.code as any);
-    const translationB = t(b.code as any);
-    
-    const nameA = translationA && translationA !== a.code ? translationA : a.name;
-    const nameB = translationB && translationB !== b.code ? translationB : b.name;
-    
+  // Seřadíme země podle přeloženého názvu
+  speakers.sort((a, b) => {
+    const nameA = t(a.code as any) || a.name;
+    const nameB = t(b.code as any) || b.name;
     return nameA.localeCompare(nameB, lang);
   });
 
   return {
-    code: langCode,
-    label,
+    code: langInfo.code,
+    label: label,
     countries: speakers
   };
 }).sort((a, b) => a.label.localeCompare(b.label, lang));
@@ -49,17 +44,19 @@ const languageGroups = allUsedLanguages.map(langCode => {
 <StarlightPage 
   frontmatter={{ 
     title: String(t('geo.nav.languages') || 'Jazyky'), 
-    template: 'doc',
-    description: 'Přehled jazyků a zemí, kde se jimi hovoří.'
+    template: 'doc'
   }}
 >
   <div class="languages-list">
     {languageGroups.map(group => (
       <section class="lang-group">
-        <h2 id={group.code}>{group.label} <span class="code">({group.code})</span></h2>
+        <h2 id={group.code}>
+          {group.label} <span class="code">({group.code})</span>
+        </h2>
         <div class="country-grid">
           {group.countries.map(country => {
-            const displayName = t(country.code) !== country.code ? t(country.code) : country.name;
+            const countryKey = country.code as any;
+            const displayName = t(countryKey) !== country.code ? t(countryKey) : country.name;
             return (
               <a href={`/${lang}/countries/${country.code.toLowerCase()}/`} class="country-card">
                 <span class:list={['fi', `fi-${country.code.toLowerCase()}`]}></span>
@@ -74,15 +71,11 @@ const languageGroups = allUsedLanguages.map(langCode => {
 </StarlightPage>
 
 <style>
+  /* Styl zůstává stejný, je v pořádku */
   .lang-group { margin-bottom: 3rem; }
   h2 { border-bottom: 1px solid var(--sl-color-hairline); padding-bottom: 0.5rem; margin-bottom: 1rem; }
   .code { font-size: 0.6em; color: var(--sl-color-gray-3); font-weight: normal; vertical-align: middle; }
-  
-  .country-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 0.75rem;
-  }
+  .country-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; }
   .country-card {
     display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem;
     background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline);

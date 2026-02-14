@@ -1,0 +1,88 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { 
+  getI18nPaths, 
+  countriesData, 
+  languages, 
+  iso_639_3, 
+  useTranslations 
+} from '@/content/config/i18n';
+
+export async function getStaticPaths() {
+  const paths = getI18nPaths();
+  const allCodes = new Set([
+    ...Object.keys(languages),
+    ...Object.keys(iso_639_3)
+  ]);
+
+  return paths.flatMap(p => 
+    Array.from(allCodes).map(code => ({
+      params: { lang: p.params.lang, code: code.toLowerCase() }
+    }))
+  );
+}
+
+const { lang, code } = Astro.params;
+const t = useTranslations(lang);
+
+// Lookup jazyka
+const meta = (languages as any)[code] || (iso_639_3 as any)[code];
+const name = meta?.en || code.toUpperCase();
+const native = meta?.label || '—';
+
+// Najít země, které tento jazyk používají
+const relatedCountries = Object.values(countriesData).filter(c => 
+  c.language?.map(l => l.toLowerCase()).includes(code.toLowerCase())
+);
+---
+
+<StarlightPage frontmatter={{ title: `${name} (${code.toUpperCase()})`, template: 'doc' }}>
+  
+  <div class="meta-grid">
+    <div class="card">
+      <span class="label">{lang === 'cs' ? 'Nativní název' : 'Native Name'}</span>
+      <span class="value">{native}</span>
+    </div>
+    <div class="card">
+      <span class="label">ISO 639</span>
+      <span class="value mono">{code.toUpperCase()}</span>
+    </div>
+    {meta?.type && (
+      <div class="card">
+        <span class="label">Typ</span>
+        <span class="value">{meta.type === 'C' ? 'Constructed' : meta.type}</span>
+      </div>
+    )}
+  </div>
+
+  <h2 class="section-title">{lang === 'cs' ? 'Země používající tento jazyk' : 'Countries using this language'}</h2>
+  
+  <div class="country-list">
+    {relatedCountries.length > 0 ? (
+      relatedCountries.map(country => (
+        <a href={`/${lang}/countries/${country.code.toLowerCase()}/`} class="country-link">
+          <span class:list={['fi', `fi-${country.code.toLowerCase()}`]}></span>
+          <span>{t(country.code as any) !== country.code ? t(country.code as any) : country.name}</span>
+        </a>
+      ))
+    ) : (
+      <p>{lang === 'cs' ? 'Žádné záznamy.' : 'No records found.'}</p>
+    )}
+  </div>
+</StarlightPage>
+
+<style>
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .card { padding: 1rem; background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline); border-radius: 0.5rem; display: flex; flex-direction: column; }
+  .label { font-size: 0.8rem; color: var(--sl-color-gray-3); text-transform: uppercase; }
+  .value { font-size: 1.2rem; font-weight: bold; }
+  .mono { font-family: var(--sl-font-mono); }
+  .section-title { margin-top: 2rem; border-bottom: 1px solid var(--sl-color-hairline); padding-bottom: 0.5rem; }
+  .country-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+  .country-link { 
+    display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; 
+    background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline); border-radius: 0.5rem;
+    text-decoration: none; color: inherit !important; transition: all 0.2s;
+  }
+  .country-link:hover { border-color: var(--sl-color-accent); background: var(--sl-color-gray-5); transform: translateY(-2px); }
+</style>

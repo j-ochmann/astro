@@ -1,0 +1,59 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { 
+  getI18nPaths, 
+  countriesData, 
+  useTranslations 
+} from '@/content/config/i18n';
+
+export async function getStaticPaths() {
+  const paths = getI18nPaths();
+  const allCurrencies = new Set();
+  Object.values(countriesData).forEach(c => c.currency?.forEach(curr => allCurrencies.add(curr)));
+
+  return paths.flatMap(p => 
+    Array.from(allCurrencies).map(code => ({
+      params: { lang: p.params.lang, code: (code as string).toLowerCase() }
+    }))
+  );
+}
+
+const { lang, code } = Astro.params;
+const t = useTranslations(lang);
+const upperCode = code.toUpperCase();
+
+// Najít země používající tuto měnu
+const relatedCountries = Object.values(countriesData).filter(c => 
+  c.currency?.map(curr => curr.toLowerCase()).includes(code.toLowerCase())
+);
+---
+
+<StarlightPage frontmatter={{ title: `${upperCode}`, template: 'doc' }}>
+  
+  <div class="currency-header">
+    <div class="currency-code-large">{upperCode}</div>
+  </div>
+
+  <h2 class="section-title">{lang === 'cs' ? 'Země platící touto měnou' : 'Countries using this currency'}</h2>
+  
+  <div class="country-list">
+    {relatedCountries.map(country => (
+      <a href={`/${lang}/countries/${country.code.toLowerCase()}/`} class="country-link">
+        <span class:list={['fi', `fi-${country.code.toLowerCase()}`]}></span>
+        <span>{t(country.code as any) || country.name}</span>
+      </a>
+    ))}
+  </div>
+</StarlightPage>
+
+<style>
+  /* Můžeš recyklovat styly z Jazyků výše */
+  .currency-header { padding: 2rem; background: var(--sl-color-accent-low); border-radius: 1rem; text-align: center; margin-bottom: 2rem; }
+  .currency-code-large { font-size: 3rem; font-weight: 900; font-family: var(--sl-font-mono); }
+  .country-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+  .country-link { 
+    display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; 
+    background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline); border-radius: 0.5rem;
+    text-decoration: none; color: inherit !important;
+  }
+</style>

@@ -81,14 +81,14 @@ const continentKey = `geo.continent.${country.continent.toLowerCase().replace(/\
             {t(continentKey) || country.continent}
         </li>
         <li>
-            <strong>{t('geo.stats.phone') || 'Předvolba'}:</strong> 
+            <strong>{t('geo.stats.phone')}:</strong> 
             {country.phone.map(p => `+${p}`).join(', ')}
         </li>
       </ul>
     </div>
 
     <div class="stats-card">
-      <h3>{t('geo.detail.localization') || 'Měna a jazyky'}</h3>
+      <h3>{t('geo.detail.local') || 'Měna a jazyky'}</h3>
       <ul>
         <li>
           <strong>{t('geo.stats.currency')}:</strong> 

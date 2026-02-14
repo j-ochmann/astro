@@ -130,24 +130,29 @@ export default defineConfig({
               link: '/countries/' 
             },
             { 
-              label: 'Data Table', 
-              translations: { cs: 'Tabulkový přehled' },
+              label: 'Countries Table', 
+              translations: { cs: 'Tabulka států' },
               link: '/countries/table/'
             },
             { 
               label: 'Languages', 
               translations: { cs: 'Jazyky' },
-              link: '/countries/languages/' 
+              link: '/languages/' 
             },
             { 
               label: 'Languages Table', 
               translations: { cs: 'Tabulka jazyků' },
-              link: '/countries/languages/table/'
+              link: '/languages/table/'
             },
             { 
               label: 'Currencies', 
               translations: { cs: 'Měny' },
-              link: '/countries/currencies/' 
+              link: '/currencies/' 
+            },
+            { 
+              label: 'Currencies Table', 
+              translations: { cs: 'Tabulka Měn' },
+              link: '/currencies/table/' 
             },
             { 
               label: 'Notes & Articles',
