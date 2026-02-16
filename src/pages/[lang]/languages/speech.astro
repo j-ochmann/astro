@@ -339,6 +339,7 @@ const allLangs = ([...usedLangs, ...unusedLangs] as any[]).map(l => ({
       synth.cancel();
       const ut = new SpeechSynthesisUtterance(`Test: ${voice.name}`);
       ut.voice = voice;
+      ut.lang = voice.lang;
       synth.speak(ut);
       return;
     }
