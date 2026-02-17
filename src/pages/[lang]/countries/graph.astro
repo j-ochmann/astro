@@ -1,19 +1,26 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { getI18nPaths, getCountryName } from '@/content/config/i18n';
+import { getI18nPaths, getCountryName, getMledozeData } from '@/content/config/i18n';
 import graphData from '@/content/config/i18n/nodes_and_links.json';
 
 export async function getStaticPaths() {
   return getI18nPaths();
 }
 
-const { lang } = Astro.params;
+const { lang = 'en' } = Astro.params;
 
-const localizedNodes = graphData.nodes.map(node => ({
-  ...node,
-  // Přeložíme název země hned teď
-  displayName: getCountryName(node.name, lang || 'en')
-}));
+// Příprava dat pro D3 (překlady a URL)
+const localizedNodes = graphData.nodes.map((node: any) => {
+  const mledoze = getMledozeData(node.name);
+  const countryCode = mledoze?.cca2.toLowerCase() || node.name.toLowerCase();
+  
+  return {
+    ...node,
+    displayName: getCountryName(node.name, lang),
+    // URL ve formátu /cs/countries/cz
+    url: `/${lang}/countries/${countryCode}`
+  };
+});
 
 const localizedGraphData = {
   ...graphData,
@@ -24,24 +31,14 @@ const translations = {
   cs: {
     title: "Graf sousedství",
     modePan: "Režim: Panování",
-    africa: "Afrika",
-    asia: "Asie",
-    europe: "Evropa",
-    na: "S. Amerika",
-    oceania: "Austrálie a Oceánie",
-    sa: "J. Amerika",
-    multi: "Mezikontinentální",
+    africa: "Afrika", asia: "Asie", europe: "Evropa", na: "S. Amerika",
+    oceania: "Austrálie a Oceánie", sa: "J. Amerika", multi: "Mezikontinentální",
   },
   en: {
     title: "Country Contiguity Graph",
     modePan: "Mode: Background Pan",
-    africa: "Africa",
-    asia: "Asia",
-    europe: "Europe",
-    na: "North America",
-    oceania: "Australia & Oceania",
-    sa: "South America",
-    multi: "Transcontinental",
+    africa: "Africa", asia: "Asia", europe: "Europe", na: "North America",
+    oceania: "Australia & Oceania", sa: "South America", multi: "Transcontinental",
   }
 } as const;
 
@@ -49,7 +46,6 @@ const t = translations[lang as keyof typeof translations] || translations.en;
 ---
 
 <StarlightPage frontmatter={{ title: t.title, template: 'doc' }}>
-  
   <div class="graph-container">
     <svg class="legend" width="100%" height="60" viewBox="0 0 960 40" preserveAspectRatio="xMidYMid meet">
         <g><circle fill="#FF6347" r="5" cx="10" cy="20"></circle><text class="legendlabel" dx="25" dy="25">{t.africa}</text></g>
@@ -64,61 +60,39 @@ const t = translations[lang as keyof typeof translations] || translations.en;
         <svg id="main-graph"></svg>
     </div>
   </div>
-
 </StarlightPage>
 
 <style is:global>
-  .graph-container h2 { text-align: center; margin-top: 0; }
-  
   #canvas-wrapper {
       border: 1px solid var(--sl-color-gray-5);
       background: var(--sl-color-gray-6);
       border-radius: 8px;
       overflow: hidden;
-      margin-bottom: 1rem;
   }
-
-  #main-graph {
-      display: block;
-      width: 100%;
-      height: 500px;
-      cursor: move;
-  }
-
-  .modelabel { font: bold 14px sans-serif; fill: var(--sl-color-text); }
-  .links line { stroke: var(--sl-color-gray-4); stroke-opacity: 0.4; stroke-width: 2px; }
-  .node circle { stroke: #000; stroke-width: 1.5px; }
-  .node text { display: none; font: 12px sans-serif; fill: var(--sl-color-text); }
+  #main-graph { display: block; width: 100%; height: 600px; cursor: crosshair; }
+  .links line { stroke: var(--sl-color-gray-4); stroke-opacity: 0.3; stroke-width: 1.5px; }
+  .node circle { stroke: #fff; stroke-width: 1px; cursor: pointer; transition: stroke-width 0.2s; }
+  .node:hover circle { stroke: var(--sl-color-text); stroke-width: 3px; }
+  .node text { display: none; font: 12px sans-serif; fill: var(--sl-color-text); pointer-events: none; font-weight: bold; }
   .node:hover text { display: inline; }
-  .node:hover circle { fill: #000 !important; }
-  .cell { fill: none; pointer-events: none; }
   .legendlabel { font: 12px sans-serif; fill: var(--sl-color-text); }
 </style>
 
 <script is:inline src="https://d3js.org/d3.v4.min.js"></script>
 
-<script is:inline define:vars={{ t, localizedGraphData }}>
+<script is:inline define:vars={{ localizedGraphData }}>
   function initGraph() {
-    var width = 960, height = 500;
-    var graph = localizedGraphData; // Data už přišla přeložená z Astra
+    var width = 960, height = 600;
+    var graph = localizedGraphData;
 
-    var svg = d3.select("#main-graph")
-        .attr("viewBox", `0 0 ${width} ${height}`);
+    var svg = d3.select("#main-graph").attr("viewBox", `0 0 ${width} ${height}`);
+    var g = svg.append("g");
 
     var simulation = d3.forceSimulation()
-        .force("charge_force", d3.forceManyBody().strength(-30))
-        .force("center_force", d3.forceCenter(width / 2, height / 2))
-        .force("links", d3.forceLink().id(d => d.name).distance(d => d.border / 100))
-        .force("collide", d3.forceCollide(d => d.neighbor_count * 3.5));
-
-    var voronoi = d3.voronoi()
-        .x(d => d.x).y(d => d.y)
-        .extent([[width * -2, height * -2], [width * 2, height * 2]]);
-
-    var g = svg.append("g").attr("class", "everything");
-
-    var zoom = d3.zoom().on("zoom", () => g.attr("transform", d3.event.transform));
-    svg.call(zoom);
+        .force("link", d3.forceLink().id(d => d.name).distance(50))
+        .force("charge", d3.forceManyBody().strength(-50))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide", d3.forceCollide(d => 15));
 
     var colorMapping = {
         "Africa": "#FF6347", "Asia": "#DCDCDC", "Europe": "#8FBC8F",
@@ -132,55 +106,28 @@ const t = translations[lang as keyof typeof translations] || translations.en;
     var node = g.append("g").attr("class", "nodes")
         .selectAll(".node").data(graph.nodes).enter().append("g")
         .attr("class", "node")
-        .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended))
-        .on("mouseover", highlightStart)
-        .on("mouseout", highlightEnd);
+        .on("click", d => { if (d.url) window.location.href = d.url; }) // PROKLIK
+        .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
 
     node.append("circle")
-        .attr("r", d => 6 + (d.neighbor_count / 14) * 10)
+        .attr("r", d => 5 + (d.neighbor_count / 2))
         .attr("fill", d => colorMapping[d.continents.length > 1 ? "Multi" : d.continents[0]]);
 
-    var label = node.append("text")
-        .attr("dy", ".35em").attr("x", 15)
-        // PŘELOŽENÝ NÁZEV
-        .text(d => d.displayName).style("pointer-events", "none");
+    node.append("text").attr("dx", 12).attr("dy", ".35em").text(d => d.displayName);
 
-    var modeLabel = svg.append("text").attr("class", "modelabel")
-        .text(t.modePan).attr("x", 10).attr("y", 25);
-
-    var cell = node.append("path").attr("class", "cell");
-
-    function tickActions() {
-        cell.data(voronoi.polygons(graph.nodes))
-            .attr("d", d => d && d.length ? "M" + d.join("L") + "Z" : null);
-        node.attr("transform", d => `translate(${d.x},${d.y})`);
+    simulation.nodes(graph.nodes).on("tick", () => {
         link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
             .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
-    }
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+
+    simulation.force("link").links(graph.links);
+
+    svg.call(d3.zoom().scaleExtent([0.2, 5]).on("zoom", () => g.attr("transform", d3.event.transform)));
 
     function dragstarted(d) { if (!d3.event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
     function dragged(d) { d.fx = d3.event.x; d.fy = d3.event.y; }
     function dragended(d) { if (!d3.event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
-
-    var linkSet = {};
-    graph.links.forEach(d => { linkSet[d.source + "," + d.target] = true; });
-    function areLinked(a, b) { return linkSet[a.name + "," + b.name] || linkSet[b.name + "," + a.name] || a.name === b.name; }
-
-    function highlightStart(d) {
-        node.style("stroke-opacity", n => areLinked(d, n) ? 1 : 0.1)
-            .attr("fill-opacity", n => areLinked(d, n) ? 1 : 0.1);
-        link.style("stroke-opacity", l => l.source === d || l.target === d ? 1 : 0.1);
-        label.filter(n => areLinked(d, n)).style("display", "inline");
-    }
-
-    function highlightEnd() {
-        node.style("stroke-opacity", 1).attr("fill-opacity", 1);
-        link.style("stroke-opacity", 0.4);
-        label.style("display", "none");
-    }
-
-    simulation.nodes(graph.nodes).on("tick", tickActions);
-    simulation.force("links").links(graph.links);
   }
 
   if (window.d3) initGraph();
