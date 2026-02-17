@@ -5,8 +5,82 @@ import { iso_4217 } from './i18n/iso_4217';
 import { iso_639_1 } from './i18n/iso_639_1';
 import { iso_639_3 } from './i18n/iso_639_3';
 import { uiStrings } from './i18n/ui';
-// Validace importů: Pokud se zobrazí tato chyba, přidejte 'export' do příslušného souboru.
-// Např.: export const iso_3166_1 = { ... }
+import countries from './i18n/countries.json';
+
+// --- SEKCE: MLEDOZE DATA (countries.json) ---
+
+/** Rozhraní pro data z externího JSONu (mledoze) */
+interface MledozeCountry {
+  cca2: string; 
+  cca3: string; 
+  name: {
+    common: string;
+    // Použijeme any pro native, protože struktura jazyků je extrémně variabilní
+    native: Record<string, any>; 
+  };
+  translations: Record<string, { common: string }>;
+  borders?: string[];
+}
+
+// Oprava TypeScript chyby pomocí "as unknown as MledozeCountry[]"
+const countryList = (countries as unknown) as MledozeCountry[];
+
+// Indexy pro O(1) vyhledávání
+const cca2ToCca3Map = new Map(countryList.map(c => [c.cca2.toUpperCase(), c.cca3.toUpperCase()]));
+const cca3ToCca2Map = new Map(countryList.map(c => [c.cca3.toUpperCase(), c.cca2.toUpperCase()]));
+
+/** Převede 2-místný kód na 3-místný */
+export function cca2ToCca3(cca2: string): string | undefined {
+  return cca2ToCca3Map.get(cca2.toUpperCase());
+}
+
+/** Převede 3-místný kód na 2-místný */
+export function cca3ToCca2(cca3: string): string | undefined {
+  return cca3ToCca2Map.get(cca3.toUpperCase());
+}
+
+/** Najde surová mledoze data podle jakéhokoliv ISO kódu */
+export function getMledozeData(code: string): MledozeCountry | undefined {
+  const c = code.toUpperCase();
+  return countryList.find(curr => curr.cca2 === c || curr.cca3 === c);
+}
+
+/** Vrátí název země v aktuálním jazyce webu */
+export function getCountryName(code: string, lang: string): string {
+  const country = getMledozeData(code);
+  if (!country) return code;
+
+  const langMap: Record<string, string> = {
+    cs: 'ces',
+    en: 'eng',
+    de: 'deu',
+    fr: 'fra',
+    pl: 'pol',
+    sk: 'slk'
+  };
+
+  const translationKey = langMap[lang];
+  
+  if (lang === 'en') return country.name.common;
+  return country.translations[translationKey]?.common || country.name.common;
+}
+
+/** Vrátí seznam sousedů s informacemi pro UI */
+export function getNeighbors(code: string, lang: string) {
+  const country = getMledozeData(code);
+  if (!country || !country.borders) return [];
+
+  return country.borders.map(borderCca3 => {
+    return {
+      cca3: borderCca3,
+      cca2: cca3ToCca2(borderCca3) || '??',
+      name: getCountryName(borderCca3, lang)
+    };
+  });
+}
+
+// --- SEKCE: VALIDACE A STÁVAJÍCÍ I18N LOGIKA ---
+
 if (!locales) throw new Error("Chybí export 'locales'. Zkontrolujte src/content/config/i18n/locales.ts");
 if (!iso_3166_1) throw new Error("Chybí export 'iso_3166_1'. Zkontrolujte src/content/config/i18n/iso_3166_1.ts");
 if (!iso_4217) throw new Error("Chybí export 'iso_4217'. Zkontrolujte src/content/config/i18n/iso_4217.ts");
@@ -25,13 +99,12 @@ export function getFlagCode(lang_id: string) {
 }
 
 export const getLanguageLabel = (code: string, lang: string) => {
-  let l = (iso_639_1 as any)?.[code]; // 1. Zkusí ISO 639-1 (2-písmenné kódy) 
-  if (!l) { // 2. Zkusí ISO 639-3 (3-písmenné kódy)
+  let l = (iso_639_1 as any)?.[code]; 
+  if (!l) {
     l = (iso_639_3 as any)?.[code];
   }
-  if (!l) return code.toLowerCase(); // 3. Fallback kód
-  const name = l.en || l.label || code; // 4. Výběr názvu může rozšířit o češtinu
-  // Vrací formát: "Afar (AA)" nebo "Egyptian Arabic (ARZ)"
+  if (!l) return code.toLowerCase();
+  const name = l.en || l.label || code;
   return `${name} (${code.toLowerCase()})`;
 };
 
@@ -44,10 +117,10 @@ export const getCurrencyLabel = (code: string, lang: string) => {
 export function useTranslations(lang: string) {
   const translations = uiStrings?.[lang as keyof typeof uiStrings] || uiStrings?.en || {};
   const countryNames = countryTranslations?.[lang as keyof typeof countryTranslations] || countryTranslations?.en || {};
-  // Pokud klíč neexistuje v UI strings ani v Country strings, vrátí klíč samotný
   return (key: string) => (translations as any)[key] || (countryNames as any)[key] || key;
 }
 
+/** Původní rozhraní pro iso_3166_1.ts */
 export interface Country {
   code: string;
   name: string;
@@ -61,7 +134,7 @@ export interface Country {
 }
 
 export const countriesData = iso_3166_1 as Record<string, Country>;
-/** Unikátní jazyky (Antarktidu s undefined přeskočí) */
+
 export const getAllLanguages = (): string[] => {
   return [
     ...new Set(
@@ -98,7 +171,7 @@ export const getAllCapitals = (): string[] => {
 
 function getLangInfo(code: string) {
   const c = code.toLowerCase();
-    const meta = (iso_639_1 as any)?.[c] || (iso_639_3 as any)?.[c];
+  const meta = (iso_639_1 as any)?.[c] || (iso_639_3 as any)?.[c];
   
   if (!meta) {
     return {
