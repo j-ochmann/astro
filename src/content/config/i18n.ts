@@ -5,6 +5,13 @@ import { iso_4217 } from './i18n/iso_4217';
 import { iso_639_1 } from './i18n/iso_639_1';
 import { iso_639_3 } from './i18n/iso_639_3';
 import { uiStrings } from './i18n/ui';
+// Validace importů: Pokud se zobrazí tato chyba, přidejte 'export' do příslušného souboru.
+// Např.: export const iso_3166_1 = { ... }
+if (!locales) throw new Error("Chybí export 'locales'. Zkontrolujte src/content/config/i18n/locales.ts");
+if (!iso_3166_1) throw new Error("Chybí export 'iso_3166_1'. Zkontrolujte src/content/config/i18n/iso_3166_1.ts");
+if (!iso_4217) throw new Error("Chybí export 'iso_4217'. Zkontrolujte src/content/config/i18n/iso_4217.ts");
+if (!iso_639_1) throw new Error("Chybí export 'iso_639_1'. Zkontrolujte src/content/config/i18n/iso_639_1.ts");
+if (!uiStrings) throw new Error("Chybí export 'uiStrings'. Zkontrolujte src/content/config/i18n/ui.ts");
 
 export function getI18nPaths() {
   return Object.keys(locales).map((lang) => ({
@@ -18,9 +25,9 @@ export function getFlagCode(lang_id: string) {
 }
 
 export const getLanguageLabel = (code: string, lang: string) => {
-  let l = (iso_639_1 as any)[code]; // 1. Zkusí ISO 639-1 (2-písmenné kódy) 
+  let l = (iso_639_1 as any)?.[code]; // 1. Zkusí ISO 639-1 (2-písmenné kódy) 
   if (!l) { // 2. Zkusí ISO 639-3 (3-písmenné kódy)
-    l = (iso_639_3 as any)[code];
+    l = (iso_639_3 as any)?.[code];
   }
   if (!l) return code.toLowerCase(); // 3. Fallback kód
   const name = l.en || l.label || code; // 4. Výběr názvu může rozšířit o češtinu
@@ -29,14 +36,14 @@ export const getLanguageLabel = (code: string, lang: string) => {
 };
 
 export const getCurrencyLabel = (code: string, lang: string) => {
-  const curr = iso_4217[code];
+  const curr = iso_4217?.[code];
   if (!curr) return code;
   return `${curr.name} (${code})`;
 };
 
 export function useTranslations(lang: string) {
-  const translations = uiStrings[lang as keyof typeof uiStrings] || uiStrings.en;
-  const countryNames = countryTranslations[lang as keyof typeof countryTranslations] || countryTranslations.en;
+  const translations = uiStrings?.[lang as keyof typeof uiStrings] || uiStrings?.en || {};
+  const countryNames = countryTranslations?.[lang as keyof typeof countryTranslations] || countryTranslations?.en || {};
   // Pokud klíč neexistuje v UI strings ani v Country strings, vrátí klíč samotný
   return (key: string) => (translations as any)[key] || (countryNames as any)[key] || key;
 }
@@ -48,9 +55,9 @@ export interface Country {
   continent: string;
   population: number;
   phone: number[];
-  capital?: string;      // Otazník znamená: může být undefined
-  currency?: string[];   // Otazník znamená: může být undefined
-  language?: string[];   // Otazník znamená: může být undefined
+  capital?: string;
+  currency?: string[];
+  language?: string[];
 }
 
 export const countriesData = iso_3166_1 as Record<string, Country>;
@@ -91,7 +98,7 @@ export const getAllCapitals = (): string[] => {
 
 function getLangInfo(code: string) {
   const c = code.toLowerCase();
-    const meta = (iso_639_1 as any)[c] || (iso_639_3 as any)[c];
+    const meta = (iso_639_1 as any)?.[c] || (iso_639_3 as any)?.[c];
   
   if (!meta) {
     return {

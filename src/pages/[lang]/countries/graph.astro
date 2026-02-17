@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html lang="en">
+
+<head>
+  <title>Country Graph</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <meta property="og:title" content="Country Contiguity Graph"/>
+  <meta property="og:description" content="The countries of the world as a graph. Two are connected if they share a land border" />
+  <meta property="og:image" content="https://raw.githubusercontent.com/DataOmbudsman/country-graph/master/img/large.png" />
+</head>
+
+<body>
+  <h1>Country Contiguity Graph</h1>
+  <h2>Which countries are neighbors?</h2>
+  <svg></svg>
+  <svg class="legend" width="960" height="40">
+      <g><circle fill="#FF6347" r="5" cx="10" cy="20"></circle><text class="legendlabel" dx="25" dy="25">Africa</text></g>
+      <g><circle fill="#DCDCDC" r="5" cx="90" cy="20"></circle><text class="legendlabel" dx="105" dy="25">Asia</text></g>
+      <g><circle fill="#8FBC8F" r="5" cx="170" cy="20"></circle><text class="legendlabel" dx="185" dy="25">Europe</text></g>
+      <g><circle fill="#BA55D3" r="5" cx="270" cy="20"></circle><text class="legendlabel" dx="285" dy="25">North America</text></g>
+      <g><circle fill="#1E90FF" r="5" cx="415" cy="20"></circle><text class="legendlabel" dx="430" dy="25">Australia & Oceania</text></g>
+      <g><circle fill="#FFA500" r="5" cx="600" cy="20"></circle><text class="legendlabel" dx="615" dy="25">South America</text></g>
+      <g><circle fill="#FFD700" r="5" cx="740" cy="20"></circle><text class="legendlabel" dx="755" dy="25">Transcontinental/in-between</text></g>
+  </svg>
+  <p>In the graph the countries of the world are shown (UN member states and UN observer non-member states).</p>
+  <p>Two countries are connected if they share a land border.</p>
+  <p>Press Space or Enter to switch between Background Pan mode and Easy Highlight mode.</p>
+  <p>In Background Pan mode move around by clicking and dragging the background. It's easier to pick and drag a node in Easy Highlight mode.</p>
+  <p>Zoom with the mouse wheel any time.</p>
+  <p>Data sources:
+    <a href="https://en.wikipedia.org/wiki/List_of_countries_and_territories_by_land_borders">[1]</a>
+    <a href="https://en.wikipedia.org/wiki/List_of_sovereign_states_and_dependent_territories_by_continent">[2]</a>
+    retrieved from Wikipedia on 20 Feb 2019.
+    Source code is on <a href="https://github.com/DataOmbudsman/country-graph">GitHub</a>.
+  </p>
+
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="index.js"></script>
+
+</body>
+
+</html>
+
+<style>
+h1 {
+    text-align: center;
+}
+
+h2 {
+    text-align: center;
+    font-weight: normal;
+}
+
+p {
+    text-align: center;
+    font-family: sans-serif;
+}
+
+svg {
+    display: block;
+    margin: auto;
+}
+
+.map {
+    border: 1px solid lightgray;
+    cursor: move;
+}
+
+.modelabel {
+    font: 15px sans-serif;
+    fill: black;
+}
+
+.links line {
+    stroke: #999;
+    stroke-opacity: 0.6;
+    stroke-width: 3px;
+}
+
+.node circle {
+    stroke: black;
+    stroke-width: 2px;
+    cursor: default;
+}
+
+.node text {
+    display: none;
+    font: 15px sans-serif;
+}
+
+.node:hover text {
+    display: inline;
+}
+
+.node:hover circle {
+    fill: #000;
+}
+
+.cell {
+    fill: none;
+    pointer-events: none;
+}
+
+.legendlabel {
+    font: 14px sans-serif;
+}
+</style>
+
+<script>
+var width = 960,
+    height = 500
+
+var svg = d3.select("svg")
+    .attr("class", "map")
+    .attr("width", width)
+    .attr("height", height);
+
+var simulation = d3.forceSimulation()
+    .force("charge_force", d3.forceManyBody().strength(-26))
+    .force("center_force", d3.forceCenter(width / 2, height / 2))
+    .force("links", d3.forceLink().id(nodeName).distance(linkDistance))
+    .force("collide", d3.forceCollide(collisionRadius))
+    ;
+
+var voronoi = d3.voronoi()
+    .x(function (d) { return d.x; })
+    .y(function (d) { return d.y; })
+    .extent([[width * -100, height * -100], [width * 100, height * 100]]);
+
+var zoom = d3.zoom();
+
+var panMode = true;
+
+var colorMapping = {
+    "Africa": "#FF6347",
+    "Asia": "#DCDCDC",
+    "Europe": "#8FBC8F",
+    "North_America": "#BA55D3",
+    "Oceania": "#1E90FF",
+    "South_America": "#FFA500",
+    "Multi": "#FFD700",
+}
+
+function sizeOfCircle(d) {
+    let min_size = 6;
+    let max_size = 16;
+    let max_neighbor_count = 14;
+
+    var normalized = d.neighbor_count / max_neighbor_count;
+    return min_size + normalized * (max_size - min_size)
+}
+
+function collisionRadius(d) {
+    return d.neighbor_count * 4;
+}
+
+function nodeName(d) {
+    return d.name;
+}
+
+function linkDistance(d) {
+    return d.border / 100;
+}
+
+function colorOfCircle(d) {
+    var key = d.continents.length > 1 ? "Multi" : d.continents[0]
+    return colorMapping[key]
+}
+
+function drawGraph(graph) {
+    var g = svg.append("g")
+        .attr("class", "everything");
+
+    var link = g.append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(graph.links)
+        .enter()
+        .append("line");
+
+    var node = g.append("g")
+        .attr("class", "nodes")
+        .selectAll("nodes")
+        .data(graph.nodes)
+        .enter()
+        .append("g")
+        .attr("class", "node")
+        .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended))
+        .on("mouseover", highlightStart)
+        .on("mouseout", highlightEnd);
+
+    var circle = node
+        .append("circle")
+        .attr("r", sizeOfCircle)
+        .attr("fill", colorOfCircle);
+
+    var label = node
+        .append("text")
+        .attr("dy", ".35em")
+        .text(nodeName)
+        .style("pointer-events", "none");
+
+    var modeLabel = svg
+        .append("text")
+        .attr("class", "modelabel")
+        .text("Mode: Background Pan")
+        .attr("x", 5)
+        .attr("y", 20);
+
+    var cell = node
+        .append("path")
+        .attr("class", "cell");
+
+    function switchPanMode() {
+        var newPointerEvents = panMode ? "all" : "none";
+        var newCursorStyle = panMode ? "default" : "move";
+        var newModeLabel = panMode ? "Mode: Easy Highlight" : "Mode: Background Pan";
+
+        cell.style("pointer-events", newPointerEvents);
+        svg.style("cursor", newCursorStyle);
+        modeLabel.text(newModeLabel);
+
+        panMode = !panMode;
+    }
+
+    function zoomActions() {
+        g.attr("transform", d3.event.transform)
+    }
+
+    function tickActions() {
+        cell
+            .data(voronoi.polygons(graph.nodes))
+            .attr("d", function (d) { return d.length ? "M" + d.join("L") : null; });
+
+        circle
+            .attr("cx", function (d) { return d.x; })
+            .attr("cy", function (d) { return d.y; });
+
+        link
+            .attr("x1", function (d) { return d.source.x; })
+            .attr("y1", function (d) { return d.source.y; })
+            .attr("x2", function (d) { return d.target.x; })
+            .attr("y2", function (d) { return d.target.y; });
+
+        label
+            .attr("x", function (d) { return d.x + 20; })
+            .attr("y", function (d) { return d.y; });
+    }
+
+    function dragstarted(d) {
+        if (!d3.event.active) simulation.alphaTarget(0.33).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+    }
+
+    function dragended(d) {
+        if (!d3.event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+
+    var linkSet = {};
+    graph.links.forEach(function (link) {
+        linkSet[link.source + "," + link.target] = true;
+    });
+
+    function areLinked(nodeA, nodeB) {
+        return (
+            linkSet[nodeA.name + "," + nodeB.name] ||
+            linkSet[nodeB.name + "," + nodeA.name] ||
+            nodeA.name == nodeB.name
+        );
+    }
+
+    function highlightStart(highlightedNode) {
+        var targetOpacity = 0.2;
+        node
+            .filter((node) => !areLinked(highlightedNode, node))
+            .attr("fill-opacity", targetOpacity)
+            .style("stroke-opacity", targetOpacity);
+
+        label
+            .filter((node) => areLinked(highlightedNode, node))
+            .style("display", "inline");
+
+        link
+            .filter((link) => link.source != highlightedNode && link.target != highlightedNode)
+            .style("stroke-opacity", targetOpacity);
+    }
+
+    function highlightEnd() {
+        node
+            .style("stroke-opacity", 1)
+            .attr("fill-opacity", 1);
+
+        label
+            .style("display", "none");
+
+        link
+            .style("stroke-opacity", 1);
+    }
+
+    d3.select("body").on("keydown", () => {
+        var keyCode = d3.event.keyCode;
+        if (keyCode === 13 || keyCode === 32) switchPanMode()
+    });
+
+    simulation
+        .on("tick", tickActions)
+        .nodes(graph.nodes)
+        .force("links")
+        .links(graph.links);
+
+    zoom.on("zoom", zoomActions)(svg);
+}
+
+d3.json('data/nodes_and_links.json', function (error, data) {
+    if (error) throw error;
+    drawGraph(data);
+});
+</script>

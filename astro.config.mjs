@@ -135,6 +135,11 @@ export default defineConfig({
               link: '/countries/table/'
             },
             { 
+              label: 'Countries Graph', 
+              translations: { cs: 'Síťový graf států' },
+              link: '/countries/graph/'
+            },
+            { 
               label: 'Languages', 
               translations: { cs: 'Jazyky' },
               link: '/languages/' 
