@@ -8,15 +8,9 @@ export async function getStaticPaths() {
 
 const { lang } = Astro.params;
 
-// Jednoduché překlady pro nadpisy a legendu
 const t = {
   cs: {
-    title: "Graf sousedství států",
-    sub: "Které země jsou sousedé?",
-    desc1: "V grafu jsou zobrazeny země světa (členské a pozorovatelské státy OSN).",
-    desc2: "Dvě země jsou spojeny, pokud sdílejí pozemní hranici.",
-    controls: "Stisknutím Mezerníku nebo Enteru přepnete mezi režimy Panování a Zvýraznění.",
-    sources: "Zdroje dat",
+    title: "Graf sousedství",
     africa: "Afrika",
     asia: "Asie",
     europe: "Evropa",
@@ -24,16 +18,9 @@ const t = {
     oceania: "Austrálie a Oceánie",
     sa: "J. Amerika",
     multi: "Mezikontinentální",
-    modePan: "Režim: Panování pozadí",
-    modeHigh: "Režim: Snadné zvýraznění"
   },
   en: {
     title: "Country Contiguity Graph",
-    sub: "Which countries are neighbors?",
-    desc1: "The graph shows the countries of the world (UN members and observers).",
-    desc2: "Two countries are connected if they share a land border.",
-    controls: "Press Space or Enter to switch between Background Pan and Easy Highlight mode.",
-    sources: "Data sources",
     africa: "Africa",
     asia: "Asia",
     europe: "Europe",
@@ -41,8 +28,6 @@ const t = {
     oceania: "Australia & Oceania",
     sa: "South America",
     multi: "Transcontinental",
-    modePan: "Mode: Background Pan",
-    modeHigh: "Mode: Easy Highlight"
   }
 }[lang] || { /* default en fallback */ };
 ---
@@ -50,12 +35,6 @@ const t = {
 <StarlightPage frontmatter={{ title: t.title, template: 'doc' }}>
   
   <div class="graph-container">
-    <h2>{t.sub}</h2>
-    
-    <div id="canvas-wrapper">
-        <svg id="main-graph"></svg>
-    </div>
-
     <svg class="legend" width="100%" height="60" viewBox="0 0 960 40" preserveAspectRatio="xMidYMid meet">
         <g><circle fill="#FF6347" r="5" cx="10" cy="20"></circle><text class="legendlabel" dx="25" dy="25">{t.africa}</text></g>
         <g><circle fill="#DCDCDC" r="5" cx="100" cy="20"></circle><text class="legendlabel" dx="115" dy="25">{t.asia}</text></g>
@@ -65,17 +44,8 @@ const t = {
         <g><circle fill="#FFA500" r="5" cx="600" cy="20"></circle><text class="legendlabel" dx="615" dy="25">{t.sa}</text></g>
         <g><circle fill="#FFD700" r="5" cx="740" cy="20"></circle><text class="legendlabel" dx="755" dy="25">{t.multi}</text></g>
     </svg>
-
-    <div class="info-text">
-        <p>{t.desc1}</p>
-        <p>{t.desc2}</p>
-        <p><strong>{t.controls}</strong></p>
-        <p>
-            {t.sources}: 
-            <a href="https://en.wikipedia.org/wiki/List_of_countries_and_territories_by_land_borders">[1]</a>
-            <a href="https://en.wikipedia.org/wiki/List_of_sovereign_states_and_dependent_territories_by_continent">[2]</a>
-            (Wikipedia 2019).
-        </p>
+    <div id="canvas-wrapper">
+        <svg id="main-graph"></svg>
     </div>
   </div>
 
@@ -168,13 +138,6 @@ const t = {
 
         var cell = node.append("path").attr("class", "cell");
 
-        function switchPanMode() {
-            panMode = !panMode;
-            cell.style("pointer-events", panMode ? "none" : "all");
-            svg.style("cursor", panMode ? "move" : "default");
-            modeLabel.text(panMode ? t.modePan : t.modeHigh);
-        }
-
         function tickActions() {
             cell.data(voronoi.polygons(graph.nodes))
                 .attr("d", d => d && d.length ? "M" + d.join("L") + "Z" : null);
@@ -182,12 +145,10 @@ const t = {
             link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
                 .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
         }
-
         // Drag functions
         function dragstarted(d) { if (!d3.event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
         function dragged(d) { d.fx = d3.event.x; d.fy = d3.event.y; }
         function dragended(d) { if (!d3.event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
-
         // Highlight logic
         var linkSet = {};
         graph.links.forEach(d => { linkSet[d.source + "," + d.target] = true; });
@@ -206,19 +167,11 @@ const t = {
             label.style("display", "none");
         }
 
-        d3.select(window).on("keydown", () => {
-            if (d3.event.keyCode === 13 || d3.event.keyCode === 32) {
-                d3.event.preventDefault();
-                switchPanMode();
-            }
-        });
-
         simulation.nodes(graph.nodes).on("tick", tickActions);
         simulation.force("links").links(graph.links);
     });
   }
 
-  // Spuštění po načtení
   if (window.d3) initGraph();
   else window.addEventListener('load', initGraph);
 </script>
