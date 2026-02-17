@@ -31,7 +31,7 @@ export const getLanguageLabel = (code: string, lang: string) => {
 export const getCurrencyLabel = (code: string, lang: string) => {
   const curr = iso_4217[code];
   if (!curr) return code;
-  return lang === 'cs' ? `${curr.cs} (${code})` : `${curr.name} (${code})`;
+  return `${curr.name} (${code})`;
 };
 
 export function useTranslations(lang: string) {
@@ -44,7 +44,7 @@ export function useTranslations(lang: string) {
 export interface Country {
   code: string;
   name: string;
-  label: string;
+  native: string;
   continent: string;
   population: number;
   phone: number[];

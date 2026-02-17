@@ -1,4 +1,4 @@
-const countryTranslations = {
+export const countryTranslations = {
 en: {}, gb: {},
 cs: {
 "AF": "Afghánistán", "AX": "Ålandy", "AL": "Albánie", "DZ": "Alžírsko", "AS": "Americká Samoa", 
