@@ -1,3 +1,11 @@
+import { iso_3166_1 } from './i18n/iso_3166_1';
+import { countryTranslations } from './i18n/country_translations';
+import { iso_4217 } from './i18n/iso_4217';
+import { iso_639_1 } from './i18n/iso_639_1';
+import { iso_639_3 } from './i18n/iso_639_3';
+import { locales } from './i18n/locales';
+import { uiStrings } from './i18n/ui';
+
 export function getI18nPaths() {
   return Object.keys(locales).map((lang) => ({
     params: { lang },
@@ -10,7 +18,7 @@ export function getFlagCode(lang_id: string) {
 }
 
 export const getLanguageLabel = (code: string, lang: string) => {
-  let l = (languages as any)[code]; // 1. Zkusí ISO 639-1 (2-písmenné kódy) 
+  let l = (iso_639_1 as any)[code]; // 1. Zkusí ISO 639-1 (2-písmenné kódy) 
   if (!l) { // 2. Zkusí ISO 639-3 (3-písmenné kódy)
     l = (iso_639_3 as any)[code];
   }
@@ -21,9 +29,9 @@ export const getLanguageLabel = (code: string, lang: string) => {
 };
 
 export const getCurrencyLabel = (code: string, lang: string) => {
-  const curr = currencies[code];
+  const curr = iso_4217[code];
   if (!curr) return code;
-  return lang === 'cs' ? `${curr.cs} (${code})` : `${curr.en} (${code})`;
+  return lang === 'cs' ? `${curr.cs} (${code})` : `${curr.name} (${code})`;
 };
 
 export function useTranslations(lang: string) {
@@ -45,8 +53,7 @@ export interface Country {
   language?: string[];   // Otazník znamená: může být undefined
 }
 
-export const countriesData = countries as Record<string, Country>;
-
+export const countriesData = iso_3166_1 as Record<string, Country>;
 /** Unikátní jazyky (Antarktidu s undefined přeskočí) */
 export const getAllLanguages = (): string[] => {
   return [
@@ -84,7 +91,7 @@ export const getAllCapitals = (): string[] => {
 
 function getLangInfo(code: string) {
   const c = code.toLowerCase();
-    const meta = (languages as any)[c] || (iso_639_3 as any)[c];
+    const meta = (iso_639_1 as any)[c] || (iso_639_3 as any)[c];
   
   if (!meta) {
     return {
