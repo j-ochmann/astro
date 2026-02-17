@@ -8,7 +8,7 @@ export async function getStaticPaths() {
 
 const { lang } = Astro.params;
 
-const t = {
+const translations = {
   cs: {
     title: "Graf sousedství",
     africa: "Afrika",
@@ -29,7 +29,9 @@ const t = {
     sa: "South America",
     multi: "Transcontinental",
   }
-}[lang] || { /* default en fallback */ };
+} as const;
+
+const t = translations[lang as keyof typeof translations] || translations.en;
 ---
 
 <StarlightPage frontmatter={{ title: t.title, template: 'doc' }}>
