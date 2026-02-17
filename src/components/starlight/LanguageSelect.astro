@@ -1,6 +1,7 @@
 ---
 import 'flag-icons/css/flag-icons.min.css';
-import { locales, getFlagCode } from '@/content/config/i18n';
+import { locales } from '@/content/config/i18n/locales';
+import { getFlagCode } from '@/content/config/i18n';
 import config from 'virtual:starlight/user-config';
 
 const currentLocale = Astro.currentLocale?.toString() || 'en';

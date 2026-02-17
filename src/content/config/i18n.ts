@@ -1,9 +1,9 @@
+import { locales } from './i18n/locales';
 import { iso_3166_1 } from './i18n/iso_3166_1';
 import { countryTranslations } from './i18n/country_translations';
 import { iso_4217 } from './i18n/iso_4217';
 import { iso_639_1 } from './i18n/iso_639_1';
 import { iso_639_3 } from './i18n/iso_639_3';
-import { locales } from './i18n/locales';
 import { uiStrings } from './i18n/ui';
 
 export function getI18nPaths() {

@@ -8,7 +8,7 @@ import d2 from 'astro-d2';
 import react from '@astrojs/react';
 import '@fontsource/syne/700.css';
 
-import { locales } from './src/content/config/i18n.ts';
+import { locales } from './src/content/config/i18n/locales';
 
 export default defineConfig({
   site: 'https://j-ochmann.github.io',
