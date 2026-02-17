@@ -26,9 +26,6 @@ export const getCurrencyLabel = (code: string, lang: string) => {
   return lang === 'cs' ? `${curr.cs} (${code})` : `${curr.en} (${code})`;
 };
 
-
-
-
 export function useTranslations(lang: string) {
   const translations = uiStrings[lang as keyof typeof uiStrings] || uiStrings.en;
   const countryNames = countryTranslations[lang as keyof typeof countryTranslations] || countryTranslations.en;
@@ -108,7 +105,6 @@ function getLangInfo(code: string) {
   };
 }
 
-// Upravená funkce pro použité jazyky
 export function getUsedLanguagesData() {
   const usedCodes = new Set<string>();
   Object.values(countriesData).forEach(c => {
@@ -127,16 +123,14 @@ export function getUsedLanguagesData() {
   });
 }
 
-// Upravená funkce pro nepoužité jazyky
 export function getUnusedLanguagesData() {
   const usedCodes = new Set<string>();
   Object.values(countriesData).forEach(c => {
     c.language?.forEach(l => usedCodes.add(l));
   });
 
-  // Sloučíme klíče z obou slovníků a odfiltrujeme ty použité
   const allAvailableCodes = new Set([
-    ...Object.keys(languages),
+    ...Object.keys(iso_639_1),
     ...Object.keys(iso_639_3)
   ]);
 
