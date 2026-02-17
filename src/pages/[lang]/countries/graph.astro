@@ -9,15 +9,27 @@ export async function getStaticPaths() {
 
 const { lang = 'en' } = Astro.params;
 
+// Pomocná funkce pro vytvoření slugu, pokud selže ISO kód
+const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+
 // Příprava dat (překlady a URL)
 const localizedNodes = graphData.nodes.map((node: any) => {
   const mledoze = getMledozeData(node.name);
-  const countryCode = mledoze?.cca2.toLowerCase() || node.name.toLowerCase();
+  
+  // ROBUSTNÍ GENEROVÁNÍ KÓDU/URL:
+  // 1. Zkusíme cca2 (dvoumístný kód) z mledoze dat
+  // 2. Pokud není, zkusíme kód přímo z uzlu (pokud ho tam máš)
+  // 3. Jako poslední záchrana slugify anglického jména
+  let countrySlug = mledoze?.cca2?.toLowerCase();
+  
+  if (!countrySlug) {
+    countrySlug = slugify(node.name);
+  }
   
   return {
     ...node,
     displayName: getCountryName(node.name, lang),
-    url: `/${lang}/countries/${countryCode}`
+    url: `/${lang}/countries/${countrySlug}`
   };
 });
 
@@ -70,7 +82,6 @@ const t = translations[lang as keyof typeof translations] || translations.en;
       margin-bottom: 1rem;
   }
   #main-graph { display: block; width: 100%; height: 500px; cursor: move; }
-  .modelabel { font: bold 14px sans-serif; fill: var(--sl-color-text); }
   .links line { stroke: var(--sl-color-gray-4); stroke-opacity: 0.4; stroke-width: 2px; }
   .node circle { stroke: #000; stroke-width: 1.5px; cursor: pointer; }
   .node text { display: none; font: 12px sans-serif; fill: var(--sl-color-text); pointer-events: none; }
@@ -115,7 +126,10 @@ const t = translations[lang as keyof typeof translations] || translations.en;
     var node = g.append("g").attr("class", "nodes")
         .selectAll(".node").data(graph.nodes).enter().append("g")
         .attr("class", "node")
-        .on("click", d => { if (d.url) window.location.href = d.url; })
+        .on("click", d => { 
+            // Použijeme připravené URL
+            if (d.url) window.location.href = d.url; 
+        })
         .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended))
         .on("mouseover", highlightStart)
         .on("mouseout", highlightEnd);
@@ -130,7 +144,6 @@ const t = translations[lang as keyof typeof translations] || translations.en;
 
     var cell = node.append("path").attr("class", "cell");
 
-    // Highlight Logic
     var linkSet = {};
     graph.links.forEach(d => { linkSet[d.source + "," + d.target] = true; });
     function areLinked(a, b) { return linkSet[a.name + "," + b.name] || linkSet[b.name + "," + a.name] || a.name === b.name; }
