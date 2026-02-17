@@ -22,7 +22,7 @@ const unusedLangs = getUnusedLanguagesData();
 const allLangs = ([...usedLangs, ...unusedLangs] as any[]).map(l => ({
   code: l.code,
   nameEn: l.nameEn,
-  nameNative: l.nameNative,
+  native: l.native,
   type: l.type,
   usageCount: Number(l.usageCount || 0) // Zajištění existence vlastnosti
 }));
@@ -65,7 +65,7 @@ const labels = {
         <tr>
           <th data-sort="code">{labels.code} <Icon name="lucide:arrow-up-down" /></th>
           <th data-sort="nameEn">{labels.en} <Icon name="lucide:arrow-up-down" /></th>
-          <th data-sort="nameNative">{labels.native} <Icon name="lucide:arrow-up-down" /></th>
+          <th data-sort="native">{labels.native} <Icon name="lucide:arrow-up-down" /></th>
           <th data-sort="type">{labels.type} <Icon name="lucide:arrow-up-down" /></th>
           <th data-sort="usageCount">{labels.usage} <Icon name="lucide:arrow-up-down" /></th>
         </tr>
@@ -79,7 +79,7 @@ const labels = {
                 {l.nameEn}
               </a>
             </td>
-            <td class="native">{l.nameNative}</td>
+            <td class="native">{l.native}</td>
             <td class="type-cell"><span>{l.type}</span></td>
             <td><strong>{l.usageCount}</strong></td>
           </tr>

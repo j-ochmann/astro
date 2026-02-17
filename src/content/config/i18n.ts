@@ -131,11 +131,6 @@ export const getLanguageLabel = (code: string, lang: string) => {
 
   let meta = findMeta(code);
 
-  // Fallback pro hybridní kódy typu en-US -> en
-  if (!meta && c.includes('-')) {
-    meta = findMeta(c.split('-')[0]);
-  }
-
   if (!meta) return code;
 
   // Získání jména (podpora pro různé formáty tvých souborů)
@@ -173,7 +168,7 @@ function getLangInfo(code: string) {
   return {
     code: c,
     nameEn: meta.en || meta.name || meta.label || 'Unknown',
-    namelabel: meta.label || meta.name || '—',
+    native: meta.label || meta.native || meta.name || '—',
     type: meta.type || 'standard',
     isKnown: true
   };

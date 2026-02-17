@@ -215,7 +215,7 @@ export const iso_3166_1 = {
       population: 11750000,
       phone: [32],
       currency: ["EUR"],
-      language: ["nl","fr","de","wa"]
+      language: ["nl","fr-FR","de","wa"]
    },
    BF: {
       code: "BF",
@@ -226,7 +226,7 @@ export const iso_3166_1 = {
       population: 24300000,
       phone: [226],
       currency: ["XOF"],
-      language: ["fr","ff"]
+      language: ["fr-FR","ff"]
    },
    BG: {
       code: "BG",
@@ -259,7 +259,7 @@ export const iso_3166_1 = {
       population: 14000000,
       phone: [257],
       currency: ["BIF"],
-      language: ["fr","rn","sw"]
+      language: ["fr-FR","rn","sw"]
    },
    BJ: {
       code: "BJ",
@@ -270,7 +270,7 @@ export const iso_3166_1 = {
       population: 14500000,
       phone: [229],
       currency: ["XOF"],
-      language: ["fr","fon","yor"]
+      language: ["fr-FR","fon","yor"]
    },
    BL: {
       code: "BL",
@@ -281,7 +281,7 @@ export const iso_3166_1 = {
       population: 11000,
       phone: [590],
       currency: ["EUR"],
-      language: ["fr"]
+      language: ["fr-FR"]
    },
    BM: {
       code: "BM",
@@ -412,7 +412,7 @@ export const iso_3166_1 = {
       population: 41200000,
       phone: [1],
       currency: ["CAD"],
-      language: ["en-CA","fr","iu","cr","oj"]
+      language: ["en-CA","fr-CA","iu","cr","oj"]
    },
    CC: {
       code: "CC",
@@ -434,7 +434,7 @@ export const iso_3166_1 = {
       population: 114800000,
       phone: [243],
       currency: ["CDF"],
-      language: ["fr","ln","kg","sw","lu"]
+      language: ["fr-FR","ln","kg","sw","lu"]
    },
    CF: {
       code: "CF",
@@ -445,7 +445,7 @@ export const iso_3166_1 = {
       population: 5950000,
       phone: [236],
       currency: ["XAF"],
-      language: ["fr","sg"]
+      language: ["fr-FR","sg"]
    },
    CG: {
       code: "CG",
@@ -456,7 +456,7 @@ export const iso_3166_1 = {
       population: 6350000,
       phone: [242],
       currency: ["XAF"],
-      language: ["fr","ln","mkw"]
+      language: ["fr-FR","ln","mkw"]
    },
    CH: {
       code: "CH",
@@ -467,7 +467,7 @@ export const iso_3166_1 = {
       population: 8980000,
       phone: [41],
       currency: ["CHF","CHE","CHW"],
-      language: ["de","fr","it","rm","gsw"]
+      language: ["de","fr-FR","it","rm","gsw"]
    },
    CI: {
       code: "CI",
@@ -478,7 +478,7 @@ export const iso_3166_1 = {
       population: 33800000,
       phone: [225],
       currency: ["XOF"],
-      language: ["fr","dyu","bci"]
+      language: ["fr-FR","dyu","bci"]
    },
    CK: {
       code: "CK",
@@ -511,7 +511,7 @@ export const iso_3166_1 = {
       population: 30200000,
       phone: [237],
       currency: ["XAF"],
-      language: ["en-GB","fr","ewo","dua","jax"]
+      language: ["en-GB","fr-FR","ewo","dua","jax"]
    },
    CN: {
       code: "CN",
@@ -522,7 +522,7 @@ export const iso_3166_1 = {
       population: 1409000000,
       phone: [86],
       currency: ["CNY"],
-      language: ["zh","bo","ug","za","ii","yue","wuu","nan","hak","cjy","gan","hsn"]
+      language: ["zh-CN","bo","ug","za","ii","yue","wuu","nan","hak","cjy","gan","hsn"]
    },
    CO: {
       code: "CO",
@@ -588,7 +588,7 @@ export const iso_3166_1 = {
       population: 2000,
       phone: [61],
       currency: ["AUD"],
-      language: ["en-AU","zh","ms"]
+      language: ["en-AU","zh-CN","ms"]
    },
    CY: {
       code: "CY",
@@ -632,7 +632,7 @@ export const iso_3166_1 = {
       population: 1150000,
       phone: [253],
       currency: ["DJF"],
-      language: ["fr","ar"]
+      language: ["fr-FR","ar"]
    },
    DK: {
       code: "DK",
@@ -821,7 +821,7 @@ export const iso_3166_1 = {
       population: 65000000,
       phone: [33],
       currency: ["EUR"],
-      language: ["fr","br","oc","co"]
+      language: ["fr-FR","br","oc","co"]
    },
    GA: {
       code: "GA",
@@ -832,7 +832,7 @@ export const iso_3166_1 = {
       population: 2550000,
       phone: [241],
       currency: ["XAF"],
-      language: ["fr","fng"]
+      language: ["fr-FR","fng"]
    },
    GB: {
       code: "GB",
@@ -876,7 +876,7 @@ export const iso_3166_1 = {
       population: 320000,
       phone: [594],
       currency: ["EUR"],
-      language: ["fr","gcr"]
+      language: ["fr-FR","gcr"]
    },
    GG: {
       code: "GG",
@@ -887,7 +887,7 @@ export const iso_3166_1 = {
       population: 64000,
       phone: [44],
       currency: ["GBP"],
-      language: ["en-GB","fr","nrf"]
+      language: ["en-GB","fr-FR","nrf"]
    },
    GH: {
       code: "GH",
@@ -942,7 +942,7 @@ export const iso_3166_1 = {
       population: 14700000,
       phone: [224],
       currency: ["GNF"],
-      language: ["fr","fuf","man"]
+      language: ["fr-FR","fuf","man"]
    },
    GP: {
       code: "GP",
@@ -953,7 +953,7 @@ export const iso_3166_1 = {
       population: 396000,
       phone: [590],
       currency: ["EUR"],
-      language: ["fr","gcf"]
+      language: ["fr-FR","gcf"]
    },
    GQ: {
       code: "GQ",
@@ -964,7 +964,7 @@ export const iso_3166_1 = {
       population: 1750000,
       phone: [240],
       currency: ["XAF"],
-      language: ["es","fr","pt"]
+      language: ["es","fr-FR","pt"]
    },
    GR: {
       code: "GR",
@@ -1084,7 +1084,7 @@ export const iso_3166_1 = {
       population: 12700000,
       phone: [509],
       currency: ["HTG","USD"],
-      language: ["fr","ht"]
+      language: ["fr-FR","ht"]
    },
    HU: {
       code: "HU",
@@ -1216,7 +1216,7 @@ export const iso_3166_1 = {
       population: 104000,
       phone: [44],
       currency: ["GBP"],
-      language: ["en-GB","fr","jer"]
+      language: ["en-GB","fr-FR","jer"]
    },
    JM: {
       code: "JM",
@@ -1304,7 +1304,7 @@ export const iso_3166_1 = {
       population: 880000,
       phone: [269],
       currency: ["KMF"],
-      language: ["ar","fr","zdj"]
+      language: ["ar","fr-FR","zdj"]
    },
    KN: {
       code: "KN",
@@ -1392,7 +1392,7 @@ export const iso_3166_1 = {
       population: 5250000,
       phone: [961],
       currency: ["LBP"],
-      language: ["ar","fr","en-GB"]
+      language: ["ar","fr-FR","en-GB"]
    },
    LC: {
       code: "LC",
@@ -1469,7 +1469,7 @@ export const iso_3166_1 = {
       population: 670000,
       phone: [352],
       currency: ["EUR"],
-      language: ["fr","de","lb"]
+      language: ["fr-FR","de","lb"]
    },
    LV: {
       code: "LV",
@@ -1513,7 +1513,7 @@ export const iso_3166_1 = {
       population: 37000,
       phone: [377],
       currency: ["EUR"],
-      language: ["fr","mcf"]
+      language: ["fr-FR","mcf"]
    },
    MD: {
       code: "MD",
@@ -1546,7 +1546,7 @@ export const iso_3166_1 = {
       population: 32000,
       phone: [590],
       currency: ["EUR"],
-      language: ["en-GB","fr","nl"]
+      language: ["en-GB","fr-FR","nl"]
    },
    MG: {
       code: "MG",
@@ -1557,7 +1557,7 @@ export const iso_3166_1 = {
       population: 32300000,
       phone: [261],
       currency: ["MGA"],
-      language: ["fr","mg"]
+      language: ["fr-FR","mg"]
    },
    MH: {
       code: "MH",
@@ -1590,7 +1590,7 @@ export const iso_3166_1 = {
       population: 24500000,
       phone: [223],
       currency: ["XOF"],
-      language: ["fr","bm"]
+      language: ["fr-FR","bm"]
    },
    MM: {
       code: "MM",
@@ -1622,7 +1622,7 @@ export const iso_3166_1 = {
       population: 715000,
       phone: [853],
       currency: ["MOP"],
-      language: ["zh","pt"]
+      language: ["zh-MO","pt"]
    },
    MP: {
       code: "MP",
@@ -1644,7 +1644,7 @@ export const iso_3166_1 = {
       population: 365000,
       phone: [596],
       currency: ["EUR"],
-      language: ["fr","gcf"]
+      language: ["fr-FR","gcf"]
    },
    MR: {
       code: "MR",
@@ -1688,7 +1688,7 @@ export const iso_3166_1 = {
       population: 1300000,
       phone: [230],
       currency: ["MUR"],
-      language: ["en-GB","fr","mfe"]
+      language: ["en-GB","fr-FR","mfe"]
    },
    MV: {
       code: "MV",
@@ -1732,7 +1732,7 @@ export const iso_3166_1 = {
       population: 35800000,
       phone: [60],
       currency: ["MYR"],
-      language: ["ms","zh","ta"]
+      language: ["ms","zh-CN","ta"]
    },
    MZ: {
       code: "MZ",
@@ -1765,7 +1765,7 @@ export const iso_3166_1 = {
       population: 295000,
       phone: [687],
       currency: ["XPF"],
-      language: ["fr","dhv"]
+      language: ["fr-FR","dhv"]
    },
    NE: {
       code: "NE",
@@ -1776,7 +1776,7 @@ export const iso_3166_1 = {
       population: 28400000,
       phone: [227],
       currency: ["XOF"],
-      language: ["fr","ha","kr","dje"]
+      language: ["fr-FR","ha","kr","dje"]
    },
    NF: {
       code: "NF",
@@ -1919,7 +1919,7 @@ export const iso_3166_1 = {
       population: 311000,
       phone: [689],
       currency: ["XPF"],
-      language: ["fr","ty"]
+      language: ["fr-FR","ty"]
    },
    PG: {
       code: "PG",
@@ -1974,7 +1974,7 @@ export const iso_3166_1 = {
       population: 5800,
       phone: [508],
       currency: ["EUR"],
-      language: ["fr"]
+      language: ["fr-FR"]
    },
    PN: {
       code: "PN",
@@ -2063,7 +2063,7 @@ export const iso_3166_1 = {
       population: 990000,
       phone: [262],
       currency: ["EUR"],
-      language: ["fr","rcf"]
+      language: ["fr-FR","rcf"]
    },
    RO: {
       code: "RO",
@@ -2107,7 +2107,7 @@ export const iso_3166_1 = {
       population: 14800000,
       phone: [250],
       currency: ["RWF"],
-      language: ["rw","en-GB","fr","sw"]
+      language: ["rw","en-GB","fr-FR","sw"]
    },
    SA: {
       code: "SA",
@@ -2140,7 +2140,7 @@ export const iso_3166_1 = {
       population: 108000,
       phone: [248],
       currency: ["SCR"],
-      language: ["fr","en-GB","crs"]
+      language: ["fr-FR","en-GB","crs"]
    },
    SD: {
       code: "SD",
@@ -2173,7 +2173,7 @@ export const iso_3166_1 = {
       population: 6050000,
       phone: [65],
       currency: ["SGD"],
-      language: ["en-GB","ms","ta","zh"]
+      language: ["en-GB","ms","ta","zh-SG"]
    },
    SH: {
       code: "SH",
@@ -2250,7 +2250,7 @@ export const iso_3166_1 = {
       population: 18800000,
       phone: [221],
       currency: ["XOF"],
-      language: ["fr","wo"]
+      language: ["fr-FR","wo"]
    },
    SO: {
       code: "SO",
@@ -2360,7 +2360,7 @@ export const iso_3166_1 = {
       population: 19600000,
       phone: [235],
       currency: ["XAF"],
-      language: ["fr","shu"]
+      language: ["fr-FR","shu"]
    },
    TF: {
       code: "TF",
@@ -2371,7 +2371,7 @@ export const iso_3166_1 = {
       population: 140,
       phone: [262],
       currency: ["EUR"],
-      language: ["fr"]
+      language: ["fr-FR"]
    },
    TG: {
       code: "TG",
@@ -2382,7 +2382,7 @@ export const iso_3166_1 = {
       population: 9500000,
       phone: [228],
       currency: ["XOF"],
-      language: ["fr","ee","kbp"]
+      language: ["fr-FR","ee","kbp"]
    },
    TH: {
       code: "TH",
@@ -2503,7 +2503,7 @@ export const iso_3166_1 = {
       population: 23900000,
       phone: [886],
       currency: ["TWD"],
-      language: ["zh","nan","hak"]
+      language: ["zh-TW","nan","hak"]
    },
    TZ: {
       code: "TZ",
@@ -2656,7 +2656,7 @@ export const iso_3166_1 = {
       population: 345000,
       phone: [678],
       currency: ["VUV"],
-      language: ["bi","en-GB","fr"]
+      language: ["bi","en-GB","fr-FR"]
    },
    WF: {
       code: "WF",
@@ -2667,7 +2667,7 @@ export const iso_3166_1 = {
       population: 11400,
       phone: [681],
       currency: ["XPF"],
-      language: ["fr","wls","fud"]
+      language: ["fr-FR","wls","fud"]
    },
    WS: {
       code: "WS",
@@ -2711,7 +2711,7 @@ export const iso_3166_1 = {
       population: 345000,
       phone: [262],
       currency: ["EUR"],
-      language: ["fr","swb"]
+      language: ["fr-FR","swb"]
    },
    ZA: {
       code: "ZA",
