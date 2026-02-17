@@ -42,7 +42,11 @@ export function cca3ToCca2(cca3: string): string | undefined {
 /** Najde surová mledoze data podle jakéhokoliv ISO kódu */
 export function getMledozeData(code: string): MledozeCountry | undefined {
   const c = code.toUpperCase();
-  return countryList.find(curr => curr.cca2 === c || curr.cca3 === c);
+  return countryList.find(curr => 
+    curr.cca2 === c || 
+    curr.cca3 === c || 
+    curr.name.common.toUpperCase() === c // Přidáno vyhledávání podle jména
+  );
 }
 
 /** Vrátí název země v aktuálním jazyce webu */
@@ -79,14 +83,6 @@ export function getNeighbors(code: string, lang: string) {
   });
 }
 
-export function getMledozeData(code: string): MledozeCountry | undefined {
-  const c = code.toUpperCase();
-  return countryList.find(curr => 
-    curr.cca2 === c || 
-    curr.cca3 === c || 
-    curr.name.common.toUpperCase() === c // Přidáno vyhledávání podle jména
-  );
-}
 // --- SEKCE: VALIDACE A STÁVAJÍCÍ I18N LOGIKA ---
 
 if (!locales) throw new Error("Chybí export 'locales'. Zkontrolujte src/content/config/i18n/locales.ts");

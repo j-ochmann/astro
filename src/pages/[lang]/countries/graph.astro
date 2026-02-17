@@ -1,7 +1,7 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { getI18nPaths, getCountryName, getMledozeData } from '@/content/config/i18n';
-import graphData from '@/content/config/i18n/nodes_and_links.json';
+import graphData from '@/content/config/i18n/nodes_and_links.json'; 
 
 export async function getStaticPaths() {
   return getI18nPaths();
@@ -9,7 +9,7 @@ export async function getStaticPaths() {
 
 const { lang = 'en' } = Astro.params;
 
-// Příprava dat pro D3 (překlady a URL)
+// Příprava dat (překlady a URL)
 const localizedNodes = graphData.nodes.map((node: any) => {
   const mledoze = getMledozeData(node.name);
   const countryCode = mledoze?.cca2.toLowerCase() || node.name.toLowerCase();
@@ -17,7 +17,6 @@ const localizedNodes = graphData.nodes.map((node: any) => {
   return {
     ...node,
     displayName: getCountryName(node.name, lang),
-    // URL ve formátu /cs/countries/cz
     url: `/${lang}/countries/${countryCode}`
   };
 });
@@ -68,31 +67,41 @@ const t = translations[lang as keyof typeof translations] || translations.en;
       background: var(--sl-color-gray-6);
       border-radius: 8px;
       overflow: hidden;
+      margin-bottom: 1rem;
   }
-  #main-graph { display: block; width: 100%; height: 600px; cursor: crosshair; }
-  .links line { stroke: var(--sl-color-gray-4); stroke-opacity: 0.3; stroke-width: 1.5px; }
-  .node circle { stroke: #fff; stroke-width: 1px; cursor: pointer; transition: stroke-width 0.2s; }
-  .node:hover circle { stroke: var(--sl-color-text); stroke-width: 3px; }
-  .node text { display: none; font: 12px sans-serif; fill: var(--sl-color-text); pointer-events: none; font-weight: bold; }
+  #main-graph { display: block; width: 100%; height: 500px; cursor: move; }
+  .modelabel { font: bold 14px sans-serif; fill: var(--sl-color-text); }
+  .links line { stroke: var(--sl-color-gray-4); stroke-opacity: 0.4; stroke-width: 2px; }
+  .node circle { stroke: #000; stroke-width: 1.5px; cursor: pointer; }
+  .node text { display: none; font: 12px sans-serif; fill: var(--sl-color-text); pointer-events: none; }
   .node:hover text { display: inline; }
+  .node:hover circle { fill: #000 !important; }
+  .cell { fill: none; pointer-events: none; }
   .legendlabel { font: 12px sans-serif; fill: var(--sl-color-text); }
 </style>
 
 <script is:inline src="https://d3js.org/d3.v4.min.js"></script>
 
-<script is:inline define:vars={{ localizedGraphData }}>
+<script is:inline define:vars={{ t, localizedGraphData }}>
   function initGraph() {
-    var width = 960, height = 600;
+    var width = 960, height = 500;
     var graph = localizedGraphData;
 
     var svg = d3.select("#main-graph").attr("viewBox", `0 0 ${width} ${height}`);
-    var g = svg.append("g");
+    var g = svg.append("g").attr("class", "everything");
 
     var simulation = d3.forceSimulation()
-        .force("link", d3.forceLink().id(d => d.name).distance(50))
-        .force("charge", d3.forceManyBody().strength(-50))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("collide", d3.forceCollide(d => 15));
+        .force("charge_force", d3.forceManyBody().strength(-30))
+        .force("center_force", d3.forceCenter(width / 2, height / 2))
+        .force("links", d3.forceLink().id(d => d.name).distance(d => d.border / 100))
+        .force("collide", d3.forceCollide(d => d.neighbor_count * 3.5));
+
+    var voronoi = d3.voronoi()
+        .x(d => d.x).y(d => d.y)
+        .extent([[width * -2, height * -2], [width * 2, height * 2]]);
+
+    var zoom = d3.zoom().on("zoom", () => g.attr("transform", d3.event.transform));
+    svg.call(zoom);
 
     var colorMapping = {
         "Africa": "#FF6347", "Asia": "#DCDCDC", "Europe": "#8FBC8F",
@@ -106,24 +115,49 @@ const t = translations[lang as keyof typeof translations] || translations.en;
     var node = g.append("g").attr("class", "nodes")
         .selectAll(".node").data(graph.nodes).enter().append("g")
         .attr("class", "node")
-        .on("click", d => { if (d.url) window.location.href = d.url; }) // PROKLIK
-        .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+        .on("click", d => { if (d.url) window.location.href = d.url; })
+        .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended))
+        .on("mouseover", highlightStart)
+        .on("mouseout", highlightEnd);
 
     node.append("circle")
-        .attr("r", d => 5 + (d.neighbor_count / 2))
+        .attr("r", d => 6 + (d.neighbor_count / 14) * 10)
         .attr("fill", d => colorMapping[d.continents.length > 1 ? "Multi" : d.continents[0]]);
 
-    node.append("text").attr("dx", 12).attr("dy", ".35em").text(d => d.displayName);
+    var label = node.append("text")
+        .attr("dy", ".35em").attr("x", 15)
+        .text(d => d.displayName);
 
-    simulation.nodes(graph.nodes).on("tick", () => {
+    var cell = node.append("path").attr("class", "cell");
+
+    // Highlight Logic
+    var linkSet = {};
+    graph.links.forEach(d => { linkSet[d.source + "," + d.target] = true; });
+    function areLinked(a, b) { return linkSet[a.name + "," + b.name] || linkSet[b.name + "," + a.name] || a.name === b.name; }
+
+    function highlightStart(d) {
+        node.style("stroke-opacity", n => areLinked(d, n) ? 1 : 0.1)
+            .attr("fill-opacity", n => areLinked(d, n) ? 1 : 0.1);
+        link.style("stroke-opacity", l => l.source.name === d.name || l.target.name === d.name ? 1 : 0.1);
+        label.filter(n => areLinked(d, n)).style("display", "inline");
+    }
+
+    function highlightEnd() {
+        node.style("stroke-opacity", 1).attr("fill-opacity", 1);
+        link.style("stroke-opacity", 0.4);
+        label.style("display", "none");
+    }
+
+    function tickActions() {
+        cell.data(voronoi.polygons(graph.nodes))
+            .attr("d", d => d && d.length ? "M" + d.join("L") + "Z" : null);
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
         link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
             .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
-        node.attr("transform", d => `translate(${d.x},${d.y})`);
-    });
+    }
 
-    simulation.force("link").links(graph.links);
-
-    svg.call(d3.zoom().scaleExtent([0.2, 5]).on("zoom", () => g.attr("transform", d3.event.transform)));
+    simulation.nodes(graph.nodes).on("tick", tickActions);
+    simulation.force("links").links(graph.links);
 
     function dragstarted(d) { if (!d3.event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
     function dragged(d) { d.fx = d3.event.x; d.fy = d3.event.y; }
