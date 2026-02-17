@@ -4,25 +4,40 @@ import { countryTranslations } from './i18n/country_translations';
 import { iso_4217 } from './i18n/iso_4217';
 import { iso_639_1 } from './i18n/iso_639_1';
 import { iso_639_3 } from './i18n/iso_639_3';
+import { iso_639_3166 } from './i18n/iso_639_3166';
 import { uiStrings } from './i18n/ui';
 import countries from './i18n/countries.json';
 
 // --- SEKCE: MLEDOZE DATA (countries.json) ---
 
 /** Rozhraní pro data z externího JSONu (mledoze) */
-interface MledozeCountry {
+export interface MledozeCountry {
   cca2: string; 
   cca3: string; 
   name: {
     common: string;
-    // Použijeme any pro native, protože struktura jazyků je extrémně variabilní
     native: Record<string, any>; 
   };
   translations: Record<string, { common: string }>;
   borders?: string[];
+  tld?: string[];
+  latlng?: [number, number];
+  area?: number;
+  region?: string;
+  subregion?: string;
+  timezones?: string[];
+  maps?: {
+    googleMaps: string;
+    openStreetMaps: string;
+  };
+  flags?: {
+    png: string;
+    svg: string;
+    alt?: string;
+  };
 }
 
-// Oprava TypeScript chyby pomocí "as unknown as MledozeCountry[]"
+// Přetypování JSONu
 const countryList = (countries as unknown) as MledozeCountry[];
 
 // Indexy pro O(1) vyhledávání
@@ -45,7 +60,7 @@ export function getMledozeData(code: string): MledozeCountry | undefined {
   return countryList.find(curr => 
     curr.cca2 === c || 
     curr.cca3 === c || 
-    curr.name.common.toUpperCase() === c // Přidáno vyhledávání podle jména
+    curr.name.common.toUpperCase() === c
   );
 }
 
@@ -85,11 +100,8 @@ export function getNeighbors(code: string, lang: string) {
 
 // --- SEKCE: VALIDACE A STÁVAJÍCÍ I18N LOGIKA ---
 
-if (!locales) throw new Error("Chybí export 'locales'. Zkontrolujte src/content/config/i18n/locales.ts");
-if (!iso_3166_1) throw new Error("Chybí export 'iso_3166_1'. Zkontrolujte src/content/config/i18n/iso_3166_1.ts");
-if (!iso_4217) throw new Error("Chybí export 'iso_4217'. Zkontrolujte src/content/config/i18n/iso_4217.ts");
-if (!iso_639_1) throw new Error("Chybí export 'iso_639_1'. Zkontrolujte src/content/config/i18n/iso_639_1.ts");
-if (!uiStrings) throw new Error("Chybí export 'uiStrings'. Zkontrolujte src/content/config/i18n/ui.ts");
+if (!locales) throw new Error("Chybí export 'locales'.");
+if (!iso_3166_1) throw new Error("Chybí export 'iso_3166_1'.");
 
 export function getI18nPaths() {
   return Object.keys(locales).map((lang) => ({
@@ -103,14 +115,69 @@ export function getFlagCode(lang_id: string) {
 }
 
 export const getLanguageLabel = (code: string, lang: string) => {
-  let l = (iso_639_1 as any)?.[code]; 
-  if (!l) {
-    l = (iso_639_3 as any)?.[code];
+  if (!code) return '—';
+  const c = code.toLowerCase();
+  
+  // Pomocná funkce pro prohledání všech zdrojů
+  const findMeta = (cd: string) => {
+    const key = cd.toLowerCase();
+    // Musíme zkontrolovat, zda přistupujeme k objektu přímo, nebo přes jeho pojmenovaný export
+    const table639_1 = (iso_639_1 as any)?.iso_639_1 || iso_639_1;
+    const table639_3 = (iso_639_3 as any)?.iso_639_3 || iso_639_3;
+    const tableHybrid = (iso_639_3166 as any)?.iso_639_3166 || iso_639_3166;
+
+    return tableHybrid?.[cd] || tableHybrid?.[key] || table639_1?.[key] || table639_3?.[key];
+  };
+
+  let meta = findMeta(code);
+
+  // Fallback pro hybridní kódy typu en-US -> en
+  if (!meta && c.includes('-')) {
+    meta = findMeta(c.split('-')[0]);
   }
-  if (!l) return code.toLowerCase();
-  const name = l.en || l.label || code;
+
+  if (!meta) return code;
+
+  // Získání jména (podpora pro různé formáty tvých souborů)
+  const name = meta.en || meta.label || meta.name || code;
   return `${name} (${code.toLowerCase()})`;
 };
+
+function getLangInfo(code: string) {
+  if (!code) return { code: '??', nameEn: 'Unknown', namelabel: '—', type: '—', isKnown: false };
+  const c = code.toLowerCase();
+
+  const table639_1 = (iso_639_1 as any)?.iso_639_1 || iso_639_1;
+  const table639_3 = (iso_639_3 as any)?.iso_639_3 || iso_639_3;
+  const tableHybrid = (iso_639_3166 as any)?.iso_639_3166 || iso_639_3166;
+
+  const meta = tableHybrid?.[code] || tableHybrid?.[c] || table639_1?.[c] || table639_3?.[c];
+
+  if (!meta) {
+    if (c.includes('-')) {
+      const base = c.split('-')[0];
+      const baseMeta = table639_1?.[base] || table639_3?.[base];
+      if (baseMeta) {
+        return {
+          code: c,
+          nameEn: `${baseMeta.en || baseMeta.label || baseMeta.name} (${c.split('-')[1].toUpperCase()})`,
+          namelabel: baseMeta.label || '—',
+          type: 'hybrid',
+          isKnown: true
+        };
+      }
+    }
+    return { code: c, nameEn: 'Unknown', namelabel: '—', type: '—', isKnown: false };
+  }
+
+  return {
+    code: c,
+    nameEn: meta.en || meta.name || meta.label || 'Unknown',
+    namelabel: meta.label || meta.name || '—',
+    type: meta.type || 'standard',
+    isKnown: true
+  };
+}
 
 export const getCurrencyLabel = (code: string, lang: string) => {
   const curr = iso_4217?.[code];
@@ -124,7 +191,7 @@ export function useTranslations(lang: string) {
   return (key: string) => (translations as any)[key] || (countryNames as any)[key] || key;
 }
 
-/** Původní rozhraní pro iso_3166_1.ts */
+/** Původní rozhraní pro iso_3166_1.ts rozšířené o nepovinná pole pro bezchybný TypeScript */
 export interface Country {
   code: string;
   name: string;
@@ -135,98 +202,42 @@ export interface Country {
   capital?: string;
   currency?: string[];
   language?: string[];
+  // Přidáme timezone sem, abychom ho v [code].astro nemuseli složitě hledat
+  timezone?: string;
 }
 
 export const countriesData = iso_3166_1 as Record<string, Country>;
 
+// Helper funkce pro jazyky, měny, kontinenty...
 export const getAllLanguages = (): string[] => {
-  return [
-    ...new Set(
-      Object.values(countriesData)
-        .flatMap(c => c.language ?? [])
-    )
-  ].sort();
+  return [...new Set(Object.values(countriesData).flatMap(c => c.language ?? []))].sort();
 };
 
 export const getAllCurrencies = (): string[] => {
-  return [
-    ...new Set(
-      Object.values(countriesData)
-        .flatMap(c => c.currency ?? [])
-    )
-  ].sort();
+  return [...new Set(Object.values(countriesData).flatMap(c => c.currency ?? []))].sort();
 };
 
 export const getAllContinents = (): string[] => {
-  return [
-    ...new Set(
-      Object.values(countriesData)
-        .map(c => c.continent)
-    )
-  ].sort();
+  return [...new Set(Object.values(countriesData).map(c => c.continent))].sort();
 };
 
 export const getAllCapitals = (): string[] => {
-  return Object.values(countriesData)
-    .map(c => c.capital)
-    .filter((cap): cap is string => !!cap)
-    .sort();
+  return Object.values(countriesData).map(c => c.capital).filter((cap): cap is string => !!cap).sort();
 };
-
-function getLangInfo(code: string) {
-  const c = code.toLowerCase();
-  const meta = (iso_639_1 as any)?.[c] || (iso_639_3 as any)?.[c];
-  
-  if (!meta) {
-    return {
-      code: c,
-      nameEn: 'Unknown',
-      namelabel: '—',
-      type: '—',
-      isKnown: false
-    };
-  }
-
-  return {
-    code: c,
-    nameEn: meta.en || 'Unknown',
-    namelabel: meta.label || '—',
-    type: meta.type || '—',
-    isKnown: true
-  };
-}
 
 export function getUsedLanguagesData() {
   const usedCodes = new Set<string>();
-  Object.values(countriesData).forEach(c => {
-    c.language?.forEach(l => usedCodes.add(l));
-  });
-
+  Object.values(countriesData).forEach(c => { c.language?.forEach(l => usedCodes.add(l)); });
   return Array.from(usedCodes).map(code => {
     const info = getLangInfo(code);
-    const usageCount = Object.values(countriesData)
-      .filter(c => c.language?.includes(code)).length;
-
-    return {
-      ...info,
-      usageCount
-    };
+    const usageCount = Object.values(countriesData).filter(c => c.language?.includes(code)).length;
+    return { ...info, usageCount };
   });
 }
 
 export function getUnusedLanguagesData() {
   const usedCodes = new Set<string>();
-  Object.values(countriesData).forEach(c => {
-    c.language?.forEach(l => usedCodes.add(l));
-  });
-
-  const allAvailableCodes = new Set([
-    ...Object.keys(iso_639_1),
-    ...Object.keys(iso_639_3)
-  ]);
-
-  return Array.from(allAvailableCodes)
-    .filter(code => !usedCodes.has(code))
-    .map(code => getLangInfo(code))
-    .sort((a, b) => a.nameEn.localeCompare(b.nameEn));
+  Object.values(countriesData).forEach(c => { c.language?.forEach(l => usedCodes.add(l)); });
+  const allAvailableCodes = new Set([...Object.keys(iso_639_1), ...Object.keys(iso_639_3)]);
+  return Array.from(allAvailableCodes).filter(code => !usedCodes.has(code)).map(code => getLangInfo(code)).sort((a, b) => a.nameEn.localeCompare(b.nameEn));
 }

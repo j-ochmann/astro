@@ -1,5 +1,6 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getTimezonesForCountry } from 'countries-and-timezones';
 import { locales } from '@/content/config/i18n/locales';
 import { 
   countriesData, 
@@ -11,6 +12,7 @@ import {
   getNeighbors
 } from '@/content/config/i18n';
 
+// Povinný export pro dynamické trasy v Astro
 export async function getStaticPaths() {
   const paths = [];
   const langs = Object.keys(locales);
@@ -30,11 +32,15 @@ export async function getStaticPaths() {
 const { country, lang } = Astro.props;
 const t = useTranslations(lang);
 
-// Rozšířená data
-const mledoze = getMledozeData(country.code);
+// Data z mledoze (přetypováno na any pro TS stabilitu)
+const mledoze = getMledozeData(country.code) as any;
 const neighbors = getNeighbors(country.code, lang);
 
-// Navigace
+// Časová pásma seřazená podle offsetu (posunu)
+const countryTimezones = (getTimezonesForCountry(country.code.toUpperCase()) || [])
+  .sort((a, b) => a.utcOffset - b.utcOffset);
+
+// Navigace (Předchozí / Další)
 const allCountryCodes = Object.keys(countriesData).sort();
 const currentIndex = allCountryCodes.indexOf(country.code);
 const prevCode = allCountryCodes[currentIndex - 1];
@@ -44,9 +50,7 @@ const localizedName = getCountryName(country.code, lang);
 const continentKey = `geo.continent.${country.continent.toLowerCase().replace(/\s+/g, '-')}` as any;
 
 const wikipediaUrl = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(localizedName)}`;
-const googleMapsUrl = mledoze?.maps?.googleMaps || `https://www.google.com/maps/search/${encodeURIComponent(country.name)}`;
-
-const timeZone = country.timezone || 'UTC';
+const googleMapsUrl = mledoze?.maps?.googleMaps || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(country.name)}`;
 const latlng = mledoze?.latlng ? `${mledoze.latlng[0]}°, ${mledoze.latlng[1]}°` : '—';
 ---
 
@@ -77,29 +81,33 @@ const latlng = mledoze?.latlng ? `${mledoze.latlng[0]}°, ${mledoze.latlng[1]}°
     <div class="stats-card">
       <h3>{t('geo.detail.basicInfo') || 'Základní informace'}</h3>
       <ul>
-        <li>
-            <strong>{t('geo.stats.capital') || 'Capital'}:</strong> 
-            <span class="capital-box">
-                {country.capital ?? '—'}
-                <span class="live-time" data-timezone={timeZone}>
-                    <span class="time-string">--:--:--</span>
-                    <span class="date-string">--. --. ----</span>
-                </span>
-            </span>
-        </li>
+        <li><strong>{t('geo.stats.capital') || 'Capital'}:</strong> <span>{country.capital ?? '—'}</span></li>
         <li><strong>{t('geo.stats.population') || 'Population'}:</strong> <span>{country.population.toLocaleString(lang)}</span></li>
         <li><strong>{t('geo.stats.area') || 'Area'}:</strong> <span>{mledoze?.area ? `${mledoze.area.toLocaleString(lang)} km²` : '—'}</span></li>
         <li><strong>GPS:</strong> <span class="mono">{latlng}</span></li>
+        <li><strong>{t('geo.stats.continent') || 'Continent'}:</strong> <span>{t(continentKey) || country.continent}</span></li>
       </ul>
     </div>
 
     <div class="stats-card">
-      <h3>{t('geo.detail.geography') || 'Geografie'}</h3>
-      <ul>
-        <li><strong>{t('geo.stats.continent') || 'Continent'}:</strong> <span>{t(continentKey) || country.continent}</span></li>
-        <li><strong>{t('geo.stats.region') || 'Region'}:</strong> <span>{mledoze?.region} {mledoze?.subregion && `(${mledoze.subregion})`}</span></li>
-        <li><strong>{t('geo.stats.phone') || 'Phone'}:</strong> <span>{country.phone.map(p => `+${p}`).join(', ')}</span></li>
-      </ul>
+      <h3>{lang === 'cs' ? 'Místní časy' : 'Local Times'}</h3>
+      <div class="timezone-wrapper">
+        {countryTimezones.length > 0 ? (
+          countryTimezones.map((tz) => (
+            <div class="tz-entry live-clock" data-tz={tz.name}>
+              <div class="tz-meta">
+                <span class="tz-offset">{tz.utcOffsetStr}</span>
+                <span class="tz-id">{tz.name.split('/').pop()?.replace(/_/g, ' ')}</span>
+              </div>
+              <div class="tz-time-row">
+                <span class="clock-value">--:--:--</span>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p>No timezone data found.</p>
+        )}
+      </div>
     </div>
 
     <div class="stats-card">
@@ -146,12 +154,12 @@ const latlng = mledoze?.latlng ? `${mledoze.latlng[0]}°, ${mledoze.latlng[1]}°
         <span class="nav-title">{getCountryName(prevCode, lang)}</span>
       </a>
     ) : <div class="nav-empty" />}
-    <a href={`/${lang}/countries/`} class="nav-item meta">
-      <span class="nav-label">Grid</span><span class="nav-title">Atlas</span>
-    </a>
-    <a href={`/${lang}/countries/table/`} class="nav-item meta">
-      <span class="nav-label">Data</span><span class="nav-title">Tabulka</span>
-    </a>
+    
+    <div class="nav-item meta-links">
+        <a href={`/${lang}/countries/`}>Atlas</a>
+        <a href={`/${lang}/countries/table/`}>Data</a>
+    </div>
+
     {nextCode ? (
       <a href={`/${lang}/countries/${nextCode.toLowerCase()}/`} class="nav-item next">
         <span class="nav-label">{t('geo.nav.next') || 'Další'} →</span>
@@ -162,22 +170,23 @@ const latlng = mledoze?.latlng ? `${mledoze.latlng[0]}°, ${mledoze.latlng[1]}°
 </StarlightPage>
 
 <script>
-  function updateTime() {
-    const timeElements = document.querySelectorAll('.live-time');
-    timeElements.forEach(el => {
-      const tz = el.getAttribute('data-timezone') || 'UTC';
-      const now = new Date();
-      try {
-        const timeStr = now.toLocaleTimeString('cs-CZ', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const dateStr = now.toLocaleDateString('cs-CZ', { timeZone: tz, day: 'numeric', month: 'long', year: 'numeric' });
-        const timeSpan = el.querySelector('.time-string');
-        const dateSpan = el.querySelector('.date-string');
-        if (timeSpan) timeSpan.textContent = timeStr;
-        if (dateSpan) dateSpan.textContent = dateStr;
-      } catch (e) { console.error("Invalid timezone:", tz); }
+  function tick() {
+    const clocks = document.querySelectorAll('.live-clock');
+    const now = new Date();
+    clocks.forEach(el => {
+      const tz = el.getAttribute('data-tz');
+      const display = el.querySelector('.clock-value');
+      if (tz && display) {
+        try {
+          display.textContent = new Intl.DateTimeFormat('cs-CZ', {
+            timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+          }).format(now);
+        } catch (e) { display.textContent = "N/A"; }
+      }
     });
   }
-  updateTime(); setInterval(updateTime, 1000);
+  setInterval(tick, 1000);
+  tick();
 </script>
 
 <style>
@@ -191,25 +200,44 @@ const latlng = mledoze?.latlng ? `${mledoze.latlng[0]}°, ${mledoze.latlng[1]}°
   .hero-links { display: flex; gap: 1rem; margin-top: 0.5rem; }
   .link-btn { font-size: 0.85rem; color: var(--sl-color-accent-high) !important; text-decoration: none; padding: 0.4rem 0.8rem; border: 1px solid var(--sl-color-accent); border-radius: 4px; }
   .large-flag { display: block; width: 240px; height: auto; aspect-ratio: 4/3; border: 1px solid var(--sl-color-gray-5); background-size: cover; border-radius: 4px; }
+  
   .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
   .stats-card { background: var(--sl-color-gray-6); padding: 1.25rem; border: 1px solid var(--sl-color-hairline); border-radius: 8px; margin-top: 0 !important; }
-  .stats-card h3 { margin: 0 0 1rem 0 !important; font-size: 0.8rem; color: var(--sl-color-gray-3); text-transform: uppercase; }
-  .stats-card ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem; }
-  .stats-card li { display: flex; flex-direction: column; gap: 0.2rem; margin: 0 !important; }
+  .stats-card h3 { margin: 0 0 1rem 0 !important; font-size: 0.8rem; color: var(--sl-color-gray-3); text-transform: uppercase; border-bottom: 1px solid var(--sl-color-gray-5); padding-bottom: 0.5rem; }
+  .stats-card ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.8rem; }
+  .stats-card li { display: flex; flex-direction: column; gap: 0.1rem; margin: 0 !important; }
   .stats-card strong { color: var(--sl-color-accent-high); font-size: 0.7rem; text-transform: uppercase; }
-  .mono { font-family: var(--sl-font-mono); font-size: 0.9rem; }
-  .time-string { font-size: 1.1rem; color: var(--sl-color-white); font-weight: bold; font-family: var(--sl-font-mono); }
-  .date-string { font-size: 0.7rem; color: var(--sl-color-gray-3); }
+
+  /* Timezone list s posuvníkem pro státy jako Rusko/USA */
+  .timezone-wrapper { display: flex; flex-direction: column; gap: 0.5rem; max-height: 300px; overflow-y: auto; padding-right: 5px; }
+  .timezone-wrapper::-webkit-scrollbar { width: 4px; }
+  .timezone-wrapper::-webkit-scrollbar-thumb { background: var(--sl-color-gray-5); border-radius: 4px; }
+
+  .tz-entry { background: var(--sl-color-gray-5); padding: 0.5rem 0.75rem; border-radius: 6px; border-left: 3px solid var(--sl-color-accent-high); }
+  .tz-meta { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--sl-color-gray-3); font-weight: bold; }
+  .tz-offset { color: var(--sl-color-accent-high); }
+  .clock-value { font-size: 1.3rem; font-weight: bold; font-family: var(--sl-font-mono); color: var(--sl-color-white); }
+
   .list-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .tag { background: var(--sl-color-gray-5); padding: 0.2rem 0.6rem; font-size: 0.8rem; border-radius: 4px; color: var(--sl-color-white) !important; text-decoration: none !important; }
+  
   .neighbors-section { margin-top: 3rem; }
   .neighbor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; }
   .neighbor-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem; background: var(--sl-color-gray-6); border: 1px solid var(--sl-color-hairline); border-radius: 6px; text-decoration: none; color: inherit !important; font-size: 0.85rem; }
-  .nav-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--sl-color-hairline); }
+
+  .nav-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--sl-color-hairline); }
   .nav-item { display: flex; flex-direction: column; padding: 0.75rem; border: 1px solid var(--sl-color-hairline); border-radius: 8px; text-decoration: none !important; }
+  .meta-links { border: none; flex-direction: row; gap: 1rem; align-items: center; justify-content: center; }
+  .meta-links a { color: var(--sl-color-accent-high); font-weight: bold; text-decoration: none; font-size: 0.9rem; }
   .nav-label { font-size: 0.65rem; color: var(--sl-color-gray-3); text-transform: uppercase; }
   .nav-title { font-size: 0.9rem; font-weight: bold; color: var(--sl-color-accent-high); }
   .next { text-align: right; }
-  .meta { text-align: center; }
-  @media (max-width: 50rem) { .country-hero { flex-direction: column-reverse; } .large-flag { width: 100%; } .nav-grid { grid-template-columns: 1fr 1fr; } }
+
+  @media (max-width: 50rem) { 
+    .country-hero { flex-direction: column-reverse; } 
+    .large-flag { width: 100%; } 
+    .nav-grid { grid-template-columns: 1fr; } 
+    .meta-links { order: 3; margin-top: 1rem; }
+    .next { text-align: left; } 
+  }
 </style>
