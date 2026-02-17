@@ -1,7 +1,11 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { getI18nPaths, getCountryName, getMledozeData } from '@/content/config/i18n';
-import graphData from '@/content/config/i18n/nodes_and_links.json'; 
+import { 
+  getI18nPaths, 
+  getCountryName, 
+  countriesData, 
+  getMledozeData 
+} from '@/content/config/i18n';
 
 export async function getStaticPaths() {
   return getI18nPaths();
@@ -9,48 +13,46 @@ export async function getStaticPaths() {
 
 const { lang = 'en' } = Astro.params;
 
-// Pomocná funkce pro vytvoření slugu, pokud selže ISO kód
-const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+const countries = Object.values(countriesData);
 
-// Příprava dat (překlady a URL)
-const localizedNodes = graphData.nodes.map((node: any) => {
-  const mledoze = getMledozeData(node.name);
-  
-  // ROBUSTNÍ GENEROVÁNÍ KÓDU/URL:
-  // 1. Zkusíme cca2 (dvoumístný kód) z mledoze dat
-  // 2. Pokud není, zkusíme kód přímo z uzlu (pokud ho tam máš)
-  // 3. Jako poslední záchrana slugify anglického jména
-  let countrySlug = mledoze?.cca2?.toLowerCase();
-  
-  if (!countrySlug) {
-    countrySlug = slugify(node.name);
-  }
-  
+const nodes = countries.map(c => {
+  const mledoze = getMledozeData(c.code);
   return {
-    ...node,
-    displayName: getCountryName(node.name, lang),
-    url: `/${lang}/countries/${countrySlug}`
+    id: c.code.toLowerCase(),
+    displayName: getCountryName(c.code, lang),
+    neighbor_count: mledoze?.borders?.length || 0,
+    continents: [c.continent],
+    url: `/${lang}/countries/${c.code.toLowerCase()}`
   };
 });
 
-const localizedGraphData = {
-  ...graphData,
-  nodes: localizedNodes
-};
+const links: any[] = [];
+const processedPairs = new Set();
+
+countries.forEach(c => {
+  const mledoze = getMledozeData(c.code);
+  if (mledoze?.borders) {
+    mledoze.borders.forEach(neighborCca3 => {
+      const neighborMledoze = getMledozeData(neighborCca3);
+      if (neighborMledoze) {
+        const source = c.code.toLowerCase();
+        const target = neighborMledoze.cca2.toLowerCase();
+        const pairId = [source, target].sort().join('-');
+        
+        if (!processedPairs.has(pairId) && countriesData[neighborMledoze.cca2.toUpperCase()]) {
+          links.push({ source, target });
+          processedPairs.add(pairId);
+        }
+      }
+    });
+  }
+});
+
+const localizedGraphData = { nodes, links };
 
 const translations = {
-  cs: {
-    title: "Graf sousedství",
-    modePan: "Režim: Panování",
-    africa: "Afrika", asia: "Asie", europe: "Evropa", na: "S. Amerika",
-    oceania: "Austrálie a Oceánie", sa: "J. Amerika", multi: "Mezikontinentální",
-  },
-  en: {
-    title: "Country Contiguity Graph",
-    modePan: "Mode: Background Pan",
-    africa: "Africa", asia: "Asia", europe: "Europe", na: "North America",
-    oceania: "Australia & Oceania", sa: "South America", multi: "Transcontinental",
-  }
+  cs: { title: "Graf sousedství", africa: "Afrika", asia: "Asie", europe: "Evropa", na: "S. Amerika", oceania: "Austrálie", sa: "J. Amerika", multi: "Mezi" },
+  en: { title: "Country Graph", africa: "Africa", asia: "Asia", europe: "Europe", na: "N. America", oceania: "Oceania", sa: "S. America", multi: "Multi" }
 } as const;
 
 const t = translations[lang as keyof typeof translations] || translations.en;
@@ -58,125 +60,84 @@ const t = translations[lang as keyof typeof translations] || translations.en;
 
 <StarlightPage frontmatter={{ title: t.title, template: 'doc' }}>
   <div class="graph-container">
-    <svg class="legend" width="100%" height="60" viewBox="0 0 960 40" preserveAspectRatio="xMidYMid meet">
-        <g><circle fill="#FF6347" r="5" cx="10" cy="20"></circle><text class="legendlabel" dx="25" dy="25">{t.africa}</text></g>
-        <g><circle fill="#DCDCDC" r="5" cx="100" cy="20"></circle><text class="legendlabel" dx="115" dy="25">{t.asia}</text></g>
-        <g><circle fill="#8FBC8F" r="5" cx="180" cy="20"></circle><text class="legendlabel" dx="195" dy="25">{t.europe}</text></g>
-        <g><circle fill="#BA55D3" r="5" cx="280" cy="20"></circle><text class="legendlabel" dx="295" dy="25">{t.na}</text></g>
-        <g><circle fill="#1E90FF" r="5" cx="420" cy="20"></circle><text class="legendlabel" dx="435" dy="25">{t.oceania}</text></g>
-        <g><circle fill="#FFA500" r="5" cx="600" cy="20"></circle><text class="legendlabel" dx="615" dy="25">{t.sa}</text></g>
-        <g><circle fill="#FFD700" r="5" cx="740" cy="20"></circle><text class="legendlabel" dx="755" dy="25">{t.multi}</text></g>
+    <svg class="legend" width="100%" height="50" viewBox="0 0 960 40" preserveAspectRatio="xMidYMid meet">
+        <g transform="translate(10,20)"><circle fill="#FF6347" r="5"></circle><text dx="12" dy="4" class="legendlabel">Africa</text></g>
+        <g transform="translate(120,20)"><circle fill="#DCDCDC" r="5"></circle><text dx="12" dy="4" class="legendlabel">Asia</text></g>
+        <g transform="translate(230,20)"><circle fill="#8FBC8F" r="5"></circle><text dx="12" dy="4" class="legendlabel">Europe</text></g>
+        <g transform="translate(350,20)"><circle fill="#BA55D3" r="5"></circle><text dx="12" dy="4" class="legendlabel">N. America</text></g>
+        <g transform="translate(480,20)"><circle fill="#1E90FF" r="5"></circle><text dx="12" dy="4" class="legendlabel">Oceania</text></g>
+        <g transform="translate(600,20)"><circle fill="#FFA500" r="5"></circle><text dx="12" dy="4" class="legendlabel">S. America</text></g>
     </svg>
-    <div id="canvas-wrapper">
-        <svg id="main-graph"></svg>
-    </div>
+    <div id="canvas-wrapper"><svg id="main-graph"></svg></div>
   </div>
 </StarlightPage>
 
 <style is:global>
-  #canvas-wrapper {
-      border: 1px solid var(--sl-color-gray-5);
-      background: var(--sl-color-gray-6);
-      border-radius: 8px;
-      overflow: hidden;
-      margin-bottom: 1rem;
-  }
-  #main-graph { display: block; width: 100%; height: 500px; cursor: move; }
-  .links line { stroke: var(--sl-color-gray-4); stroke-opacity: 0.4; stroke-width: 2px; }
-  .node circle { stroke: #000; stroke-width: 1.5px; cursor: pointer; }
-  .node text { display: none; font: 12px sans-serif; fill: var(--sl-color-text); pointer-events: none; }
+  #canvas-wrapper { border: 1px solid var(--sl-color-gray-5); background: var(--sl-color-gray-6); border-radius: 8px; overflow: hidden; }
+  #main-graph { display: block; width: 100%; height: 600px; cursor: move; }
+  .links line { stroke: var(--sl-color-gray-4); stroke-opacity: 0.3; stroke-width: 1.5px; }
+  .node circle { stroke: #000; stroke-width: 1px; cursor: pointer; }
+  .node text { display: none; font: 11px sans-serif; fill: var(--sl-color-text); pointer-events: none; }
   .node:hover text { display: inline; }
-  .node:hover circle { fill: #000 !important; }
-  .cell { fill: none; pointer-events: none; }
   .legendlabel { font: 12px sans-serif; fill: var(--sl-color-text); }
 </style>
 
 <script is:inline src="https://d3js.org/d3.v4.min.js"></script>
-
-<script is:inline define:vars={{ t, localizedGraphData }}>
+<script is:inline define:vars={{ localizedGraphData }}>
   function initGraph() {
-    var width = 960, height = 500;
+    var width = 960, height = 600;
     var graph = localizedGraphData;
-
     var svg = d3.select("#main-graph").attr("viewBox", `0 0 ${width} ${height}`);
-    var g = svg.append("g").attr("class", "everything");
+    var g = svg.append("g");
 
     var simulation = d3.forceSimulation()
-        .force("charge_force", d3.forceManyBody().strength(-30))
-        .force("center_force", d3.forceCenter(width / 2, height / 2))
-        .force("links", d3.forceLink().id(d => d.name).distance(d => d.border / 100))
-        .force("collide", d3.forceCollide(d => d.neighbor_count * 3.5));
+        .force("link", d3.forceLink().id(d => d.id).distance(40))
+        .force("charge", d3.forceManyBody().strength(-60))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide", d3.forceCollide(d => 10 + d.neighbor_count));
 
-    var voronoi = d3.voronoi()
-        .x(d => d.x).y(d => d.y)
-        .extent([[width * -2, height * -2], [width * 2, height * 2]]);
+    svg.call(d3.zoom().on("zoom", () => g.attr("transform", d3.event.transform)));
 
-    var zoom = d3.zoom().on("zoom", () => g.attr("transform", d3.event.transform));
-    svg.call(zoom);
+    var colorMapping = { "Africa": "#FF6347", "Asia": "#DCDCDC", "Europe": "#8FBC8F", "North America": "#BA55D3", "Oceania": "#1E90FF", "South America": "#FFA500" };
 
-    var colorMapping = {
-        "Africa": "#FF6347", "Asia": "#DCDCDC", "Europe": "#8FBC8F",
-        "North_America": "#BA55D3", "Oceania": "#1E90FF",
-        "South_America": "#FFA500", "Multi": "#FFD700",
-    };
-
-    var link = g.append("g").attr("class", "links")
-        .selectAll("line").data(graph.links).enter().append("line");
-
-    var node = g.append("g").attr("class", "nodes")
-        .selectAll(".node").data(graph.nodes).enter().append("g")
+    var link = g.append("g").attr("class", "links").selectAll("line").data(graph.links).enter().append("line");
+    var node = g.append("g").attr("class", "nodes").selectAll(".node").data(graph.nodes).enter().append("g")
         .attr("class", "node")
-        .on("click", d => { 
-            // Použijeme připravené URL
-            if (d.url) window.location.href = d.url; 
-        })
-        .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended))
+        .on("click", d => { window.location.href = d.url; })
         .on("mouseover", highlightStart)
-        .on("mouseout", highlightEnd);
+        .on("mouseout", highlightEnd)
+        .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
 
-    node.append("circle")
-        .attr("r", d => 6 + (d.neighbor_count / 14) * 10)
-        .attr("fill", d => colorMapping[d.continents.length > 1 ? "Multi" : d.continents[0]]);
-
-    var label = node.append("text")
-        .attr("dy", ".35em").attr("x", 15)
-        .text(d => d.displayName);
-
-    var cell = node.append("path").attr("class", "cell");
-
-    var linkSet = {};
-    graph.links.forEach(d => { linkSet[d.source + "," + d.target] = true; });
-    function areLinked(a, b) { return linkSet[a.name + "," + b.name] || linkSet[b.name + "," + a.name] || a.name === b.name; }
+    node.append("circle").attr("r", d => 5 + (d.neighbor_count/2)).attr("fill", d => colorMapping[d.continents[0]] || "#ccc");
+    var label = node.append("text").attr("dy", ".35em").attr("x", 12).text(d => d.displayName);
 
     function highlightStart(d) {
-        node.style("stroke-opacity", n => areLinked(d, n) ? 1 : 0.1)
-            .attr("fill-opacity", n => areLinked(d, n) ? 1 : 0.1);
-        link.style("stroke-opacity", l => l.source.name === d.name || l.target.name === d.name ? 1 : 0.1);
-        label.filter(n => areLinked(d, n)).style("display", "inline");
+        var adj = {};
+        graph.links.forEach(l => {
+            adj[l.source.id + "-" + l.target.id] = true;
+            adj[l.target.id + "-" + l.source.id] = true;
+        });
+        node.style("stroke-opacity", n => (n.id === d.id || adj[d.id + "-" + n.id]) ? 1 : 0.1)
+            .attr("fill-opacity", n => (n.id === d.id || adj[d.id + "-" + n.id]) ? 1 : 0.1);
+        link.style("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1);
+        label.filter(n => n.id === d.id || adj[d.id + "-" + n.id]).style("display", "inline");
     }
 
     function highlightEnd() {
         node.style("stroke-opacity", 1).attr("fill-opacity", 1);
-        link.style("stroke-opacity", 0.4);
+        link.style("stroke-opacity", 0.3);
         label.style("display", "none");
     }
 
-    function tickActions() {
-        cell.data(voronoi.polygons(graph.nodes))
-            .attr("d", d => d && d.length ? "M" + d.join("L") + "Z" : null);
+    simulation.nodes(graph.nodes).on("tick", () => {
+        link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
         node.attr("transform", d => `translate(${d.x},${d.y})`);
-        link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
-    }
-
-    simulation.nodes(graph.nodes).on("tick", tickActions);
-    simulation.force("links").links(graph.links);
+    });
+    simulation.force("link").links(graph.links);
 
     function dragstarted(d) { if (!d3.event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
     function dragged(d) { d.fx = d3.event.x; d.fy = d3.event.y; }
     function dragended(d) { if (!d3.event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
   }
-
-  if (window.d3) initGraph();
-  else window.addEventListener('load', initGraph);
+  initGraph();
 </script>
