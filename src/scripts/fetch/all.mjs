@@ -17,14 +17,14 @@ async function runAll() {
 
   try {
     const results = await Promise.allSettled([
-      //fetchBOC(),
-      fetchBOE(),
+      fetchBOC(),
+    ////fetchBOE(),
       //fetchCNB(),
       //fetchECB(),
       //fetchFED(),
-      fetchIMF(),
+    ////fetchIMF(),
       //fetchRBA(),
-      fetchUNT()
+    ////fetchUNT()
     ]);
 
     // Check results of individual fetches
