@@ -1,73 +1,76 @@
-/*
-UN Treasury (Organizace spojených národů)
-OSN publikuje své operační kurzy (UNOP), které se používají pro veškeré jejich mise po světě. Je to nejautoritativnější zdroj pro "exotiku".
-
-URL: https://treasury.un.org/operationalrates/OperationalRates.php
-
-Formát: Nabízejí XML a CSV, které se snadno stahuje.
-*/
-
 import fs from 'node:fs';
 import path from 'node:path';
 
 const OUTPUT_FILE = './public/unt.json';
-const URL = 'https://treasury.un.org/operationalrates/OperationalRates.php?Type=C';
 
-/**
- * Fetches the UN Operational Rates of Exchange.
- * This is the most authoritative source for "exotic" and less common currencies.
- */
 export async function fetchUNT() {
   console.log('⏳ Fetching data from UN Treasury...');
 
   try {
-    const response = await fetch(URL);
-    if (!response.ok) throw new Error(`UN fetch failed: ${response.statusText}`);
+    const url =
+      'https://treasury.un.org/operationalrates/OperationalRates.php?Type=C&Download=CSV';
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`UN Server Error: ${response.status}`);
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('text') && !contentType.includes('csv')) {
+      throw new Error('UN did not return CSV content.');
+    }
 
     const text = await response.text();
-    const lines = text.split('\n');
 
-    // UN CSV format:
-    // Country or Territory,Currency Name,Currency Code,Operational Rate,Effective Date
-    // The first line is usually the header.
-    const dataLines = lines.slice(1).filter(line => line.trim() !== '' && line.includes(','));
+    if (!text || text.length < 200) {
+      throw new Error('UN Treasury returned empty CSV data.');
+    }
 
-    const rates = dataLines.map(line => {
-      // Simple CSV split (handling potential quotes if necessary)
-      const parts = line.split(',').map(p => p.trim().replace(/"/g, ''));
-      
-      if (parts.length < 5) return null;
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-      const [country, currencyName, code, rate, effectiveDate] = parts;
+    // první řádek je header
+    const header = lines[0].split(',');
 
-      return {
-        country,
-        currency: currencyName,
-        code: code,
-        // UN rates are always "Units per 1 USD"
-        rate: parseFloat(rate),
-        effectiveDate: effectiveDate
-      };
-    }).filter(item => item !== null && !isNaN(item.rate));
+    const rates = lines.slice(1)
+      .map(line => line.split(','))
+      .filter(cols => cols.length >= 4)
+      .map(cols => ({
+        country: cols[0]?.replace(/"/g, '').trim(),
+        currency: cols[1]?.replace(/"/g, '').trim(),
+        code: cols[2]?.replace(/"/g, '').trim(),
+        rate: parseFloat(cols[3]?.replace(/"/g, '').trim())
+      }))
+      .filter(item =>
+        item.code &&
+        /^[A-Z]{3}$/.test(item.code) &&
+        !isNaN(item.rate) &&
+        item.rate > 0
+      );
+
+    if (rates.length === 0) {
+      throw new Error('UN CSV parsed but no valid rates found.');
+    }
 
     const result = {
-      source: 'United Nations Treasury',
-      url: 'https://treasury.un.org/operationalrates/',
+      source: 'United Nations Treasury (Operational Rates)',
       base: 'USD',
       fetchedAt: new Date().toISOString(),
       count: rates.length,
-      rates: rates
+      rates
     };
 
     const dir = path.dirname(OUTPUT_FILE);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(result, null, 2));
+
     console.log(`✅ UN Treasury data saved (${rates.length} currencies)`);
 
     return result;
+
   } catch (error) {
-    console.error('❌ Error processing UN data:', error.message);
-    throw error;
+    console.error('❌ UN failure:', error.message);
+    return null;
   }
 }
