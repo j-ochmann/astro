@@ -6,11 +6,26 @@ import { iso_639_1 } from './i18n/iso_639_1';
 import { iso_639_3 } from './i18n/iso_639_3';
 import { iso_639_3166 } from './i18n/iso_639_3166';
 import { uiStrings } from './i18n/ui';
+import currencies from './i18n/currencies.json';
 import countries from './i18n/countries.json';
 
-// --- SEKCE: MLEDOZE DATA (countries.json) ---
+export interface CurrencyDetail {
+  name: string;
+  demonym: string;
+  majorSingle: string;
+  majorPlural: string;
+  ISOnum: number | null;
+  symbol: string;
+  symbolNative: string;
+  minorSingle: string;
+  minorPlural: string;
+  ISOdigits: number;
+  decimals: number;
+  numToBasic: number | null;
+}
 
-/** Rozhraní pro data z externího JSONu (mledoze) */
+export const currencyData = currencies as unknown as Record<string, CurrencyDetail>;
+
 export interface MledozeCountry {
   cca2: string; 
   cca3: string; 
@@ -19,6 +34,7 @@ export interface MledozeCountry {
     native: Record<string, any>; 
   };
   translations: Record<string, { common: string }>;
+  currencies?: Record<string, { name: string; symbol: string }>;
   borders?: string[];
   tld?: string[];
   latlng?: [number, number];
@@ -98,6 +114,11 @@ export function getNeighbors(code: string, lang: string) {
   });
 }
 
+/** Vrátí seznam zemí, které používají danou měnu */
+export function getCountriesByCurrency(currencyCode: string) {
+  return countryList.filter(c => c.currencies && Object.keys(c.currencies).includes(currencyCode));
+}
+
 // --- SEKCE: VALIDACE A STÁVAJÍCÍ I18N LOGIKA ---
 
 if (!locales) throw new Error("Chybí export 'locales'.");
@@ -175,7 +196,8 @@ function getLangInfo(code: string) {
 }
 
 export const getCurrencyLabel = (code: string, lang: string) => {
-  const curr = iso_4217?.[code];
+//const curr = iso_4217?.[code];
+  const curr = currencyData?.[code];
   if (!curr) return code;
   return `${curr.name} (${code})`;
 };

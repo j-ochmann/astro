@@ -1,0 +1,33 @@
+{
+  "source": "Federal Reserve (via FRED)",
+  "url": "https://fred.stlouisfed.org",
+  "base": "USD",
+  "date": "2026-02-13",
+  "rates": [
+    {
+      "currency": "Euro",
+      "code": "EUR",
+      "rate": 0.8425
+    },
+    {
+      "currency": "Chinese Yuan",
+      "code": "CNY",
+      "rate": 6.908
+    },
+    {
+      "currency": "Japanese Yen",
+      "code": "JPY",
+      "rate": 152.77
+    },
+    {
+      "currency": "Canadian Dollar",
+      "code": "CAD",
+      "rate": 1.3618
+    },
+    {
+      "currency": "Brazilian Real",
+      "code": "BRL",
+      "rate": 5.2297
+    }
+  ]
+}

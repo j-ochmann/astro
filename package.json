@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build",
+    "fetch-data": "node src/scripts/fetch/all.mjs",
+    "build": "npm run fetch-data && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "deploy": "gh-pages -d dist"
@@ -40,6 +41,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "countries-and-timezones": "^3.8.0",
+    "dotenv": "^17.3.1",
     "flag-icons": "^7.5.0",
     "fs-extra": "^11.3.3",
     "glob": "^13.0.0",
