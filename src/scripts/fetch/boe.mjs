@@ -9,7 +9,7 @@ const URL = 'https://www.bankofengland.co.uk/boeapps/database/_exportdata.asp?xm
  * Fetches exchange rates from the Bank of England (BoE).
  * Note: BoE rates are quoted against the British Pound (GBP).
  */
-export async function fetchBoE() {
+export async function fetchBOE() {
   console.log('⏳ Fetching data from Bank of England...');
 
   try {
