@@ -13,7 +13,7 @@ export async function fetchBOC() {
     if (!response.ok) throw new Error(`BoC fetch failed: ${response.statusText}`);
 
     const data = await response.json();
-    /* RAW SAVE
+    // RAW SAVE
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
     const rawFile = path.join(RAW_DIR, `boc_${timestamp}.json`);
 
@@ -22,7 +22,7 @@ export async function fetchBOC() {
     }
 
     fs.writeFileSync(rawFile, JSON.stringify(data, null, 2));
-    console.log(`✅ Raw saved: ${rawFile}`); */
+    console.log(`✅ Raw saved: ${rawFile}`);
     // NORMALIZED WITHOUT CONVERSION
     const observations = data.observations;
     const latestObs = observations[observations.length - 1];
