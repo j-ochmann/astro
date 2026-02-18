@@ -8,7 +8,7 @@ const URL = 'https://www.bankofcanada.ca/valet/observations/group/FX_RATES_DAILY
  * Fetches comprehensive exchange rate data from the Bank of Canada.
  * Covers many currencies not present in FED or ECB datasets.
  */
-export async function fetchCanada() {
+export async function fetchBOC() {
   console.log('⏳ Fetching data from Bank of Canada (Valet API)...');
 
   try {

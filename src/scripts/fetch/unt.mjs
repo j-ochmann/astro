@@ -17,7 +17,7 @@ const URL = 'https://treasury.un.org/operationalrates/OperationalRates.php?Type=
  * Fetches the UN Operational Rates of Exchange.
  * This is the most authoritative source for "exotic" and less common currencies.
  */
-export async function fetchUN() {
+export async function fetchUNT() {
   console.log('⏳ Fetching data from UN Treasury...');
 
   try {
