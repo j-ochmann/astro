@@ -1,6 +1,11 @@
-import { fetchCNB } from './cnb.mjs';
-import { fetchECB } from './ecb.mjs';
-import { fetchFED } from './fed.mjs';
+import { fetchBOC } from './boc.mjs'; // Bank of Canada
+import { fetchBOE } from './boe.mjs'; // Bank of England
+import { fetchCNB } from './cnb.mjs'; // Czech National Bank
+import { fetchECB } from './ecb.mjs'; // European Central Bank
+import { fetchFED } from './fed.mjs'; // Federal Reserve Bank of St. Louis (FRED)
+import { fetchIMF } from './imf.mjs'; // International Monetary Fund
+import { fetchRBA } from './rba.mjs'; // Reserve Bank of Australia
+import { fetchUNT } from './unt.mjs'; // United Nations Treasury 
 
 /**
  * Orchestrates the fetching of all exchange rate data.
@@ -12,9 +17,14 @@ async function runAll() {
 
   try {
     const results = await Promise.allSettled([
+      fetchBOC(),
+      fetchBOE(),
       fetchCNB(),
       fetchECB(),
-      fetchFED()
+      fetchFED(),
+      fetchIMF(),
+      fetchRBA(),
+      fetchUNT()
     ]);
 
     // Check results of individual fetches
