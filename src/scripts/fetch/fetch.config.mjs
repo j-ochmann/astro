@@ -7,8 +7,10 @@ export const PATHS = {
   NORMALIZED: path.join(BASE_DIR, 'normalized'),
   AU: 'au',
   CA: 'ca',
+  CH: 'ch',
   CZ: 'cz',
   EU: 'eu',
+  GB: 'gb',
   HK: 'hk',
   IL: 'il',
   RO: 'ro',
@@ -17,11 +19,12 @@ export const PATHS = {
   US: 'us',
   UNORE: 'unore',
   NASDAQ: 'nasdaq',
+  PYTH: 'pyth',
+  CHAINLINK: 'chainlink',
   /* invalid: CH,CN,GB,JP,SE,International Monetary Fund */
-  CH: 'ch',
   CN: 'cn',
-  GB: 'gb',
   JP: 'jp',
   SE: 'se',
+  SG: 'sg',
   IMF: 'imf'
 };

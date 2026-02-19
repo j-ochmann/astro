@@ -1,7 +1,9 @@
 import { fetchAU } from './fx/au.mjs'; // Reserve Bank of Australia
 import { fetchCA } from './fx/ca.mjs'; // Bank of Canada
+import { fetchCH } from './fx/ch.mjs'; // Swiss National Bank 
 import { fetchCZ } from './fx/cz.mjs'; // Czech National Bank
 import { fetchEU } from './fx/eu.mjs'; // European Central Bank
+import { fetchGB } from './fx/gb.mjs'; // Bank of England
 import { fetchHK } from './fx/hk.mjs'; // Hong Kong Monetary Authority
 import { fetchIL } from './fx/il.mjs'; // Bank of Israel
 import { fetchRO } from './fx/ro.mjs'; // Central Bank of Romania 
@@ -9,14 +11,16 @@ import { fetchRU } from './fx/ru.mjs'; // Central Bank of Russia
 import { fetchUZ } from './fx/uz.mjs'; // Central Bank of Uzbekistan
 import { fetchUS } from './fx/us.mjs'; // Federal Reserve Bank of St. Louis (FRED)
 import { fetchUNORE } from './fx/unore.mjs'; // United Nations Treasury 
-/* invalid: CH,CN,GB,JP,SE,International Monetary Fund */
-import { fetchCH } from './fx/ch.mjs'; // Swiss National Bank 
-import { fetchCN } from './fx/cn.mjs'; // People's Bank of China
-import { fetchGB } from './fx/gb.mjs'; // Bank of England
-import { fetchJP } from './fx/jp.mjs'; // Bank of Japan
-import { fetchSE } from './fx/se.mjs'; // Sveriges Riksbank
-import { fetchIMF } from './fx/imf.mjs'; // International Monetary Fund
-//import {  } from './fx/.mjs'; // 
+import { fetchNASDAQ } from './fx/nasdaq.mjs'; // NASDAQ 
+import { fetchPyth } from './fx/pyth.mjs'; // Pyth Network - Hermes API (Web3)
+import { fetchChainlink } from './fx/chainlink.mjs'; // Chainlink (Web3)
+/* invalid: CN,JP,SE,SG,International Monetary Fund */
+// import { fetchCN } from './fx/cn.mjs'; // People's Bank of China
+// import { fetchJP } from './fx/jp.mjs'; // Bank of Japan
+// import { fetchSE } from './fx/se.mjs'; // Sveriges Riksbank
+// import { fetchSG } from './fx/sg.mjs'; // Monetary Authority of Singapore
+// import { fetchIMF } from './fx/imf.mjs'; // International Monetary Fund
+// import {  } from './fx/.mjs'; // 
 
 async function runAll() {
   console.log('🚀 Starting data synchronization...');
@@ -24,15 +28,13 @@ async function runAll() {
 
   try {
     const results = await Promise.allSettled([
-      // fetchAU(),fetchCA(),fetchCZ(),fetchEU(),fetchHK(),
-      // fetchIL(),fetchRO(),fetchRU(),fetchUZ(),fetchUS(),
+      // fetchAU(),fetchCA(),fetchCH(),fetchCZ(),fetchEU(),fetchGB(),
+      // fetchHK(),fetchIL(),fetchRO(),fetchRU(),fetchUZ(),fetchUS(),
       // fetchUNORE(),
       // fetchNASDAQ(),
-      fetchIMF()
-      // fetchCH(),
-      // fetchCN(),
-      // fetchGB(),
-      // fetchJP(),
+      fetchPyth(),
+      fetchChainlink(),
+      // fetchIMF(),fetchCN(),fetchJP(),fetchSG(),
       // fetchSE()
     ]);
     // Check results of individual fetches
