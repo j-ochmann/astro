@@ -1,16 +1,20 @@
-import { fetchBOC } from './boc.mjs'; // Bank of Canada
-//import { fetchBOE } from './boe.mjs'; // Bank of England
-import { fetchBOJ } from './boj.mjs'; // Bank of Japan
-import { fetchCBR } from './cbr.mjs'; // Central Bank of Russia
-import { fetchCNB } from './cnb.mjs'; // Czech National Bank
-import { fetchECB } from './ecb.mjs'; // European Central Bank
-import { fetchFED } from './fed.mjs'; // Federal Reserve Bank of St. Louis (FRED)
-//import { fetchIMF } from './imf.mjs'; // International Monetary Fund
-import { fetchPBC } from './pbc.mjs'; // People's Bank of China
-import { fetchRBA } from './rba.mjs'; // Reserve Bank of Australia
-import { fetchSNB } from './snb.mjs'; // Swiss National Bank
-import { fetchSRB } from './srb.mjs'; // Sveriges Riksbank 
-//!!!import { fetchUNT } from './unt.mjs'; // United Nations Treasury 
+import { fetchBOC } from './fx/boc.mjs'; // Bank of Canada
+import { fetchCBR } from './fx/cbr.mjs'; // Central Bank of Russia
+import { fetchCBU } from './fx/cbu.mjs'; // Central Bank of Uzbekistan
+import { fetchCNB } from './fx/cnb.mjs'; // Czech National Bank
+import { fetchECB } from './fx/ecb.mjs'; // European Central Bank
+import { fetchFED } from './fx/fed.mjs'; // Federal Reserve Bank of St. Louis (FRED)
+import { fetchHKM } from './fx/hkm.mjs'; // Hong Kong Monetary Authority
+import { fetchRBA } from './fx/rba.mjs'; // Reserve Bank of Australia
+/*
+Bank of England
+Bank of Japan
+International Monetary Fund
+People's Bank of China
+Sveriges Riksbank
+Swiss National Bank
+United Nations Treasury
+*/
 
 async function runAll() {
   console.log('🚀 Starting data synchronization...');
@@ -18,20 +22,18 @@ async function runAll() {
 
   try {
     const results = await Promise.allSettled([
-      fetchBOC(),
-      fetchBOJ(),
-      fetchCBR(),
-      fetchCNB(),
-      fetchECB(),
-      fetchFED(),
-      fetchPBC(),
-      fetchRBA(),
-      fetchSNB(),
-      fetchSRB(),
+      // fetchBOC(),
+      // fetchCBR(),
+      fetchCBU(),
+      // fetchCNB(),
+      // fetchECB(),
+      // fetchFED(),
+      // fetchHKM(),
+      // fetchRBA(),
     ]);
     // Check results of individual fetches
     results.forEach((result, index) => {
-      const names = ['BOC','BOJ','CBR','CNB','ECB','FED','PBC','RBA','SNB','SRB',];
+      const names = ['BOC','CBR','CNB','ECB','FED','RBA'];
       if (result.status === 'rejected') {
         console.error(`❌ ${names[index]} task failed:`, result.reason?.message || result.reason);
       }
