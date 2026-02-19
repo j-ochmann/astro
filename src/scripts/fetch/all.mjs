@@ -3,6 +3,7 @@ import { fetchCA } from './fx/ca.mjs'; // Bank of Canada
 import { fetchCZ } from './fx/cz.mjs'; // Czech National Bank
 import { fetchEU } from './fx/eu.mjs'; // European Central Bank
 import { fetchHK } from './fx/hk.mjs'; // Hong Kong Monetary Authority
+import { fetchIL } from './fx/il.mjs'; // Bank of Israel
 import { fetchRO } from './fx/ro.mjs'; // Central Bank of Romania 
 import { fetchRU } from './fx/ru.mjs'; // Central Bank of Russia
 import { fetchUZ } from './fx/uz.mjs'; // Central Bank of Uzbekistan
@@ -19,6 +20,7 @@ async function runAll() {
       fetchCZ(),
       fetchEU(),
       fetchHK(),
+      fetchIL(),
       fetchRO(),
       fetchRU(),
       fetchUZ(),
@@ -26,7 +28,7 @@ async function runAll() {
     ]);
     // Check results of individual fetches
     results.forEach((result, index) => {
-      const names = ['AU','CA','CZ','EU','HK','RO','RU','UZ','US'];
+      const names = ['AU','CA','CZ','EU','HK','IL','RO','RU','UZ','US'];
       if (result.status === 'rejected') {
         console.error(`❌ ${names[index]} task failed:`, result.reason?.message || result.reason);
       }
