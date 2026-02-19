@@ -1,3 +1,7 @@
+# Ignore Feeds
+src/content/feed/*
+src/content/feed/**
+
 # build output
 dist/
 # generated types

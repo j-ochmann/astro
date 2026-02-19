@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from './config.js';
+import { PATHS } from '../fetch.config.mjs';
 import { XMLParser } from 'fast-xml-parser';
 
 const RAW_DIR = path.join(PATHS.RAW, 'unore');
