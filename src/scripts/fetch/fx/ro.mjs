@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { XMLParser } from 'fast-xml-parser'; // Předpokládám, že máš nebo doinstaluješ
+import { PATHS } from '../fetch.config.mjs';
 
-const RAW_DIR = './data/raw/ro';
-const NORMALIZED_DIR = './data/normalized';
+const RAW_DIR = path.join(PATHS.RAW, PATHS.RO);
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.RO);
 const URL = 'https://www.bnr.ro/nbrfxrates.xml';
 
 export async function fetchRO() {
@@ -17,7 +18,7 @@ export async function fetchRO() {
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
     
     if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
-    fs.writeFileSync(path.join(RAW_DIR, `ro_${timestamp}.xml`), xmlData);
+    fs.writeFileSync(path.join(RAW_DIR, PATHS.RO+`_${timestamp}.xml`), xmlData);
 
     const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
     const jsonObj = parser.parse(xmlData);
@@ -45,7 +46,7 @@ export async function fetchRO() {
     };
 
     if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
-    const normalizedFile = path.join(NORMALIZED_DIR, `ro_${timestamp}.json`);
+    const normalizedFile = path.join(NORMALIZED_DIR, PATHS.RO+`_${timestamp}.json`);
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
 
     console.log(`✅ BNR sync complete. Fetched ${Object.keys(rates).length} currencies.`);

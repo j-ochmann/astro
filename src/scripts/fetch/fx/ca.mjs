@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { PATHS } from '../fetch.config.mjs';
 
-const RAW_DIR = './data/raw/ca';
-const NORMALIZED_DIR = './data/normalized';
+const RAW_DIR = path.join(PATHS.RAW, PATHS.CA);
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.CA);
 const URL = 'https://www.bankofcanada.ca/valet/observations/group/FX_RATES_DAILY/json';
 
 export async function fetchCA() {
@@ -10,12 +11,12 @@ export async function fetchCA() {
 
   try {
     const response = await fetch(URL);
-    if (!response.ok) throw new Error(`BoC fetch failed: ${response.statusText}`);
+    if (!response.ok) throw new Error(`Bank of Canada fetch failed: ${response.statusText}`);
 
     const data = await response.json();
     // RAW SAVE
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-    const rawFile = path.join(RAW_DIR, `ca_${timestamp}.json`);
+    const rawFile = path.join(RAW_DIR, PATHS.CA+`_${timestamp}.json`);
 
     if (!fs.existsSync(RAW_DIR)) {
       fs.mkdirSync(RAW_DIR, { recursive: true });
@@ -52,7 +53,7 @@ export async function fetchCA() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `ca_${timestamp}.json`
+      PATHS.CA+`_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));

@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { PATHS } from '../fetch.config.mjs';
 
-const RAW_DIR = './data/raw/uz';
-const NORMALIZED_DIR = './data/normalized';
+const RAW_DIR = path.join(PATHS.RAW, PATHS.UZ);
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.UZ);
 const URL = 'https://cbu.uz/en/arkhiv-kursov-valyut/json/';
 
 export async function fetchUZ() {
@@ -17,7 +18,7 @@ export async function fetchUZ() {
     // --- 1. SAVE RAW ---
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
     if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
-    fs.writeFileSync(path.join(RAW_DIR, `uz_${timestamp}.json`), JSON.stringify(data, null, 2));
+    fs.writeFileSync(path.join(RAW_DIR, PATHS.UZ+`_${timestamp}.json`), JSON.stringify(data, null, 2));
 
     // --- 2. NORMALIZE ---
     const rates = {};
@@ -46,7 +47,7 @@ export async function fetchUZ() {
     };
 
     if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
-    const normalizedFile = path.join(NORMALIZED_DIR, `uz_${timestamp}.json`);
+    const normalizedFile = path.join(NORMALIZED_DIR, PATHS.UZ+`_${timestamp}.json`);
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
 
     console.log(`✅ CBU sync complete. Fetched ${Object.keys(rates).length} currencies.`);

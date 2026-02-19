@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { PATHS } from '../fetch.config.mjs';
 
-const RAW_DIR = path.join(PATHS.RAW, 'au');
-const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, 'normalized');
+const RAW_DIR = path.join(PATHS.RAW, PATHS.AU);
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.AU);
 const URL = 'https://www.rba.gov.au/rss/rss-cb-exchange-rates.xml';
 
 export async function fetchAU() {
@@ -16,25 +16,17 @@ export async function fetchAU() {
     }
 
     const xml = await response.text();
-
-    // --------------------------------------------------
-    // 1️⃣ RAW SAVE
-    // --------------------------------------------------
-
+    // RAW SAVE
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
 
     if (!fs.existsSync(RAW_DIR)) {
       fs.mkdirSync(RAW_DIR, { recursive: true });
     }
 
-    const rawFile = path.join(RAW_DIR, `au_${timestamp}.xml`);
+    const rawFile = path.join(RAW_DIR, PATHS.AU+`_${timestamp}.xml`);
     fs.writeFileSync(rawFile, xml);
     console.log(`✅ Raw saved: ${rawFile}`);
-
-    // --------------------------------------------------
-    // 2️⃣ PARSE + NORMALIZE (NO CONVERSION!)
-    // --------------------------------------------------
-
+    // PARSE + NORMALIZE (NO CONVERSION!)
     const itemRegex =
       /<item[^>]*>[\s\S]*?<cb:targetCurrency>([^<]+)<\/cb:targetCurrency>[\s\S]*?<cb:value[^>]*>([\d.]+)<\/cb:value>[\s\S]*?<dc:date>([^<]+)<\/dc:date>/g;
 
@@ -54,10 +46,6 @@ export async function fetchAU() {
       }
     }
 
-    // RBA většinou nevrací AUD → přidáme
-    tempRates.push(['AUD', 1]);
-
-    // Abecední řazení
     tempRates.sort((a, b) => a[0].localeCompare(b[0]));
 
     const rates = Object.fromEntries(tempRates);
@@ -74,10 +62,7 @@ export async function fetchAU() {
       fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
     }
 
-    const normalizedFile = path.join(
-      NORMALIZED_DIR,
-      `au_${timestamp}.json`
-    );
+    const normalizedFile = path.join( NORMALIZED_DIR, PATHS.AU+`_${timestamp}.json`);
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
 

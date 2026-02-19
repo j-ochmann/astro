@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { PATHS } from '../fetch.config.mjs';
 
+const RAW_DIR = path.join(PATHS.RAW, PATHS.CZ);
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.CZ);
 const URL = 'https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt';
-
-const RAW_DIR = './data/raw/cz';
-const NORMALIZED_DIR = './data/normalized';
 
 export async function fetchCZ() {
   console.log('⏳ Fetching [CZ] Czech National Bank...');
@@ -22,7 +22,7 @@ export async function fetchCZ() {
     // --------------------------------------------------
 
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-    const rawFile = path.join(RAW_DIR, `cz_${timestamp}.txt`);
+    const rawFile = path.join(RAW_DIR, PATHS.CZ+`_${timestamp}.txt`);
 
     if (!fs.existsSync(RAW_DIR)) {
       fs.mkdirSync(RAW_DIR, { recursive: true });
@@ -79,7 +79,7 @@ export async function fetchCZ() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `cz_${timestamp}.json`
+      PATHS.CZ+`_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));

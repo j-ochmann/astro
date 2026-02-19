@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { PATHS } from '../fetch.config.mjs';
 
+const RAW_DIR = path.join(PATHS.RAW, PATHS.EU);
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.EU);
 const URL = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml';
-
-const RAW_DIR = './data/raw/eu';
-const NORMALIZED_DIR = './data/normalized';
 
 export async function fetchEU() {
   console.log('⏳ Fetching [EU] European Central Bank...');
@@ -22,7 +22,7 @@ export async function fetchEU() {
     // --------------------------------------------------
 
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-    const rawFile = path.join(RAW_DIR, `eu_${timestamp}.xml`);
+    const rawFile = path.join(RAW_DIR, PATHS.EU+`_${timestamp}.xml`);
 
     if (!fs.existsSync(RAW_DIR)) {
       fs.mkdirSync(RAW_DIR, { recursive: true });
@@ -76,7 +76,7 @@ export async function fetchEU() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `eu_${timestamp}.json`
+      PATHS.EU+`_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));

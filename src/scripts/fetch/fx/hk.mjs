@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { PATHS } from '../fetch.config.mjs';
 
-const RAW_DIR = './data/raw/hk';
-const NORMALIZED_DIR = './data/normalized';
+const RAW_DIR = path.join(PATHS.RAW, PATHS.HK);
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.HK);
 const URL = 'https://api.hkma.gov.hk/public/market-data-and-statistics/monthly-statistical-bulletin/er-ir/er-eeri-daily';
 
 export async function fetchHK() {
@@ -17,7 +18,7 @@ export async function fetchHK() {
     // --- 1. SAVE RAW ---
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
     if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
-    fs.writeFileSync(path.join(RAW_DIR, `hk_${timestamp}.json`), JSON.stringify(data, null, 2));
+    fs.writeFileSync(path.join(RAW_DIR, PATHS.HK+`_${timestamp}.json`), JSON.stringify(data, null, 2));
 
     // --- 2. NORMALIZE ---
     if (!data.result || data.result.records.length === 0) {
@@ -64,7 +65,7 @@ export async function fetchHK() {
     };
 
     if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
-    const normalizedFile = path.join(NORMALIZED_DIR, `hk_${timestamp}.json`);
+    const normalizedFile = path.join(NORMALIZED_DIR, PATHS.HK+`_${timestamp}.json`);
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
 
     console.log(`✅ HKMA sync complete. Added ${Object.keys(cleanRates).length} currencies (Base: HKD).`);

@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { XMLParser } from 'fast-xml-parser';
+import { PATHS } from '../fetch.config.mjs';
 
-const RAW_DIR = './data/raw/il';
-const NORMALIZED_DIR = './data/normalized';
-
+const RAW_DIR = path.join(PATHS.RAW, PATHS.IL);
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.IL);
 /**
  * Bank of Israel - Public API (XML version)
  * Tento endpoint vrací ExchangeRatesResponseCollectioDTO
@@ -33,7 +33,7 @@ export async function fetchIL() {
     const xmlData = await response.text();
 
     // --- 1. SAVE RAW DATA ---
-    const rawFile = path.join(RAW_DIR, `il_${timestamp}.xml`);
+    const rawFile = path.join(RAW_DIR, PATHS.IL+`_${timestamp}.xml`);
     fs.writeFileSync(rawFile, xmlData);
     console.log(`✅ Raw saved: ${rawFile}`);
 
@@ -87,7 +87,7 @@ export async function fetchIL() {
       rates: sortedRates
     };
 
-    const normalizedFile = path.join(NORMALIZED_DIR, `il_ILS_${timestamp}.json`);
+    const normalizedFile = path.join(NORMALIZED_DIR, PATHS.IL+`_${timestamp}.json`);
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
     
     console.log(`✅ Normalized saved (${Object.keys(sortedRates).length} currencies): ${normalizedFile}`);

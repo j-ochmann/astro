@@ -1,15 +1,15 @@
 import 'dotenv/config';
 import fs from 'node:fs';
 import path from 'node:path';
+import { PATHS } from '../fetch.config.mjs';
 
+const RAW_DIR = path.join(PATHS.RAW, PATHS.US);
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.US);
 const FRED_API_KEY = process.env.FRED_API_KEY;
 
 if (!FRED_API_KEY) {
   throw new Error('Missing FRED_API_KEY in environment variables');
 }
-
-const RAW_DIR = './data/raw/us';
-const NORMALIZED_DIR = './data/normalized';
 
 const SERIES = [
   { id: 'DEXUSEU', code: 'EUR', inverse: true },
@@ -88,7 +88,7 @@ export async function fetchUS() {
       fs.mkdirSync(RAW_DIR, { recursive: true });
     }
 
-    const rawFile = path.join(RAW_DIR, `us_${timestamp}.json`);
+    const rawFile = path.join(RAW_DIR, PATHS.US+`_${timestamp}.json`);
     fs.writeFileSync(rawFile, JSON.stringify(rawSnapshot, null, 2));
     console.log(`✅ Raw saved: ${rawFile}`);
 
@@ -116,7 +116,7 @@ export async function fetchUS() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `us_${timestamp}.json`
+      PATHS.US+`_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));

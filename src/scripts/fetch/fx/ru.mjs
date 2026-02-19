@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { PATHS } from '../fetch.config.mjs';
 
-const RAW_DIR = './data/raw/ru';
-const NORMALIZED_DIR = './data/normalized';
+const RAW_DIR = path.join(PATHS.RAW, PATHS.RU);
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.RU);
 const URL = 'https://www.cbr.ru/scripts/XML_daily.asp';
 
 export async function fetchRU() {
@@ -17,7 +18,7 @@ export async function fetchRU() {
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
     if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
 
-    const rawFile = path.join(RAW_DIR, `ru_${timestamp}.xml`);
+    const rawFile = path.join(RAW_DIR, PATHS.RU+`_${timestamp}.xml`);
     fs.writeFileSync(rawFile, rawText);
     console.log(`✅ Raw saved: ${rawFile}`);
 
@@ -60,7 +61,7 @@ export async function fetchRU() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `ru_${timestamp}.json`
+      PATHS.RU+`_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));

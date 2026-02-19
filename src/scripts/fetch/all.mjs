@@ -16,16 +16,16 @@ async function runAll() {
 
   try {
     const results = await Promise.allSettled([
-      // fetchAU(),
-      // fetchCA(),
-      // fetchCZ(),
-      // fetchEU(),
-      // fetchHK(),
-      // fetchIL(),
-      // fetchRO(),
-      // fetchRU(),
-      // fetchUZ(),
-      // fetchUS(),
+      fetchAU(),
+      fetchCA(),
+      fetchCZ(),
+      fetchEU(),
+      fetchHK(),
+      fetchIL(),
+      fetchRO(),
+      fetchRU(),
+      fetchUZ(),
+      fetchUS(),
       fetchUNORE()
     ]);
     // Check results of individual fetches
