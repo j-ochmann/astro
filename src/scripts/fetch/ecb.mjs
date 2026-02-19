@@ -2,51 +2,92 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const URL = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml';
-const OUTPUT_FILE = './public/ecb.json';
 
-/**
- * Fetches the daily exchange rates from the European Central Bank (ECB).
- */
+const RAW_DIR = './data/raw/ecb';
+const NORMALIZED_DIR = './data/normalized';
+
 export async function fetchECB() {
   console.log('⏳ Fetching data from ECB...');
 
   try {
     const response = await fetch(URL);
-    if (!response.ok) throw new Error(`ECB fetch failed: ${response.statusText}`);
+    if (!response.ok) {
+      throw new Error(`ECB fetch failed: ${response.statusText}`);
+    }
 
     const xml = await response.text();
-    
-    // Simple regex to extract data from ECB XML format: <Cube currency='USD' rate='1.0821'/>
+
+    // --------------------------------------------------
+    // 1️⃣ RAW SAVE
+    // --------------------------------------------------
+
+    const timestamp = new Date().toISOString().replace(/[:]/g, '-');
+    const rawFile = path.join(RAW_DIR, `ecb_${timestamp}.xml`);
+
+    if (!fs.existsSync(RAW_DIR)) {
+      fs.mkdirSync(RAW_DIR, { recursive: true });
+    }
+
+    fs.writeFileSync(rawFile, xml);
+    console.log(`✅ Raw saved: ${rawFile}`);
+
+    // --------------------------------------------------
+    // 2️⃣ PARSE + NORMALIZE (NO CONVERSION!)
+    // --------------------------------------------------
+
+    // Extract date: <Cube time='2026-02-18'>
+    const dateMatch = xml.match(/<Cube time='([^']+)'/);
+    const date = dateMatch
+      ? dateMatch[1]
+      : new Date().toISOString().split('T')[0];
+
+    // Extract rates
     const regex = /<Cube currency='([^']+)' rate='([^']+)'\/>/g;
-    const rates = [];
+
+    const tempRates = [];
     let match;
 
     while ((match = regex.exec(xml)) !== null) {
-      rates.push({
-        currency: match[1],
-        rate: parseFloat(match[2])
-      });
+      const code = match[1];
+      const rate = parseFloat(match[2]);
+
+      tempRates.push([code, rate]);
     }
 
-    // Extracting date: <Cube time='2026-02-18'>
-    const dateMatch = xml.match(/<Cube time='([^']+)'/);
-    const date = dateMatch ? dateMatch[1] : new Date().toISOString().split('T')[0];
+    // ECB nevrací EUR → přidáme 1
+    tempRates.push(['EUR', 1]);
 
-    const result = {
+    // Abecední řazení
+    tempRates.sort((a, b) => a[0].localeCompare(b[0]));
+
+    const rates = Object.fromEntries(tempRates);
+
+    const normalized = {
       source: 'European Central Bank',
-      url: 'https://www.ecb.europa.eu',
       base: 'EUR',
-      date: date,
-      rates: rates
+      date,
+      fetchedAt: new Date().toISOString(),
+      rates
     };
 
-    const dir = path.dirname(OUTPUT_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(NORMALIZED_DIR)) {
+      fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
+    }
 
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(result, null, 2));
-    console.log(`✅ ECB data saved to: ${OUTPUT_FILE}`);
+    const normalizedFile = path.join(
+      NORMALIZED_DIR,
+      `ecb_EUR_${timestamp}.json`
+    );
 
-    return result;
+    fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
+
+    console.log(`✅ Normalized saved (base EUR): ${normalizedFile}`);
+
+    return {
+      raw: rawFile,
+      normalized: normalizedFile
+    };
+
   } catch (error) {
     console.error('❌ Error processing ECB data:', error.message);
     throw error;

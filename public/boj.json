@@ -1,0 +1,9 @@
+{
+  "source": "Bank of Japan",
+  "base": "JPY",
+  "date": "2026-02-19",
+  "fetchedAt": "2026-02-19T01:05:40.327Z",
+  "rates": {
+    "JPY": 1
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "source": "Swiss National Bank",
+  "base": "CHF",
+  "date": "2026-02-19",
+  "fetchedAt": "2026-02-19T01:05:39.600Z",
+  "rates": {
+    "CHF": 1
+  }
+}
