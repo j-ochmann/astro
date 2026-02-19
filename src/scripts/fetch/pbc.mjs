@@ -5,7 +5,7 @@ const RAW_DIR = './data/raw/pboc';
 const NORMALIZED_DIR = './data/normalized';
 const URL = 'https://www.pbc.gov.cn/english/130721/index.html';
 
-export async function fetchPBOC() {
+export async function fetchPBC() {
   console.log('⏳ Fetching data from People’s Bank of China...');
 
   try {
