@@ -17,7 +17,7 @@ export async function fetchHK() {
     // --- 1. SAVE RAW ---
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
     if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
-    fs.writeFileSync(path.join(RAW_DIR, `hkma_${timestamp}.json`), JSON.stringify(data, null, 2));
+    fs.writeFileSync(path.join(RAW_DIR, `hk_${timestamp}.json`), JSON.stringify(data, null, 2));
 
     // --- 2. NORMALIZE ---
     if (!data.result || data.result.records.length === 0) {
@@ -64,7 +64,7 @@ export async function fetchHK() {
     };
 
     if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
-    const normalizedFile = path.join(NORMALIZED_DIR, `hkma_HKD_${timestamp}.json`);
+    const normalizedFile = path.join(NORMALIZED_DIR, `hk_${timestamp}.json`);
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
 
     console.log(`✅ HKMA sync complete. Added ${Object.keys(cleanRates).length} currencies (Base: HKD).`);

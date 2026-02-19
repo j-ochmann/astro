@@ -236,7 +236,7 @@ export const iso_3166_1 = {
       capital: "Sofia",
       population: 6580000,
       phone: [359],
-      currency: ["BGN"],
+      currency: ["EUR","BGN"],
       language: ["bg"]
    },
    BH: {
@@ -787,7 +787,7 @@ export const iso_3166_1 = {
       capital: "Stanley",
       population: 3700,
       phone: [500],
-      currency: ["FKP"],
+      currency: ["FKP"], // 1:1 GBP
       language: ["en-GB"]
    },
    FM: {
@@ -2227,7 +2227,7 @@ export const iso_3166_1 = {
       capital: "Freetown",
       population: 9200000,
       phone: [232],
-      currency: ["SLL"],
+      currency: ["SLE","SLL"],
       language: ["en-GB","kri"]
    },
    SM: {
@@ -2304,7 +2304,7 @@ export const iso_3166_1 = {
       capital: "San Salvador",
       population: 6400000,
       phone: [503],
-      currency: ["SVC","USD"],
+      currency: ["USD","SVC"],
       language: ["es"]
    },
    SX: {
@@ -2743,7 +2743,7 @@ export const iso_3166_1 = {
       capital: "Harare",
       population: 17500000,
       phone: [263],
-      currency: ["USD","ZAR","BWP","GBP","AUD","CNY","INR","JPY"],
+      currency: ["ZWG","ZWL","USD","ZAR","BWP","GBP","AUD","CNY","INR","JPY"],
       language: ["en-GB","sn","nd"]
    }
 };

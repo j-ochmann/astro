@@ -22,7 +22,7 @@ export async function fetchEU() {
     // --------------------------------------------------
 
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-    const rawFile = path.join(RAW_DIR, `ecb_${timestamp}.xml`);
+    const rawFile = path.join(RAW_DIR, `eu_${timestamp}.xml`);
 
     if (!fs.existsSync(RAW_DIR)) {
       fs.mkdirSync(RAW_DIR, { recursive: true });
@@ -76,7 +76,7 @@ export async function fetchEU() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `ecb_EUR_${timestamp}.json`
+      `eu_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));

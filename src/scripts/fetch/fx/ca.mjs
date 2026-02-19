@@ -15,7 +15,7 @@ export async function fetchCA() {
     const data = await response.json();
     // RAW SAVE
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-    const rawFile = path.join(RAW_DIR, `boc_${timestamp}.json`);
+    const rawFile = path.join(RAW_DIR, `ca_${timestamp}.json`);
 
     if (!fs.existsSync(RAW_DIR)) {
       fs.mkdirSync(RAW_DIR, { recursive: true });
@@ -52,7 +52,7 @@ export async function fetchCA() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `boc_CAD_${timestamp}.json`
+      `ca_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));

@@ -17,7 +17,7 @@ export async function fetchUZ() {
     // --- 1. SAVE RAW ---
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
     if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
-    fs.writeFileSync(path.join(RAW_DIR, `cbu_${timestamp}.json`), JSON.stringify(data, null, 2));
+    fs.writeFileSync(path.join(RAW_DIR, `uz_${timestamp}.json`), JSON.stringify(data, null, 2));
 
     // --- 2. NORMALIZE ---
     const rates = {};
@@ -46,7 +46,7 @@ export async function fetchUZ() {
     };
 
     if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
-    const normalizedFile = path.join(NORMALIZED_DIR, `cbu_UZS_${timestamp}.json`);
+    const normalizedFile = path.join(NORMALIZED_DIR, `uz_${timestamp}.json`);
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
 
     console.log(`✅ CBU sync complete. Fetched ${Object.keys(rates).length} currencies.`);

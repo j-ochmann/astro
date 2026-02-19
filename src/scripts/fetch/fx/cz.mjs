@@ -22,7 +22,7 @@ export async function fetchCZ() {
     // --------------------------------------------------
 
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-    const rawFile = path.join(RAW_DIR, `cnb_${timestamp}.txt`);
+    const rawFile = path.join(RAW_DIR, `cz_${timestamp}.txt`);
 
     if (!fs.existsSync(RAW_DIR)) {
       fs.mkdirSync(RAW_DIR, { recursive: true });
@@ -79,7 +79,7 @@ export async function fetchCZ() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `cnb_CZK_${timestamp}.json`
+      `cz_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));

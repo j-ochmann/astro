@@ -17,7 +17,7 @@ export async function fetchRO() {
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
     
     if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
-    fs.writeFileSync(path.join(RAW_DIR, `bnr_${timestamp}.xml`), xmlData);
+    fs.writeFileSync(path.join(RAW_DIR, `ro_${timestamp}.xml`), xmlData);
 
     const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
     const jsonObj = parser.parse(xmlData);
@@ -45,7 +45,7 @@ export async function fetchRO() {
     };
 
     if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
-    const normalizedFile = path.join(NORMALIZED_DIR, `bnr_RON_${timestamp}.json`);
+    const normalizedFile = path.join(NORMALIZED_DIR, `ro_${timestamp}.json`);
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
 
     console.log(`✅ BNR sync complete. Fetched ${Object.keys(rates).length} currencies.`);

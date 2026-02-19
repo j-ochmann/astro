@@ -6,54 +6,73 @@ const RAW_DIR = './data/raw/il';
 const NORMALIZED_DIR = './data/normalized';
 
 /**
- * Bank of Israel API - XML Feed
- * URL provides exchange rates against the Israeli Shekel (ILS).
+ * Bank of Israel - Public API (XML version)
+ * Tento endpoint vrací ExchangeRatesResponseCollectioDTO
  */
-const URL = 'https://www.boi.org.il/en/InterBankExchangeRates.xml';
+const URL = 'https://boi.org.il/PublicApi/GetExchangeRates?asXml=true';
 
 export async function fetchIL() {
-  console.log('⏳ Fetching [IL] Bank of Israel...');
+  console.log('⏳ Fetching [IL] Bank of Israel (Public API)...');
 
   try {
-    const response = await fetch(URL);
-    if (!response.ok) throw new Error(`BOI fetch failed: ${response.status}`);
+    const timestamp = new Date().toISOString().replace(/[:]/g, '-');
+    if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
+    if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
+
+    const response = await fetch(URL, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'application/xml'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`BOI fetch failed: ${response.status} ${response.statusText}`);
+    }
 
     const xmlData = await response.text();
-    const timestamp = new Date().toISOString().replace(/[:]/g, '-');
 
     // --- 1. SAVE RAW DATA ---
-    if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
-    const rawFile = path.join(RAW_DIR, `boi_${timestamp}.xml`);
+    const rawFile = path.join(RAW_DIR, `il_${timestamp}.xml`);
     fs.writeFileSync(rawFile, xmlData);
     console.log(`✅ Raw saved: ${rawFile}`);
 
     // --- 2. PARSE XML ---
     const parser = new XMLParser({
       ignoreAttributes: false,
-      attributeNamePrefix: "@_"
+      trimValues: true
     });
     
     const jsonObj = parser.parse(xmlData);
     
-    // Struktura BoI: <CURRENCIES><CURRENCY>...
-    const currencies = jsonObj.CURRENCIES.CURRENCY;
-    const lastUpdate = jsonObj.CURRENCIES.LAST_UPDATE; // Formát YYYY-MM-DD
+    // Cesta v novém XML: ExchangeRatesResponseCollectioDTO -> ExchangeRates -> ExchangeRateResponseDTO
+    const root = jsonObj.ExchangeRatesResponseCollectioDTO || jsonObj.ExchangeRatesResponseCollectionDTO;
+    if (!root || !root.ExchangeRates || !root.ExchangeRates.ExchangeRateResponseDTO) {
+      throw new Error('BOI XML structure is invalid or empty. Check the RAW file.');
+    }
+
+    const currencies = Array.isArray(root.ExchangeRates.ExchangeRateResponseDTO) 
+      ? root.ExchangeRates.ExchangeRateResponseDTO 
+      : [root.ExchangeRates.ExchangeRateResponseDTO];
 
     const rates = { "ILS": 1 };
+    let latestDate = null;
 
-    if (Array.isArray(currencies)) {
-      currencies.forEach(item => {
-        const code = item.CURRENCYCODE;
-        const rate = parseFloat(item.RATE);
-        const unit = parseInt(item.UNIT) || 1;
+    currencies.forEach(item => {
+      const code = item.Key; // V novém API je to 'Key'
+      const rate = parseFloat(item.CurrentExchangeRate); // V novém API je to 'CurrentExchangeRate'
+      const unit = parseInt(item.Unit) || 1;
 
-        if (code && !isNaN(rate)) {
-          // Kurzy jsou uváděny jako X ILS za Y jednotek cizí měny
-          // Normalizujeme na 1 jednotku
-          rates[code] = rate / unit;
+      if (code && !isNaN(rate)) {
+        // Normalizace na 1 jednotku (např. JPY má Unit 100)
+        rates[code] = rate / unit;
+        
+        // Uložíme datum z prvního záznamu (formát 2026-02-18T13:23:03...)
+        if (!latestDate && item.LastUpdate) {
+          latestDate = item.LastUpdate.split('T')[0];
         }
-      });
-    }
+      }
+    });
 
     // --- 3. NORMALIZE ---
     const sortedRates = Object.fromEntries(
@@ -63,20 +82,15 @@ export async function fetchIL() {
     const normalized = {
       source: 'Bank of Israel',
       base: 'ILS',
-      date: lastUpdate,
+      date: latestDate || new Date().toISOString().split('T')[0],
       fetchedAt: new Date().toISOString(),
       rates: sortedRates
     };
 
-    if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
-    
-    const normalizedFile = path.join(
-      NORMALIZED_DIR,
-      `boi_ILS_${timestamp}.json`
-    );
-
+    const normalizedFile = path.join(NORMALIZED_DIR, `il_ILS_${timestamp}.json`);
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
-    console.log(`✅ Normalized saved (base ILS): ${normalizedFile}`);
+    
+    console.log(`✅ Normalized saved (${Object.keys(sortedRates).length} currencies): ${normalizedFile}`);
 
     return { raw: rawFile, normalized: normalizedFile };
 

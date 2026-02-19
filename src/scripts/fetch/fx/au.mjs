@@ -27,7 +27,7 @@ export async function fetchAU() {
       fs.mkdirSync(RAW_DIR, { recursive: true });
     }
 
-    const rawFile = path.join(RAW_DIR, `rba_${timestamp}.xml`);
+    const rawFile = path.join(RAW_DIR, `au_${timestamp}.xml`);
     fs.writeFileSync(rawFile, xml);
     console.log(`✅ Raw saved: ${rawFile}`);
 
@@ -76,7 +76,7 @@ export async function fetchAU() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `rba_AUD_${timestamp}.json`
+      `au_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));

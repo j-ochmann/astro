@@ -88,7 +88,7 @@ export async function fetchUS() {
       fs.mkdirSync(RAW_DIR, { recursive: true });
     }
 
-    const rawFile = path.join(RAW_DIR, `fed_${timestamp}.json`);
+    const rawFile = path.join(RAW_DIR, `us_${timestamp}.json`);
     fs.writeFileSync(rawFile, JSON.stringify(rawSnapshot, null, 2));
     console.log(`✅ Raw saved: ${rawFile}`);
 
@@ -116,7 +116,7 @@ export async function fetchUS() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `fed_USD_${timestamp}.json`
+      `us_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));

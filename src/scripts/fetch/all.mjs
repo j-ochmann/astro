@@ -8,23 +8,25 @@ import { fetchRO } from './fx/ro.mjs'; // Central Bank of Romania
 import { fetchRU } from './fx/ru.mjs'; // Central Bank of Russia
 import { fetchUZ } from './fx/uz.mjs'; // Central Bank of Uzbekistan
 import { fetchUS } from './fx/us.mjs'; // Federal Reserve Bank of St. Louis (FRED)
-/* invalid: CH,CN,GB,JP,SE,International Monetary Fund,United Nations Treasury */
+import { fetchUNORE } from './fx/unore.mjs'; // United Nations Treasury 
+/* invalid: CH,CN,GB,JP,SE,International Monetary Fund,United Nations Treasury*/
 async function runAll() {
   console.log('🚀 Starting data synchronization...');
   const startTime = Date.now();
 
   try {
     const results = await Promise.allSettled([
-      fetchAU(),
-      fetchCA(),
-      fetchCZ(),
-      fetchEU(),
-      fetchHK(),
-      fetchIL(),
-      fetchRO(),
-      fetchRU(),
-      fetchUZ(),
-      fetchUS(),
+      // fetchAU(),
+      // fetchCA(),
+      // fetchCZ(),
+      // fetchEU(),
+      // fetchHK(),
+      // fetchIL(),
+      // fetchRO(),
+      // fetchRU(),
+      // fetchUZ(),
+      // fetchUS(),
+      fetchUNORE()
     ]);
     // Check results of individual fetches
     results.forEach((result, index) => {

@@ -17,7 +17,7 @@ export async function fetchRU() {
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
     if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
 
-    const rawFile = path.join(RAW_DIR, `cbr_${timestamp}.xml`);
+    const rawFile = path.join(RAW_DIR, `ru_${timestamp}.xml`);
     fs.writeFileSync(rawFile, rawText);
     console.log(`✅ Raw saved: ${rawFile}`);
 
@@ -60,7 +60,7 @@ export async function fetchRU() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `cbr_RUB_${timestamp}.json`
+      `ru_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
