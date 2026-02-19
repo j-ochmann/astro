@@ -1,45 +1,65 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+const RAW_DIR = './data/raw/snb';
+const NORMALIZED_DIR = './data/normalized';
 const URL = 'https://data.snb.ch/api/cube/devkot/data';
-const OUTPUT_FILE = './public/snb.json';
 
 export async function fetchSNB() {
-  console.log('⏳ Fetching Swiss National Bank...');
+  console.log('⏳ Fetching data from Swiss National Bank...');
 
-  const response = await fetch(URL);
-  if (!response.ok) throw new Error('SNB fetch failed');
+  try {
+    const response = await fetch(URL);
+    if (!response.ok) throw new Error(`SNB fetch failed: ${response.statusText}`);
 
-  const xml = await response.text();
+    const rawText = await response.text();
 
-  const regex = /<Obs[^>]*TIME_PERIOD="([^"]+)"[^>]*OBS_VALUE="([^"]+)"[^>]*CURRENCY="([^"]+)"/g;
+    const timestamp = new Date().toISOString().replace(/[:]/g, '-');
+    if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
 
-  const rates = { CHF: 1 };
-  let match;
+    const rawFile = path.join(RAW_DIR, `snb_${timestamp}.xml`);
+    fs.writeFileSync(rawFile, rawText);
+    console.log(`✅ Raw saved: ${rawFile}`);
 
-  while ((match = regex.exec(xml)) !== null) {
-    const currency = match[3];
-    const rate = parseFloat(match[2]);
+    const regex = /CURRENCY="([^"]+)"[^>]*OBS_VALUE="([^"]+)"/g;
 
-    if (currency && rate) {
-      rates[currency] = rate;
+    const rates = { CHF: 1 };
+    let match;
+
+    while ((match = regex.exec(rawText)) !== null) {
+      const currency = match[1];
+      const rate = parseFloat(match[2]);
+      if (currency && rate) rates[currency] = rate;
     }
+
+    const sortedRates = Object.fromEntries(
+      Object.entries(rates).sort((a, b) => a[0].localeCompare(b[0]))
+    );
+
+    const normalized = {
+      source: 'Swiss National Bank',
+      base: 'CHF',
+      date: new Date().toISOString().split('T')[0],
+      fetchedAt: new Date().toISOString(),
+      rates: sortedRates
+    };
+
+    if (!fs.existsSync(NORMALIZED_DIR))
+      fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
+
+    const normalizedFile = path.join(
+      NORMALIZED_DIR,
+      `snb_CHF_${timestamp}.json`
+    );
+
+    fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
+
+    console.log(`✅ Normalized saved (base CHF): ${normalizedFile}`);
+
+    return { raw: rawFile, normalized: normalizedFile };
+
+  } catch (error) {
+    console.error('❌ Error processing SNB data:', error.message);
+    throw error;
   }
-
-  const sortedRates = Object.fromEntries(
-    Object.entries(rates).sort(([a], [b]) => a.localeCompare(b))
-  );
-
-  const result = {
-    source: 'Swiss National Bank',
-    base: 'CHF',
-    date: new Date().toISOString().split('T')[0],
-    fetchedAt: new Date().toISOString(),
-    rates: sortedRates
-  };
-
-  fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(result, null, 2));
-
-  return result;
 }
