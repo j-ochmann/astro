@@ -9,24 +9,31 @@ import { fetchRU } from './fx/ru.mjs'; // Central Bank of Russia
 import { fetchUZ } from './fx/uz.mjs'; // Central Bank of Uzbekistan
 import { fetchUS } from './fx/us.mjs'; // Federal Reserve Bank of St. Louis (FRED)
 import { fetchUNORE } from './fx/unore.mjs'; // United Nations Treasury 
-/* invalid: CH,CN,GB,JP,SE,International Monetary Fund,United Nations Treasury*/
+/* invalid: CH,CN,GB,JP,SE,International Monetary Fund */
+import { fetchCH } from './fx/ch.mjs'; // Swiss National Bank 
+import { fetchCN } from './fx/cn.mjs'; // People's Bank of China
+import { fetchGB } from './fx/gb.mjs'; // Bank of England
+import { fetchJP } from './fx/jp.mjs'; // Bank of Japan
+import { fetchSE } from './fx/se.mjs'; // Sveriges Riksbank
+import { fetchIMF } from './fx/imf.mjs'; // International Monetary Fund
+//import {  } from './fx/.mjs'; // 
+
 async function runAll() {
   console.log('🚀 Starting data synchronization...');
   const startTime = Date.now();
 
   try {
     const results = await Promise.allSettled([
-      fetchAU(),
-      fetchCA(),
-      fetchCZ(),
-      fetchEU(),
-      fetchHK(),
-      fetchIL(),
-      fetchRO(),
-      fetchRU(),
-      fetchUZ(),
-      fetchUS(),
-      fetchUNORE()
+      // fetchAU(),fetchCA(),fetchCZ(),fetchEU(),fetchHK(),
+      // fetchIL(),fetchRO(),fetchRU(),fetchUZ(),fetchUS(),
+      // fetchUNORE(),
+      // fetchNASDAQ(),
+      fetchIMF()
+      // fetchCH(),
+      // fetchCN(),
+      // fetchGB(),
+      // fetchJP(),
+      // fetchSE()
     ]);
     // Check results of individual fetches
     results.forEach((result, index) => {

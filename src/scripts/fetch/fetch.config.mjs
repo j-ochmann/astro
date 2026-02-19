@@ -17,4 +17,11 @@ export const PATHS = {
   US: 'us',
   UNORE: 'unore',
   NASDAQ: 'nasdaq',
+  /* invalid: CH,CN,GB,JP,SE,International Monetary Fund */
+  CH: 'ch',
+  CN: 'cn',
+  GB: 'gb',
+  JP: 'jp',
+  SE: 'se',
+  IMF: 'imf'
 };
