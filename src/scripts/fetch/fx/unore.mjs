@@ -3,8 +3,8 @@ import path from 'node:path';
 import { PATHS } from '../fetch.config.mjs';
 import { XMLParser } from 'fast-xml-parser';
 
-const RAW_DIR = path.join(PATHS.RAW, 'unore');
-const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, 'normalized');
+const RAW_DIR = path.join(PATHS.RAW, PATHS.UNORE);
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.UNORE);
 const URL = 'https://treasury.un.org/operationalrates/xsql2XML.php';
 
 export async function fetchUNORE() {
@@ -18,20 +18,17 @@ export async function fetchUNORE() {
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
 
     if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
-    const rawFile = path.join(RAW_DIR, `unore_${timestamp}.xml`);
+    const rawFile = path.join(RAW_DIR, PATHS.UNORE+`_${timestamp}.xml`);
     fs.writeFileSync(rawFile, xmlText);
 
-    // Inicializace parseru
     const parser = new XMLParser({
       ignoreAttributes: true,
       trimValues: true,
-      // Zajistí, že i když bude v XML jen jedna položka, vrátí se jako pole
       isArray: (name) => name === 'UN_OPERATIONAL_RATES'
     });
 
     const jsonObj = parser.parse(xmlText);
     
-    // Navigace do hloubky datasetu
     const dataSet = jsonObj.UN_OPERATIONAL_RATES_DATASET;
     if (!dataSet || !dataSet.UN_OPERATIONAL_RATES) {
       throw new Error('UN Treasury: Invalid XML structure (missing dataset).');
@@ -47,12 +44,11 @@ export async function fetchUNORE() {
       if (code && !isNaN(rate)) {
         rates[code] = rate;
         
-        // Formát data v XML je "15 Feb 2026"
         if (!latestDate && item.eff_date) {
           try {
             latestDate = new Date(item.eff_date).toISOString().split('T')[0];
           } catch (e) {
-            latestDate = item.eff_date; // fallback na raw string
+            latestDate = item.eff_date;
           }
         }
       }
@@ -69,7 +65,7 @@ export async function fetchUNORE() {
     };
 
     if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
-    const normalizedFile = path.join(NORMALIZED_DIR, `unore_USD_${timestamp}.json`);
+    const normalizedFile = path.join(NORMALIZED_DIR, PATHS.UNORE+`_${timestamp}.json`);
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
 
     console.log(`✨ UN Treasury sync complete. Total currencies: ${Object.keys(rates).length}`);

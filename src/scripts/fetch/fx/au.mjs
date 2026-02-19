@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { PATHS } from '../fetch.config.mjs';
 
+const RAW_DIR = path.join(PATHS.RAW, 'au');
+const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, 'normalized');
 const URL = 'https://www.rba.gov.au/rss/rss-cb-exchange-rates.xml';
-
-const RAW_DIR = './data/raw/au';
-const NORMALIZED_DIR = './data/normalized';
 
 export async function fetchAU() {
   console.log('⏳ Fetching [AU] Reserve Bank of Australia...');
