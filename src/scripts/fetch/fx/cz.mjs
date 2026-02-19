@@ -3,11 +3,11 @@ import path from 'node:path';
 
 const URL = 'https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt';
 
-const RAW_DIR = './data/raw/cnb';
+const RAW_DIR = './data/raw/cz';
 const NORMALIZED_DIR = './data/normalized';
 
-export async function fetchCNB() {
-  console.log('⏳ Fetching data from CNB...');
+export async function fetchCZ() {
+  console.log('⏳ Fetching [CZ] Czech National Bank...');
 
   try {
     const response = await fetch(URL);

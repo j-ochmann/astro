@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const RAW_DIR = './data/raw/cbr';
+const RAW_DIR = './data/raw/ru';
 const NORMALIZED_DIR = './data/normalized';
 const URL = 'https://www.cbr.ru/scripts/XML_daily.asp';
 
-export async function fetchCBR() {
-  console.log('⏳ Fetching data from Central Bank of Russia...');
+export async function fetchRU() {
+  console.log('⏳ Fetching [RU] Central Bank of Russia...');
 
   try {
     const response = await fetch(URL);

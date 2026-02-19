@@ -1,13 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const RAW_DIR = './data/raw/hkma';
+const RAW_DIR = './data/raw/hk';
 const NORMALIZED_DIR = './data/normalized';
-// HKMA API endpoint pro denní kurzy
 const URL = 'https://api.hkma.gov.hk/public/market-data-and-statistics/monthly-statistical-bulletin/er-ir/er-eeri-daily';
 
-export async function fetchHKM() {
-  console.log('⏳ Fetching data from Hong Kong Monetary Authority...');
+export async function fetchHK() {
+  console.log('⏳ Fetching [HK] Hong Kong Monetary Authority...');
 
   try {
     const response = await fetch(URL);

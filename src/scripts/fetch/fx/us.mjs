@@ -8,7 +8,7 @@ if (!FRED_API_KEY) {
   throw new Error('Missing FRED_API_KEY in environment variables');
 }
 
-const RAW_DIR = './data/raw/fed';
+const RAW_DIR = './data/raw/us';
 const NORMALIZED_DIR = './data/normalized';
 
 const SERIES = [
@@ -35,8 +35,8 @@ const SERIES = [
   { id: 'DEXSFUS', code: 'ZAR', inverse: false }
 ];
 
-export async function fetchFED() {
-  console.log('⏳ Fetching data from FRED...');
+export async function fetchUS() {
+  console.log('⏳ Fetching [US] Federal Reserve Bank of St. Louis (FRED)...');
 
   try {
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');

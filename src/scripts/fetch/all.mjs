@@ -1,39 +1,32 @@
-import { fetchBOC } from './fx/boc.mjs'; // Bank of Canada
-import { fetchCBR } from './fx/cbr.mjs'; // Central Bank of Russia
-import { fetchCBU } from './fx/cbu.mjs'; // Central Bank of Uzbekistan
-import { fetchCNB } from './fx/cnb.mjs'; // Czech National Bank
-import { fetchECB } from './fx/ecb.mjs'; // European Central Bank
-import { fetchFED } from './fx/fed.mjs'; // Federal Reserve Bank of St. Louis (FRED)
-import { fetchHKM } from './fx/hkm.mjs'; // Hong Kong Monetary Authority
-import { fetchRBA } from './fx/rba.mjs'; // Reserve Bank of Australia
-/*
-Bank of England
-Bank of Japan
-International Monetary Fund
-People's Bank of China
-Sveriges Riksbank
-Swiss National Bank
-United Nations Treasury
-*/
-
+import { fetchAU } from './fx/au.mjs'; // Reserve Bank of Australia
+import { fetchCA } from './fx/ca.mjs'; // Bank of Canada
+import { fetchCZ } from './fx/cz.mjs'; // Czech National Bank
+import { fetchEU } from './fx/eu.mjs'; // European Central Bank
+import { fetchHK } from './fx/hk.mjs'; // Hong Kong Monetary Authority
+import { fetchRO } from './fx/ro.mjs'; // Central Bank of Romania 
+import { fetchRU } from './fx/ru.mjs'; // Central Bank of Russia
+import { fetchUZ } from './fx/uz.mjs'; // Central Bank of Uzbekistan
+import { fetchUS } from './fx/us.mjs'; // Federal Reserve Bank of St. Louis (FRED)
+/* invalid: CH,CN,GB,JP,SE,International Monetary Fund,United Nations Treasury */
 async function runAll() {
   console.log('🚀 Starting data synchronization...');
   const startTime = Date.now();
 
   try {
     const results = await Promise.allSettled([
-      // fetchBOC(),
-      // fetchCBR(),
-      fetchCBU(),
-      // fetchCNB(),
-      // fetchECB(),
-      // fetchFED(),
-      // fetchHKM(),
-      // fetchRBA(),
+      fetchAU(),
+      fetchCA(),
+      fetchCZ(),
+      fetchEU(),
+      fetchHK(),
+      fetchRO(),
+      fetchRU(),
+      fetchUZ(),
+      fetchUS(),
     ]);
     // Check results of individual fetches
     results.forEach((result, index) => {
-      const names = ['BOC','CBR','CNB','ECB','FED','RBA'];
+      const names = ['AU','CA','CZ','EU','HK','RO','RU','UZ','US'];
       if (result.status === 'rejected') {
         console.error(`❌ ${names[index]} task failed:`, result.reason?.message || result.reason);
       }

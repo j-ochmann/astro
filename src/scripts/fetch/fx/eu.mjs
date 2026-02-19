@@ -1,18 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const URL = 'https://www.rba.gov.au/rss/rss-cb-exchange-rates.xml';
+const URL = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml';
 
-const RAW_DIR = './data/raw/rba';
+const RAW_DIR = './data/raw/eu';
 const NORMALIZED_DIR = './data/normalized';
 
-export async function fetchRBA() {
-  console.log('⏳ Fetching data from RBA...');
+export async function fetchEU() {
+  console.log('⏳ Fetching [EU] European Central Bank...');
 
   try {
     const response = await fetch(URL);
     if (!response.ok) {
-      throw new Error(`RBA fetch failed: ${response.statusText}`);
+      throw new Error(`ECB fetch failed: ${response.statusText}`);
     }
 
     const xml = await response.text();
@@ -22,12 +22,12 @@ export async function fetchRBA() {
     // --------------------------------------------------
 
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
+    const rawFile = path.join(RAW_DIR, `ecb_${timestamp}.xml`);
 
     if (!fs.existsSync(RAW_DIR)) {
       fs.mkdirSync(RAW_DIR, { recursive: true });
     }
 
-    const rawFile = path.join(RAW_DIR, `rba_${timestamp}.xml`);
     fs.writeFileSync(rawFile, xml);
     console.log(`✅ Raw saved: ${rawFile}`);
 
@@ -35,27 +35,27 @@ export async function fetchRBA() {
     // 2️⃣ PARSE + NORMALIZE (NO CONVERSION!)
     // --------------------------------------------------
 
-    const itemRegex =
-      /<item[^>]*>[\s\S]*?<cb:targetCurrency>([^<]+)<\/cb:targetCurrency>[\s\S]*?<cb:value[^>]*>([\d.]+)<\/cb:value>[\s\S]*?<dc:date>([^<]+)<\/dc:date>/g;
+    // Extract date: <Cube time='2026-02-18'>
+    const dateMatch = xml.match(/<Cube time='([^']+)'/);
+    const date = dateMatch
+      ? dateMatch[1]
+      : new Date().toISOString().split('T')[0];
+
+    // Extract rates
+    const regex = /<Cube currency='([^']+)' rate='([^']+)'\/>/g;
 
     const tempRates = [];
     let match;
-    let globalDate = '';
 
-    while ((match = itemRegex.exec(xml)) !== null) {
-      const code = match[1].trim();
+    while ((match = regex.exec(xml)) !== null) {
+      const code = match[1];
       const rate = parseFloat(match[2]);
-      const date = match[3].split('T')[0];
 
-      tempRates.push([code, parseFloat(rate.toFixed(6))]);
-
-      if (!globalDate || date > globalDate) {
-        globalDate = date;
-      }
+      tempRates.push([code, rate]);
     }
 
-    // RBA většinou nevrací AUD → přidáme
-    tempRates.push(['AUD', 1]);
+    // ECB nevrací EUR → přidáme 1
+    tempRates.push(['EUR', 1]);
 
     // Abecední řazení
     tempRates.sort((a, b) => a[0].localeCompare(b[0]));
@@ -63,9 +63,9 @@ export async function fetchRBA() {
     const rates = Object.fromEntries(tempRates);
 
     const normalized = {
-      source: 'Reserve Bank of Australia',
-      base: 'AUD',
-      date: globalDate || new Date().toISOString().split('T')[0],
+      source: 'European Central Bank',
+      base: 'EUR',
+      date,
       fetchedAt: new Date().toISOString(),
       rates
     };
@@ -76,12 +76,12 @@ export async function fetchRBA() {
 
     const normalizedFile = path.join(
       NORMALIZED_DIR,
-      `rba_AUD_${timestamp}.json`
+      `ecb_EUR_${timestamp}.json`
     );
 
     fs.writeFileSync(normalizedFile, JSON.stringify(normalized, null, 2));
 
-    console.log(`✅ Normalized saved (base AUD): ${normalizedFile}`);
+    console.log(`✅ Normalized saved (base EUR): ${normalizedFile}`);
 
     return {
       raw: rawFile,
@@ -89,7 +89,7 @@ export async function fetchRBA() {
     };
 
   } catch (error) {
-    console.error('❌ RBA failure:', error.message);
+    console.error('❌ Error processing ECB data:', error.message);
     throw error;
   }
 }

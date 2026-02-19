@@ -1,13 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const RAW_DIR = './data/raw/cbu';
+const RAW_DIR = './data/raw/uz';
 const NORMALIZED_DIR = './data/normalized';
-// API vrací všechny dostupné měny pro aktuální den
 const URL = 'https://cbu.uz/en/arkhiv-kursov-valyut/json/';
 
-export async function fetchCBU() {
-  console.log('⏳ Fetching data from Central Bank of Uzbekistan...');
+export async function fetchUZ() {
+  console.log('⏳ Fetching [UZ] Central Bank of Uzbekistan...');
 
   try {
     const response = await fetch(URL);

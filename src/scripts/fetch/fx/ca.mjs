@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const RAW_DIR = './data/raw/boc';
+const RAW_DIR = './data/raw/ca';
 const NORMALIZED_DIR = './data/normalized';
 const URL = 'https://www.bankofcanada.ca/valet/observations/group/FX_RATES_DAILY/json';
 
-export async function fetchBOC() {
-  console.log('⏳ Fetching data from Bank of Canada...');
+export async function fetchCA() {
+  console.log('⏳ Fetching [CA] Bank of Canada...');
 
   try {
     const response = await fetch(URL);
