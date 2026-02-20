@@ -4,6 +4,7 @@ import { createPublicClient, http, fallback, parseAbi } from 'viem';
 import { mainnet } from 'viem/chains';
 import { PATHS } from '../fetch.config.mjs';
 import { getAllCurrencies } from '../../../content/config/i18n.ts';
+
 const RAW_DIR = path.join(PATHS.RAW, PATHS.CHAINLINK);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.CHAINLINK);
 
@@ -49,6 +50,33 @@ async function getChainlinkFeeds(): Promise<Feed[]> {
 
   console.log(`   ✅ Step 1: Found ${filtered.length} currency pairs.`);
   return filtered;
+}
+
+// Přepočítá všechny měny na base USD
+function convertToUSDBase(pairs: Record<string, number>): Record<string, number> {
+  const rates: Record<string, number> = {};
+
+  // nejdřív vezmeme všechny přímo USD páry
+  for (const [symbol, price] of Object.entries(pairs)) {
+    const [base, quote] = symbol.split('/');
+    if (quote === 'USD') {
+      rates[base] = price;
+    } else if (base === 'USD') {
+      rates[quote] = 1 / price;
+    }
+  }
+
+  // pokusíme se přepočítat ostatní páry přes existující USD páry
+  for (const [symbol, price] of Object.entries(pairs)) {
+    const [base, quote] = symbol.split('/');
+    if (rates[base] && !rates[quote]) {
+      rates[quote] = rates[base] / price;
+    } else if (rates[quote] && !rates[base]) {
+      rates[base] = rates[quote] * price;
+    }
+  }
+
+  return rates;
 }
 
 export async function fetchChainlink(): Promise<boolean | null> {
@@ -120,20 +148,34 @@ export async function fetchChainlink(): Promise<boolean | null> {
       }
     }
 
-    const result = {
-      source: 'Chainlink (All Currency Pairs Mode)',
-      fetchedAt: new Date().toISOString(),
-      pairs: Object.fromEntries(
-        Object.entries(pairs).sort(([a], [b]) => a.localeCompare(b))
-      )
-    };
-
     if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
 
-    const filePath = path.join(NORMALIZED_DIR, `chainlink_${timestamp}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
+    // 1️⃣ Původní feed se všemi páry
+    const allPairsFile = path.join(NORMALIZED_DIR, `fx_pairs_${timestamp}.json`);
+    fs.writeFileSync(
+      allPairsFile,
+      JSON.stringify(
+        { source: 'Chainlink (Currency Pairs)', fetchedAt: new Date().toISOString(), pairs },
+        null,
+        2
+      )
+    );
+
+    // 2️⃣ Base USD feed
+    const baseUSD = convertToUSDBase(pairs);
+    const baseUSDFile = path.join(NORMALIZED_DIR, PATHS.CHAINLINK+`_${timestamp}.json`);
+    fs.writeFileSync(
+      baseUSDFile,
+      JSON.stringify(
+        { source: 'Chainlink (USD)', base: 'USD', date: new Date().toISOString().split('T')[0], fetchedAt: new Date().toISOString(), rates: baseUSD },
+        null,
+        2
+      )
+    );
 
     console.log(`✅ Chainlink complete. Total pairs stored: ${Object.keys(pairs).length}`);
+    console.log(`✅ Base USD rates stored: ${Object.keys(baseUSD).length}`);
+
     return true;
   } catch (error: unknown) {
     const e = error as Error;
