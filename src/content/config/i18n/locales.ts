@@ -24,3 +24,26 @@ export const locales = {
   ar: { lang: 'ar', flag: 'SA', label: 'العربية' },
   he: { lang: 'he', flag: 'IL', label: 'עברית' },
 };
+/**
+ * Převede lang (např. 'en-US') na klíč (např. 'en').
+ * Pokud klíč nenajde, vrátí původní hodnotu jako fallback.
+ */
+export function getLocaleKey(lang: string | undefined): string {
+  if (!lang) return 'en';
+  // Najdeme klíč, jehož lang vlastnost odpovídá hledanému lang
+  const entry = Object.entries(locales).find(([key, val]) => val.lang === lang);
+  // Pokud najdeme shodu, vrátíme klíč (např. 'en'), jinak lang.
+  return entry ? entry[0] : lang;
+}
+/**
+ * Vygeneruje správnou lokalizovanou cestu.
+ * Použití: getPath(Astro.currentLocale, '/settings')
+ */
+export function getPath(lang: string | undefined, path: string): string {
+  const key = getLocaleKey(lang);
+  const cleanPath = path.replace(/^\/|\/$/g, '');
+  // Ošetření pro domovskou stránku daného jazyka
+  if (cleanPath === '') return `/${key}/`;
+  
+  return `/${key}/${cleanPath}/`;
+}

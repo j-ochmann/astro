@@ -83,7 +83,7 @@ interface ExtendedWindow extends Window { __ttsReaderInitialized?: boolean; }
     const main = document.querySelector("main");
     if (!main) return;
     /*const elements = Array.from(main.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li')) as HTMLElement[];*/
-    const elements = Array.from(main.querySelectorAll('.tagline, .country-card, h1, h2, h3, h4, h5, h6, p, li, td, th')) as HTMLElement[];
+    const elements = Array.from(main.querySelectorAll('.sr-only, .tagline, .country-card, h1, h2, h3, h4, h5, h6, p, li, td, th')) as HTMLElement[];
     sentences = [];
     elements.forEach(el => {
       const text = el.innerText.trim();
