@@ -1,13 +1,13 @@
-import { locales } from './i18n/locales';
-import { iso_3166_1 } from './i18n/iso_3166_1';
-import { countryTranslations } from './i18n/country_translations';
-import { iso_4217 } from './i18n/iso_4217';
-import { iso_639_1 } from './i18n/iso_639_1';
-import { iso_639_3 } from './i18n/iso_639_3';
-import { iso_639_3166 } from './i18n/iso_639_3166';
-import { uiStrings } from './i18n/ui';
-import currencies from './i18n/currencies.json';
-import countries from './i18n/countries.json';
+import { locales } from './i18n/locales.ts';
+import { iso_3166_1 } from './i18n/iso_3166_1.ts';
+import { countryTranslations } from './i18n/country_translations.ts';
+import { iso_4217 } from './i18n/iso_4217.ts';
+import { iso_639_1 } from './i18n/iso_639_1.ts';
+import { iso_639_3 } from './i18n/iso_639_3.ts';
+import { iso_639_3166 } from './i18n/iso_639_3166.ts';
+import { uiStrings } from './i18n/ui.ts';
+import currencies from './i18n/currencies.json' with { type: 'json' };
+import countries from './i18n/countries.json' with { type: 'json' };
 
 export interface CurrencyDetail {
   name: string;

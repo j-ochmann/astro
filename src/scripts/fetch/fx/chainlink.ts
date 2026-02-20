@@ -3,7 +3,7 @@ import path from 'node:path';
 import { createPublicClient, http, fallback, parseAbi } from 'viem';
 import { mainnet } from 'viem/chains';
 import { PATHS } from '../fetch.config.mjs';
-import { getAllCurrencies } from '../i18n.ts';
+import { getAllCurrencies } from '../../../content/config/i18n.ts';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.CHAINLINK);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.CHAINLINK);
@@ -13,7 +13,13 @@ const AGGREGATOR_ABI = parseAbi([
   'function decimals() view returns (uint8)'
 ]);
 
-async function getChainlinkFeeds() {
+interface Feed {
+  name: string;
+  proxyAddress?: string;
+  contractAddress?: string;
+}
+
+async function getChainlinkFeeds(): Promise<Feed[]> {
   console.log('   🔍 Step 1: Downloading directory...');
 
   const url = 'https://reference-data-directory.vercel.app/feeds-mainnet.json';
@@ -23,27 +29,22 @@ async function getChainlinkFeeds() {
     throw new Error(`Directory fetch failed: ${response.status}`);
   }
 
-  const allFeeds = await response.json();
+  const allFeeds: Feed[] = await response.json();
 
   const currencies = await getAllCurrencies();
   console.log('   🌎 Available currencies from i18n.ts:', currencies.join(', '));
 
-  const filtered = allFeeds.filter(feed => {
+  const filtered = allFeeds.filter((feed: Feed) => {
     if (!feed.name) return false;
 
     const clean = feed.name.replace(/\s+/g, '').toUpperCase();
 
-    // Odstranit wrappery, calculated feedy, exchangeRate atd.
-    if (clean.includes('(')) return false;
-    if (clean.includes('CALCULATED')) return false;
-    if (clean.includes('EXCHANGERATE')) return false;
+    if (clean.includes('(') || clean.includes('CALCULATED') || clean.includes('EXCHANGERATE')) return false;
 
-    // Base a quote z feedu
     const parts = clean.split('/');
     if (parts.length !== 2) return false;
 
     const [base, quote] = parts;
-    // Pouze měnové páry, které odpovídají ISO kódům z getAllCurrencies
     return currencies.includes(base) && currencies.includes(quote);
   });
 
@@ -51,7 +52,7 @@ async function getChainlinkFeeds() {
   return filtered;
 }
 
-export async function fetchChainlink() {
+export async function fetchChainlink(): Promise<boolean | null> {
   console.log('⏳ Fetching [Web3] Chainlink (All Currency Pairs Mode)...');
 
   const client = createPublicClient({
@@ -67,24 +68,22 @@ export async function fetchChainlink() {
     const feeds = await getChainlinkFeeds();
 
     const BATCH_SIZE = 5;
-    const pairs = {};
+    const pairs: Record<string, number> = {};
 
     for (let i = 0; i < feeds.length; i += BATCH_SIZE) {
       const currentBatch = feeds.slice(i, i + BATCH_SIZE);
       const batchId = Math.floor(i / BATCH_SIZE) + 1;
 
-      console.log(
-        `   📦 Batch ${batchId}/${Math.ceil(feeds.length / BATCH_SIZE)}`
-      );
+      console.log(`   📦 Batch ${batchId}/${Math.ceil(feeds.length / BATCH_SIZE)}`);
 
       const results = await Promise.all(
-        currentBatch.map(async (feed) => {
-          const address = feed.proxyAddress || feed.contractAddress;
-
-          if (!address) {
+        currentBatch.map(async (feed: Feed) => {
+          if (!feed.proxyAddress && !feed.contractAddress) {
             console.log(`      ⚠️  ${feed.name} skipped (no address)`);
             return null;
           }
+
+          const address = (feed.proxyAddress || feed.contractAddress) as `0x${string}`;
 
           try {
             const [roundData, decimals] = await Promise.all([
@@ -107,17 +106,11 @@ export async function fetchChainlink() {
               return null;
             }
 
-            const price =
-              Number(rawAnswer) / Math.pow(10, Number(decimals));
-
-            return {
-              symbol: feed.name.replace(/\s+/g, ''),
-              price
-            };
-          } catch (e) {
-            console.log(
-              `      ❌ ${feed.name} failed: ${e.shortMessage || e.message}`
-            );
+            const price = Number(rawAnswer) / Math.pow(10, Number(decimals));
+            return { symbol: feed.name.replace(/\s+/g, ''), price };
+          } catch (err: unknown) {
+            const e = err as Error;
+            console.log(`      ❌ ${feed.name} failed: ${e.message}`);
             return null;
           }
         })
@@ -136,24 +129,16 @@ export async function fetchChainlink() {
       )
     };
 
-    if (!fs.existsSync(NORMALIZED_DIR)) {
-      fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
-    }
+    if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
 
-    const filePath = path.join(
-      NORMALIZED_DIR,
-      `chainlink_${timestamp}.json`
-    );
-
+    const filePath = path.join(NORMALIZED_DIR, `chainlink_${timestamp}.json`);
     fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
 
-    console.log(
-      `✅ Chainlink complete. Total pairs stored: ${Object.keys(pairs).length}`
-    );
-
+    console.log(`✅ Chainlink complete. Total pairs stored: ${Object.keys(pairs).length}`);
     return true;
-  } catch (error) {
-    console.error('❌ Chainlink fatal error:', error.message);
+  } catch (error: unknown) {
+    const e = error as Error;
+    console.error('❌ Chainlink fatal error:', e.message);
     return null;
   }
 }

@@ -13,7 +13,7 @@ import { fetchUS } from './fx/us.mjs'; // Federal Reserve Bank of St. Louis (FRE
 import { fetchUNORE } from './fx/unore.mjs'; // United Nations Treasury 
 import { fetchNASDAQ } from './fx/nasdaq.mjs'; // NASDAQ 
 import { fetchPyth } from './fx/pyth.mjs'; // Pyth Network - Hermes API (Web3)
-import { fetchChainlink } from './fx/chainlink.mjs'; // Chainlink (Web3)
+import { fetchChainlink } from './fx/chainlink.ts'; // Chainlink (Web3)
 /* invalid: CN,JP,SE,SG,International Monetary Fund */
 // import { fetchCN } from './fx/cn.mjs'; // People's Bank of China
 // import { fetchJP } from './fx/jp.mjs'; // Bank of Japan
