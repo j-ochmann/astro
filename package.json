@@ -14,7 +14,7 @@
   "dependencies": {
     "@astrojs/react": "^4.4.2",
     "@astrojs/rss": "^4.0.15",
-    "@astrojs/starlight": "^0.37.4",
+    "@astrojs/starlight": "^0.37.6",
     "@astrojs/starlight-tailwind": "^4.0.2",
     "@fontsource/montserrat": "^5.2.8",
     "@fontsource/space-grotesk": "^5.2.10",
@@ -35,7 +35,7 @@
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "3d-force-graph": "^1.79.0",
-    "astro": "^5.16.15",
+    "astro": "^5.17.3",
     "astro-d2": "^0.8.1",
     "astro-icon": "^1.1.5",
     "class-variance-authority": "^0.7.1",

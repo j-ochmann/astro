@@ -3,12 +3,11 @@ import mainImage from '@/assets/img/me/20250712_056.webp?url';
 import hoverImage from '@/assets/img/me/20250712_055.webp?url';
 import { Icon } from '@astrojs/starlight/components';
 import { getRelativeLocaleUrl } from 'astro:i18n';
-const lang = Astro.url.pathname.split('/').filter(Boolean)[0] || 'en';
+const lang = Astro.currentLocale || 'en';
 const landingLink = getRelativeLocaleUrl(lang, '/');
 ---
 
 <script>
-  // Import tvého fly-away skriptu
   import "@/scripts/fly-away.js";
 
   function initMobileProfile() {
@@ -18,9 +17,7 @@ const landingLink = getRelativeLocaleUrl(lang, '/');
 
     if (!menu || !profileLink || !actionIconsContainer) return;
 
-    // Funkce pro simulaci "vletu" ikon (manuální trigger fly-away.js)
     const triggerFlyAway = () => {
-      // Vytvoříme umělý event, aby původní skript v fly-away.js zareagoval
       const enterEvent = new MouseEvent('mouseenter', { bubbles: true });
       actionIconsContainer.dispatchEvent(enterEvent);
     };
@@ -34,15 +31,13 @@ const landingLink = getRelativeLocaleUrl(lang, '/');
       const isMobile = window.matchMedia("(max-width: 1024px)").matches;
       
       if (isMobile && !menu.classList.contains('is-active')) {
-        e.preventDefault(); // Zastavíme odkaz domů
+        e.preventDefault();
         menu.classList.add('is-active');
         
-        // Musíme počkat zlomek sekundy, než se action-icons v CSS objeví (opacity: 1)
         setTimeout(triggerFlyAway, 50);
       }
     });
 
-    // Reset menu při kliku mimo
     document.addEventListener('click', (e) => {
       if (!menu.contains(e.target as Node) && menu.classList.contains('is-active')) {
         menu.classList.remove('is-active');
@@ -51,7 +46,6 @@ const landingLink = getRelativeLocaleUrl(lang, '/');
     });
   }
 
-  // Běží při prvním načtení i při navigaci ve Starlightu
   initMobileProfile();
   document.addEventListener('astro:after-swap', initMobileProfile);
 </script>
@@ -87,8 +81,8 @@ const landingLink = getRelativeLocaleUrl(lang, '/');
   </div>
 
   <div class="action-icons">
-    <a href={`/settings/`} class="icon-settings"><svg><use href="#icon-settings"></use></svg></a>
-    <a href={`/login/`} class="icon-login"><svg><use href="#icon-login"></use></svg></a>
+    <a href="" class="icon-settings"><svg><use href="#icon-settings"></use></svg></a>
+    <a href="" class="icon-login"><svg><use href="#icon-login"></use></svg></a>
   </div>
 </div>
 
