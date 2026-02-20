@@ -46,6 +46,7 @@ const headings = letters.map(letter => ({
 }));
 
 const title = lang === 'cs' ? 'Měny světa' : 'World Currencies';
+const RAY_COUNT = 65;
 ---
 
 <StarlightPage 
@@ -56,50 +57,126 @@ const title = lang === 'cs' ? 'Měny světa' : 'World Currencies';
   }}
   headings={headings}
 >
-  <div class="currency-grid-container">
-    {letters.map(letter => (
-      <section class="letter-section">
-        <h2 id={`letter-${letter.toLowerCase()}`}>{letter}</h2>
-        <div class="currency-grid">
-          {sortedCurrencies
-            .filter(c => c.code.startsWith(letter))
-            .map(curr => (
-              <a href={`/${lang}/currencies/${curr.code.toLowerCase()}/`} class="currency-card">
-                {/* Glow vrstvy pro barevný efekt */}
-                <div class="glow-bg"></div>
-                
-                <div class="card-content">
-                  {/* Skrytý odstavec pro tvůj původní TTS skript */}
-                  <p class="sr-only">{curr.name} ({curr.code})</p>
-                  
-                  <div class="card-header" aria-hidden="true">
-                    <div class="code-box">
-                      <span class="code">{curr.code}</span>
-                    </div>
-                    <div class="currency-label">
-                      {curr.name}
-                    </div>
-                  </div>
-                  
-                  <div class="info" aria-hidden="true">
-                    <div class="flag-mini-list">
-                      {curr.countries.slice(0, 8).map(cCode => (
-                        <span class:list={['fi', `fi-${cCode.toLowerCase()}`]} title={cCode}></span>
-                      ))}
-                      {curr.countries.length > 8 && <span class="more">+{curr.countries.length - 8}</span>}
-                    </div>
-                  </div>
-                </div>
-              </a>
+  <div class="pyth-visual-context">
+    <div class="wormhole-background" aria-hidden="true">
+      <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ray-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="10%" stop-color="var(--sl-color-accent)" stop-opacity="0" />
+            <stop offset="40%" stop-color="var(--sl-color-accent)" stop-opacity="0.4" />
+            <stop offset="90%" stop-color="var(--sl-color-accent-high)" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        
+        <g transform="translate(750, 350)">
+          <g>
+            <animateTransform 
+              attributeName="transform" 
+              type="rotate" 
+              from="0" to="360" 
+              dur="160s" 
+              repeatCount="indefinite" />
+            
+            {Array.from({ length: RAY_COUNT }).map((_, i) => (
+              <rect 
+                x="-1" y="100" 
+                width="1.5" height="1000" 
+                fill="url(#ray-gradient)" 
+                transform={`rotate(${(360 / RAY_COUNT) * i})`}
+              />
             ))}
-        </div>
-      </section>
-    ))}
+          </g>
+          <circle r="150" fill="var(--sl-color-bg)" filter="blur(40px)" />
+        </g>
+      </svg>
+    </div>
+
+    <div class="currency-grid-container">
+      {letters.map(letter => (
+        <section class="letter-section">
+          <h2 id={`letter-${letter.toLowerCase()}`}>{letter}</h2>
+          <div class="currency-grid">
+            {sortedCurrencies
+              .filter(c => c.code.startsWith(letter))
+              .map(curr => (
+                <a href={`/${lang}/currencies/${curr.code.toLowerCase()}/`} class="currency-card">
+                  <div class="glow-bg"></div>
+                  
+                  <div class="card-content">
+                    <p class="sr-only">{curr.name} ({curr.code})</p>
+                    
+                    <div class="card-header" aria-hidden="true">
+                      <div class="code-box">
+                        <span class="code">{curr.code}</span>
+                      </div>
+                      <div class="currency-label">
+                        {curr.name}
+                      </div>
+                    </div>
+                    
+                    <div class="info" aria-hidden="true">
+                      <div class="flag-mini-list">
+                        {curr.countries.slice(0, 8).map(cCode => (
+                          <span class:list={['fi', `fi-${cCode.toLowerCase()}`]} title={cCode}></span>
+                        ))}
+                        {curr.countries.length > 8 && <span class="more">+{curr.countries.length - 8}</span>}
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              ))}
+          </div>
+        </section>
+      ))}
+    </div>
   </div>
 </StarlightPage>
 
+<style is:global>
+  /* ZESKLOVATĚNÍ HLAVNÍCH PRVKŮ */
+  header.header {
+    background-color: rgba(var(--sl-color-bg-nav-rgb), 0.7) !important;
+    backdrop-filter: blur(12px) !important;
+  }
+
+  .right-sidebar, starlight-toc {
+    background-color: rgba(var(--sl-color-bg-nav-rgb), 0.2) !important;
+    backdrop-filter: blur(12px) !important;
+  }
+
+  /* Průhlednost panelů aby pozadí prosvítalo */
+  .main-frame, .content-panel, .sl-container, .main-pane {
+    background-color: transparent !important;
+  }
+</style>
+
 <style>
-  /* Pomocná třída pro TTS */
+  .pyth-visual-context {
+    position: relative;
+    /* Vyrovnání paddingu Starlightu pro efekt přes celou plochu */
+    margin: -2rem -3rem;
+    padding: 2rem 3rem;
+  }
+
+  .wormhole-background {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: var(--sl-color-bg);
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
+    opacity: 0.8;
+  }
+
+  .currency-grid-container {
+    position: relative;
+    z-index: 10;
+  }
+
   .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
@@ -112,7 +189,7 @@ const title = lang === 'cs' ? 'Měny světa' : 'World Currencies';
     margin-bottom: 3rem;
   }
 
-  /* KARTA - Pyth Network Style */
+  /* KARTA - Původní design */
   .currency-card {
     position: relative;
     display: flex;
@@ -122,8 +199,6 @@ const title = lang === 'cs' ? 'Měny světa' : 'World Currencies';
     border-radius: 1rem;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-    
-    /* Skleněný základ */
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(12px);
@@ -131,22 +206,20 @@ const title = lang === 'cs' ? 'Měny světa' : 'World Currencies';
     color: var(--sl-color-white) !important;
   }
 
-  /* Barevné podsvícení (back-glow) */
   .currency-card::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(var(--sl-color-accent-rgb, 59, 130, 246), 0.2) 0%, transparent 60%);
+    background: linear-gradient(135deg, rgba(var(--sl-color-accent-rgb), 0.2) 0%, transparent 60%);
     opacity: 0;
     transition: opacity 0.4s ease;
     z-index: 0;
   }
 
-  /* Vnitřní Glow kulička */
   .glow-bg {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: radial-gradient(circle at 50% 50%, rgba(var(--sl-color-accent-rgb, 59, 130, 246), 0.15) 0%, transparent 70%);
+    background: radial-gradient(circle at 50% 50%, rgba(var(--sl-color-accent-rgb), 0.15) 0%, transparent 70%);
     opacity: 0;
     transition: opacity 0.5s ease;
     z-index: 1;
@@ -154,7 +227,7 @@ const title = lang === 'cs' ? 'Měny světa' : 'World Currencies';
 
   .currency-card:hover {
     transform: translateY(-5px);
-    border-color: rgba(var(--sl-color-accent-rgb, 59, 130, 246), 0.4);
+    border-color: rgba(var(--sl-color-accent-rgb), 0.4);
     background: rgba(255, 255, 255, 0.06);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
   }
@@ -164,7 +237,7 @@ const title = lang === 'cs' ? 'Měny světa' : 'World Currencies';
     opacity: 1;
   }
 
-  /* LIGHT MODE */
+  /* LIGHT MODE ADAPTACE */
   :root[data-theme='light'] .currency-card {
     background: rgba(0, 0, 0, 0.03);
     border: 1px solid rgba(0, 0, 0, 0.08);
@@ -177,7 +250,7 @@ const title = lang === 'cs' ? 'Měny světa' : 'World Currencies';
 
   .card-content {
     position: relative;
-    z-index: 2; /* Musí být nad glow */
+    z-index: 2;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -214,7 +287,7 @@ const title = lang === 'cs' ? 'Měny světa' : 'World Currencies';
   
   .more {
     font-size: 0.7rem; color: var(--sl-color-accent-high); 
-    font-weight: 700; background: rgba(var(--sl-color-accent-rgb, 59, 130, 246), 0.1);
+    font-weight: 700; background: rgba(var(--sl-color-accent-rgb), 0.1);
     padding: 2px 6px; border-radius: 4px;
   }
 

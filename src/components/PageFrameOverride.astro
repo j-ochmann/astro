@@ -1,0 +1,65 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+import Default from '@astrojs/starlight/components/PageFrame.astro';
+
+const RAY_COUNT = 90;
+---
+
+<div class="portal-master-container">
+  <div class="pyth-portal-fx" aria-hidden="true">
+    <div class="portal-positioner">
+      <div class="portal-rotation">
+        {Array.from({ length: RAY_COUNT }).map((_, i) => (
+          <div class="p-ray" style={`--i: ${i}; --total: ${RAY_COUNT};`}></div>
+        ))}
+        <div class="portal-core"></div>
+      </div>
+    </div>
+    <div class="portal-fog"></div>
+  </div>
+
+  <Default {...Astro.props}>
+    <slot name="header" slot="header" />
+    <slot name="sidebar" slot="sidebar" />
+    <slot />
+  </Default>
+</div>
+
+<style is:global>
+  /* Průhlednost celého Starlightu */
+  :root { --sl-color-bg: transparent !important; }
+  .main-frame, .content-panel, .sl-container, .main-pane, main, .page, .header, aside {
+    background-color: transparent !important;
+  }
+  
+  body { background-color: var(--sl-color-bg-default, #050505) !important; }
+
+  /* Skleněné efekty */
+  .header { backdrop-filter: blur(12px); background: rgba(var(--sl-color-bg-nav-rgb), 0.7) !important; }
+  .right-sidebar { backdrop-filter: blur(12px); background: rgba(var(--sl-color-bg-nav-rgb), 0.3) !important; }
+
+  /* Animace */
+  .portal-master-container { position: relative; width: 100%; min-height: 100vh; }
+  .pyth-portal-fx { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+  .portal-positioner { position: absolute; top: 35%; left: 75%; }
+  .portal-rotation { position: absolute; animation: rotatePortal 120s linear infinite; }
+  
+  .p-ray {
+    position: absolute; width: 2px; height: 150vh; transform-origin: center top;
+    transform: rotate(calc(var(--i) * (360deg / var(--total))));
+    background: linear-gradient(to bottom, transparent 15%, rgba(var(--sl-color-accent-rgb), 0.4) 25%, transparent 90%);
+  }
+
+  .portal-core {
+    position: absolute; top: 50%; left: 50%; width: 300px; height: 300px;
+    background: var(--sl-color-bg-default, #050505); filter: blur(50px);
+    transform: translate(-50%, -50%); border-radius: 50%;
+  }
+
+  .portal-fog {
+    position: absolute; inset: 0; backdrop-filter: blur(40px);
+    background: radial-gradient(circle at 75% 35%, transparent 0%, var(--sl-color-bg-default, #050505) 85%);
+  }
+
+  @keyframes rotatePortal { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
