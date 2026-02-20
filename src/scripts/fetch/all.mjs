@@ -32,8 +32,8 @@ async function runAll() {
       // fetchHK(),fetchIL(),fetchRO(),fetchRU(),fetchUZ(),fetchUS(),
       // fetchUNORE(),
       // fetchNASDAQ(),
-      fetchPyth(),
-      // fetchChainlink(),
+      //fetchPyth(),
+      fetchChainlink(),
       // fetchIMF(),fetchCN(),fetchJP(),fetchSG(),
       // fetchSE()
     ]);

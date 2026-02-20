@@ -1,98 +1,116 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { createPublicClient, http, parseAbi } from 'viem';
+import { createPublicClient, http, fallback, parseAbi } from 'viem';
 import { mainnet } from 'viem/chains';
 import { PATHS } from '../fetch.config.mjs';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.CHAINLINK);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.CHAINLINK);
 
-// Minimální ABI pro získání dat z Chainlink Aggregatoru
 const AGGREGATOR_ABI = parseAbi([
   'function latestRoundData() view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)',
   'function decimals() view returns (uint8)'
 ]);
 
-/**
- * Adresy Chainlink Price Feedů na Ethereum Mainnet
- */
-const FEEDS = {
-  'JPY': '0xBcE21216a695A68E27f54710C1C79247B6201633', // JPY / USD
-  'GBP': '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419', // GBP / USD
-  'EUR': '0xb49f677943BC039E98335899501C84491F059496', // EUR / USD
-  'CHF': '0x4495B395163A301050e2763f73657A427B66D341', // CHF / USD
-  'SGD': '0x1A091560965359b3D802c1f3A715694c92A95240', // SGD / USD
-  'ILS': '0x221389D3416F6aE33A867160395D829B72F75069', // ILS / USD
-  'CNY': '0xEF645D00E2660dE9771E2D4A5964894318357039', // CNY / USD
-  'CZK': '0x323485E46244128f09E007f35A88D8b76D684E0B'  // CZK / USD
-};
+async function getChainlinkFeeds() {
+  console.log('   🔍 Step 1: Downloading directory and filtering FX...');
+
+  const url = 'https://reference-data-directory.vercel.app/feeds-mainnet.json';
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Directory fetch failed: ${response.status}`);
+
+  const allFeeds = await response.json();
+
+  // Filtrujeme pouze čistý Forex
+  const filtered = allFeeds.filter(feed => {
+    // 1. Musí mít jméno
+    if (!feed.name) return false;
+    
+    // 2. Chainlink explicitně označuje Forex v assetClass nebo feedType
+    const isForex = feed.assetClass === 'Forex' || feed.feedType === 'Rate';
+    
+    // 3. Odfiltrujeme krypto "narušitele" a stablecoiny, které se občas do Forexu vloudí
+    const name = feed.name.toUpperCase();
+    const isCrypto = ['ETH', 'BTC', 'USDf', 'STETH', 'BUSD', 'DAI', 'USDC', 'USDT'].some(token => 
+      name.startsWith(token)
+    );
+
+    // Chceme páry končící na / USD nebo obsahující měny, které nás zajímají
+    return isForex && !isCrypto && name.includes('/');
+  });
+
+  console.log(`   ✅ Step 1: Found ${filtered.length} Forex pairs.`);
+  return filtered;
+}
 
 export async function fetchChainlink() {
-  console.log('⏳ Fetching [Web3] Chainlink Data Feeds...');
+  console.log('⏳ Fetching [Web3] Chainlink (FX Optimized)...');
 
-  // Použijeme veřejný RPC uzel (Cloudflare nebo LlamaNodes)
   const client = createPublicClient({
     chain: mainnet,
-    transport: http('https://cloudflare-eth.com')
+    transport: fallback([
+      http('https://ethereum.publicnode.com', { timeout: 10_000 }),
+      http('https://rpc.ankr.com/eth', { timeout: 10_000 })
+    ])
   });
 
   try {
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-    const rates = { "USD": 1 };
-    const rawData = {};
+    const feeds = await getChainlinkFeeds();
+    const pairs = {};
 
-    for (const [iso, address] of Object.entries(FEEDS)) {
-      try {
-        // Paralelní volání ceny a počtu desetin
-        const [roundData, decimals] = await Promise.all([
-          client.readContract({
-            address,
-            abi: AGGREGATOR_ABI,
-            functionName: 'latestRoundData'
-          }),
-          client.readContract({
-            address,
-            abi: AGGREGATOR_ABI,
-            functionName: 'decimals'
-          })
-        ]);
+    // Menší dávky pro stabilitu
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < feeds.length; i += BATCH_SIZE) {
+      const currentBatch = feeds.slice(i, i + BATCH_SIZE);
+      
+      const results = await Promise.all(
+        currentBatch.map(async (feed) => {
+          const address = feed.proxyAddress || feed.contractAddress;
+          if (!address) return null;
 
-        const price = Number(roundData[1]);
-        const realPrice = price / Math.pow(10, decimals);
+          try {
+            const [roundData, decimals] = await Promise.all([
+              client.readContract({ address, abi: AGGREGATOR_ABI, functionName: 'latestRoundData' }),
+              client.readContract({ address, abi: AGGREGATOR_ABI, functionName: 'decimals' })
+            ]);
 
-        // Chainlink FX feedy jsou většinou "Currency / USD"
-        // Např. JPY/USD vrací 0.0066 -> chceme USD/JPY = 151
-        if (realPrice > 0) {
-          rates[iso] = 1 / realPrice;
-        }
+            const price = Number(roundData[1]) / Math.pow(10, Number(decimals));
+            return {
+              // Vyčistíme jméno (např. "EUR / USD" -> "EUR/USD")
+              symbol: feed.name.replace(/\s+/g, ''),
+              price
+            };
+          } catch (e) {
+            return null;
+          }
+        })
+      );
 
-        rawData[iso] = { price: realPrice, updatedAt: Number(roundData[3]) };
-      } catch (feedError) {
-        console.warn(`⚠️  Chainlink: Feed for ${iso} failed.`);
+      for (const res of results) {
+        if (res) pairs[res.symbol] = res.price;
       }
     }
 
-    if (Object.keys(rates).length <= 1) throw new Error('No Chainlink feeds were reachable.');
-
-    if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
-    fs.writeFileSync(path.join(RAW_DIR, `chainlink_${timestamp}.json`), JSON.stringify(rawData, null, 2));
-
-    const normalized = {
-      source: 'Chainlink Data Feeds (Ethereum)',
-      base: 'USD',
-      date: new Date().toISOString().split('T')[0],
+    const result = {
+      source: 'Chainlink (Forex)',
       fetchedAt: new Date().toISOString(),
-      rates: Object.fromEntries(Object.entries(rates).sort((a, b) => a[0].localeCompare(b[0])))
+      pairs: Object.fromEntries(
+        Object.entries(pairs).sort((a, b) => a[0].localeCompare(b[0]))
+      )
     };
 
     if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
-    fs.writeFileSync(path.join(NORMALIZED_DIR, `${PATHS.CHAINLINK}_${timestamp}.json`), JSON.stringify(normalized, null, 2));
+    
+    fs.writeFileSync(
+      path.join(NORMALIZED_DIR, `chainlink_${timestamp}.json`), 
+      JSON.stringify(result, null, 2)
+    );
 
-    console.log(`✅ Chainlink sync complete. Currencies: ${Object.keys(rates).length - 1}`);
+    console.log(`✅ Chainlink complete. Stored ${Object.keys(pairs).length} FX pairs.`);
     return true;
-
   } catch (error) {
-    console.error('❌ Chainlink error:', error.message);
+    console.error('❌ Chainlink fatal error:', error.message);
     return null;
   }
 }
