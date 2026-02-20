@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.IMF);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.IMF);
@@ -41,7 +41,7 @@ export async function fetchIMF() {
       throw new Error('IMF API: Unexpected JSON structure.');
     }
 
-    const rates = { XDR: 1 };
+    const rates: { [key: string]: number } = { XDR: 1 };
     let latestDate = null;
 
     const seriesArray = Array.isArray(series) ? series : [series];
@@ -98,7 +98,8 @@ export async function fetchIMF() {
     return { raw: rawFile, normalized: normalizedFile };
 
   } catch (error) {
-    console.error('❌ IMF error:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ IMF error:', errorMessage);
     return null;
   }
 }

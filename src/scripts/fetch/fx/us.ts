@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.US);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.US);
@@ -40,7 +40,7 @@ export async function fetchUS() {
 
   try {
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-    const rawSnapshot = {};
+    const rawSnapshot: Record<string, unknown> = {};
     const tempRates = [];
 
     let globalDate = '';

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { XMLParser } from 'fast-xml-parser'; // Předpokládám, že máš nebo doinstaluješ
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.RO);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.RO);
@@ -23,12 +23,12 @@ export async function fetchRO() {
     const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
     const jsonObj = parser.parse(xmlData);
     
-    const rates = { "RON": 1 };
+    const rates: Record<string, number> = { "RON": 1 };
     const cube = jsonObj.DataSet.Body.Cube;
     const date = cube['@_date'];
     const rateEntries = cube.Rate;
 
-    rateEntries.forEach(item => {
+    rateEntries.forEach((item: any) => {
       const currency = item['@_currency'];
       const value = parseFloat(item['#text']);
       const multiplier = item['@_multiplier'] ? parseInt(item['@_multiplier']) : 1;
@@ -53,7 +53,7 @@ export async function fetchRO() {
     return { normalized: normalizedFile };
 
   } catch (error) {
-    console.error('❌ BNR error:', error.message);
+    console.error('❌ BNR error:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }

@@ -1,13 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.GB);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.GB);
 
 const URL = 'https://www.bankofengland.co.uk/boeapps/database/Rates.asp?Travel=NIxRSx&into=GBP';
 
-const NAME_TO_ISO = {
+const NAME_TO_ISO: Record<string, string> = {
   'Australian Dollar': 'AUD',
   'Bulgarian Lev': 'BGN',
   'Canadian Dollar': 'CAD',
@@ -57,7 +57,7 @@ export async function fetchGB() {
     if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
     fs.writeFileSync(path.join(RAW_DIR, PATHS.GB + `_${timestamp}.html`), html);
 
-    const rates = { "GBP": 1 };
+    const rates: Record<string, number> = { "GBP": 1 };
     
     // Regulární výraz pro hledání řádků v tabulce:
     // 1. Skupina: Název měny uvnitř <a> tagu
@@ -97,7 +97,8 @@ export async function fetchGB() {
     return { raw: null, normalized: normalizedFile };
 
   } catch (error) {
-    console.error('❌ BoE Scraper error:', error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('❌ BoE Scraper error:', message);
     return null;
   }
 }

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.EU);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.EU);
@@ -58,7 +58,7 @@ export async function fetchEU() {
     tempRates.push(['EUR', 1]);
 
     // Abecední řazení
-    tempRates.sort((a, b) => a[0].localeCompare(b[0]));
+    tempRates.sort((a, b) => (a[0] as string).localeCompare(b[0] as string));
 
     const rates = Object.fromEntries(tempRates);
 
@@ -89,7 +89,8 @@ export async function fetchEU() {
     };
 
   } catch (error) {
-    console.error('❌ Error processing ECB data:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Error processing ECB data:', errorMessage);
     throw error;
   }
 }

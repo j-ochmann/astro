@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.CH);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.CH);
@@ -35,14 +35,14 @@ export async function fetchCH() {
     const rawFile = path.join(RAW_DIR, PATHS.CH + `_${timestamp}.json`);
     fs.writeFileSync(rawFile, JSON.stringify(data, null, 2));
 
-    const rates = { "CHF": 1 };
-    let latestDate = null;
+    const rates: Record<string, number> = { "CHF": 1 };
+    let latestDate: string | null = null;
 
     if (!data.timeseries || !Array.isArray(data.timeseries)) {
       throw new Error('SNB API: Unexpected JSON structure (missing timeseries).');
     }
 
-    data.timeseries.forEach(serie => {
+    data.timeseries.forEach((serie: any) => {
       // Extrakce kódu měny a jednotek z "dimItem" (např. "Europe - EUR 1" nebo "Asia - CNY 100")
       const dimItem = serie.header?.[1]?.dimItem;
       const lastValueObj = serie.values?.[serie.values.length - 1]; // Bereme nejnovější dostupný měsíc
@@ -88,7 +88,7 @@ export async function fetchCH() {
     return { raw: rawFile, normalized: normalizedFile };
 
   } catch (error) {
-    console.error('❌ SNB error:', error.message);
+    console.error('❌ SNB error:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }

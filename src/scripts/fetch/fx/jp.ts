@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { XMLParser } from 'fast-xml-parser';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.JP);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.JP);
@@ -42,8 +42,8 @@ export async function fetchJP() {
     const items = jsonObj.RDF?.item;
     if (!items) throw new Error('BoJ XML: No items found.');
 
-    const rates = { "JPY": 1 };
-    let latestDate = null;
+    const rates: Record<string, number> = { "JPY": 1 };
+    let latestDate: string | null = null;
 
     const itemsArray = Array.isArray(items) ? items : [items];
     
@@ -66,7 +66,7 @@ export async function fetchJP() {
         if (match) {
           const name = match[1].trim();
           const val = parseFloat(match[2]);
-          const iso = mapping[name];
+          const iso = mapping[name as keyof typeof mapping];
 
           if (iso && !isNaN(val)) {
             // 1 USD = 150 JPY -> 1 JPY = 1/150 USD
@@ -92,7 +92,7 @@ export async function fetchJP() {
     return true;
 
   } catch (error) {
-    console.error('❌ BoJ error:', error.message);
+    console.error('❌ BoJ error:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }

@@ -1,15 +1,15 @@
-import { fetchAU } from './fx/au.mjs'; // Reserve Bank of Australia
-import { fetchCA } from './fx/ca.mjs'; // Bank of Canada
-import { fetchCH } from './fx/ch.mjs'; // Swiss National Bank 
-import { fetchCZ } from './fx/cz.mjs'; // Czech National Bank
-import { fetchEU } from './fx/eu.mjs'; // European Central Bank
-import { fetchGB } from './fx/gb.mjs'; // Bank of England
-import { fetchHK } from './fx/hk.mjs'; // Hong Kong Monetary Authority
-import { fetchIL } from './fx/il.mjs'; // Bank of Israel
-import { fetchRO } from './fx/ro.mjs'; // Central Bank of Romania 
-import { fetchRU } from './fx/ru.mjs'; // Central Bank of Russia
-import { fetchUZ } from './fx/uz.mjs'; // Central Bank of Uzbekistan
-import { fetchUS } from './fx/us.mjs'; // Federal Reserve Bank of St. Louis (FRED)
+import { fetchAU } from './fx/au.js'; // Reserve Bank of Australia
+import { fetchCA } from './fx/ca.js'; // Bank of Canada
+import { fetchCH } from './fx/ch.js'; // Swiss National Bank 
+import { fetchCZ } from './fx/cz.js'; // Czech National Bank
+import { fetchEU } from './fx/eu.js'; // European Central Bank
+import { fetchGB } from './fx/gb.js'; // Bank of England
+import { fetchHK } from './fx/hk.js'; // Hong Kong Monetary Authority
+import { fetchIL } from './fx/il.js'; // Bank of Israel
+import { fetchRO } from './fx/ro.js'; // Central Bank of Romania 
+import { fetchRU } from './fx/ru.js'; // Central Bank of Russia
+import { fetchUZ } from './fx/uz.js'; // Central Bank of Uzbekistan
+import { fetchUS } from './fx/us.js'; // Federal Reserve Bank of St. Louis (FRED)
 import { fetchUNORE } from './fx/unore.ts'; // United Nations Treasury 
 import { fetchNASDAQ } from './fx/nasdaq.ts'; // NASDAQ 
 import { fetchPyth } from './fx/pyth.ts'; // Pyth Network - Hermes API (Web3)
@@ -28,10 +28,10 @@ async function runAll() {
 
   try {
     const results = await Promise.allSettled([
-      // fetchAU(),fetchCA(),fetchCH(),fetchCZ(),fetchEU(),fetchGB(),
-      // fetchHK(),fetchIL(),fetchRO(),fetchRU(),fetchUZ(),fetchUS(),
+      fetchAU(),fetchCA(),fetchCH(),fetchCZ(),fetchEU(),fetchGB(),
+      fetchHK(),fetchIL(),fetchRO(),fetchRU(),fetchUZ(),fetchUS(),
       fetchUNORE(),
-      fetchNASDAQ(),
+      // fetchNASDAQ(),
       fetchPyth(),
       fetchChainlink(),
       // fetchIMF(),fetchCN(),fetchJP(),fetchSG(),

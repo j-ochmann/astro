@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { XMLParser } from 'fast-xml-parser';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.IL);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.IL);
@@ -55,10 +55,10 @@ export async function fetchIL() {
       ? root.ExchangeRates.ExchangeRateResponseDTO 
       : [root.ExchangeRates.ExchangeRateResponseDTO];
 
-    const rates = { "ILS": 1 };
-    let latestDate = null;
+    const rates: { [key: string]: number } = { "ILS": 1 };
+    let latestDate: string | null = null;
 
-    currencies.forEach(item => {
+    currencies.forEach((item: any) => {
       const code = item.Key; // V novém API je to 'Key'
       const rate = parseFloat(item.CurrentExchangeRate); // V novém API je to 'CurrentExchangeRate'
       const unit = parseInt(item.Unit) || 1;
@@ -95,7 +95,8 @@ export async function fetchIL() {
     return { raw: rawFile, normalized: normalizedFile };
 
   } catch (error) {
-    console.error('❌ Error processing BOI data:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Error processing BOI data:', errorMessage);
     return null;
   }
 }

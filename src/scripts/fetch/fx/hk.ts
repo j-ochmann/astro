@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.HK);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.HK);
@@ -51,9 +51,9 @@ export async function fetchHK() {
     };
 
     // Očistíme o null hodnoty (svátky)
-    const cleanRates = {};
+    const cleanRates: Record<string, number> = {};
     Object.keys(rawRates).forEach(k => {
-      if (rawRates[k]) cleanRates[k] = rawRates[k];
+      if (rawRates[k as keyof typeof rawRates]) cleanRates[k] = rawRates[k as keyof typeof rawRates];
     });
 
     const normalized = {
@@ -72,7 +72,8 @@ export async function fetchHK() {
     return { normalized: normalizedFile };
 
   } catch (error) {
-    console.error('❌ HKMA error:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ HKMA error:', errorMessage);
     return null;
   }
 }

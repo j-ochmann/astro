@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.CA);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.CA);
@@ -34,9 +34,9 @@ export async function fetchCA() {
         .filter(([key]) => key !== 'd')
         .map(([key, value]) => [
           key.replace('FX', '').replace('CAD', ''),
-          parseFloat(value.v)
+          parseFloat((value as { v: string }).v)
         ])
-        .sort((a, b) => a[0].localeCompare(b[0]))
+        .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
     );
 
     const normalized = {
@@ -66,7 +66,7 @@ export async function fetchCA() {
     };
 
   } catch (error) {
-    console.error('❌ Error processing BoC data:', error.message);
+    console.error('❌ Error processing BoC data:', error instanceof Error ? error.message : String(error));
     throw error;
   }
 }

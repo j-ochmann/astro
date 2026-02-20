@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.CN);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.CN);
@@ -46,7 +46,7 @@ export async function fetchCN() {
       throw new Error('PBoC API: No records found in JSON response.');
     }
 
-    const rates = { "CNY": 1 };
+    const rates: { [key: string]: number } = { "CNY": 1 };
     let latestDate = jsonData.data?.date || null;
 
     records.forEach(item => {
@@ -93,7 +93,8 @@ export async function fetchCN() {
     return { raw: rawFile, normalized: normalizedFile };
 
   } catch (error) {
-    console.error('❌ PBoC error:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ PBoC error:', errorMessage);
     return null;
   }
 }

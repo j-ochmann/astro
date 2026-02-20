@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.SG);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.SG);
@@ -29,7 +29,7 @@ export async function fetchSG() {
     if (!records || records.length === 0) throw new Error('No records found in MAS response.');
 
     const latest = records[0];
-    const rates = { "SGD": 1 };
+    const rates: { [key: string]: number } = { "SGD": 1 };
     
     // MAS vrací kurzy v divných formátech (někdy za 100 jednotek)
     const mapping = {
@@ -65,7 +65,7 @@ export async function fetchSG() {
     console.log(`✅ MAS sync complete.`);
     return true;
   } catch (error) {
-    console.error('❌ MAS error:', error.message);
+    console.error('❌ MAS error:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }

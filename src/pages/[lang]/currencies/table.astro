@@ -14,15 +14,24 @@ export async function getStaticPaths() {
 const { lang } = Astro.params;
 const t = useTranslations(lang);
 
-// 1. Agregace dat o měnách
+// Inicializace lokalizovaných názvů
+const currencyNames = new Intl.DisplayNames([lang || 'en'], { type: 'currency' });
+
+// 1. Agregace dat o měnách včetně názvů
 const allCountries = Object.values(countriesData);
-const currencyMap = new Map<string, { code: string, countries: string[], usageCount: number }>();
+const currencyMap = new Map<string, { code: string, name: string, countries: string[], usageCount: number }>();
 
 allCountries.forEach((country: any) => {
   country.currency?.forEach((currCode: string) => {
     const code = currCode.toUpperCase();
     if (!currencyMap.has(code)) {
-      currencyMap.set(code, { code, countries: [], usageCount: 0 });
+      let name = code;
+      try {
+        name = currencyNames.of(code) || code;
+      } catch (e) {
+        name = code;
+      }
+      currencyMap.set(code, { code, name, countries: [], usageCount: 0 });
     }
     const curr = currencyMap.get(code)!;
     if (!curr.countries.includes(country.code)) {
@@ -36,15 +45,17 @@ const currenciesDataRaw = Array.from(currencyMap.values())
   .sort((a, b) => a.code.localeCompare(b.code))
   .map(curr => ({
     code: curr.code,
+    name: curr.name,
     usageCount: curr.usageCount,
     countries: curr.countries.join(', ')
   }));
 
 const labels = {
-  code: lang === 'cs' ? 'Kód měny' : 'Currency Code',
-  usage: lang === 'cs' ? 'Počet zemí' : 'Countries Count',
+  code: lang === 'cs' ? 'Kód' : 'Code',
+  name: lang === 'cs' ? 'Název měny' : 'Currency Name',
+  usage: lang === 'cs' ? 'Země' : 'Countries',
   list: lang === 'cs' ? 'Používáno v' : 'Used in',
-  search: lang === 'cs' ? 'Hledat měnu...' : 'Search currency...',
+  search: lang === 'cs' ? 'Hledat...' : 'Search...',
   title: lang === 'cs' ? 'Tabulka měn' : 'Currencies Table'
 };
 ---
@@ -75,8 +86,9 @@ const labels = {
     <table id="currenciesTable">
       <thead>
         <tr>
-          <th data-sort="code">{labels.code} <Icon name="lucide:arrow-up-down" /></th>
-          <th data-sort="usageCount">{labels.usage} <Icon name="lucide:arrow-up-down" /></th>
+          <th data-sort="code" style="width: 80px;">{labels.code} <Icon name="lucide:arrow-up-down" /></th>
+          <th data-sort="name">{labels.name} <Icon name="lucide:arrow-up-down" /></th>
+          <th data-sort="usageCount" style="width: 80px;">{labels.usage} <Icon name="lucide:arrow-up-down" /></th>
           <th>{labels.list}</th>
         </tr>
       </thead>
@@ -88,7 +100,8 @@ const labels = {
                 {curr.code}
               </a>
             </td>
-            <td><strong>{curr.usageCount}</strong></td>
+            <td class="currency-name-cell">{curr.name}</td>
+            <td class="text-center"><strong>{curr.usageCount}</strong></td>
             <td>
               <div class="flag-list">
                 {curr.countries.split(', ').map(cCode => (
@@ -106,51 +119,46 @@ const labels = {
 </StarlightPage>
 
 <style>
-  /* IDENTICKÉ STYLY JAKO U ZEMÍ */
   .table-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.5rem;
+    gap: 1rem;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 2rem;
-    padding: 1.25rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
     background: var(--sl-color-gray-6);
     border: 1px solid var(--sl-color-hairline);
+    border-radius: 0.5rem;
   }
 
   .search-box {
     flex: 1;
-    min-width: 250px;
+    min-width: 200px;
   }
 
   .search-box input {
     width: 100%;
-    height: 2.2rem;
-    padding: 0 1rem;
+    height: 1.8rem;
+    padding: 0 0.75rem;
     background: var(--sl-color-bg);
     color: var(--sl-color-white);
     border: 1px solid var(--sl-color-gray-4);
     border-radius: 4px;
-  }
-
-  .search-box input:focus {
-    outline: 2px solid var(--sl-color-accent);
-    border-color: transparent;
+    font-size: 0.85rem;
   }
 
   .export-group {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
   }
 
   .export-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: bold;
     color: var(--sl-color-gray-3);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
 
   .export-buttons {
@@ -166,82 +174,104 @@ const labels = {
     appearance: none;
     margin: 0;
     border: none;
-    height: 2rem;
+    height: 1.6rem;
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 0 0.85rem;
+    padding: 0 0.6rem;
     background: var(--sl-color-gray-5);
     color: var(--sl-color-white);
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     transition: background 0.2s ease;
   }
 
   .export-btn:hover {
     background: var(--sl-color-accent-low);
-    color: var(--sl-color-white);
   }
 
   .table-wrapper {
     overflow-x: auto;
     border: 1px solid var(--sl-color-hairline);
+    border-radius: 0.5rem;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: 0.8rem; /* Menší písmo pro kompaktnost */
     margin: 0;
   }
 
   th {
     background: var(--sl-color-gray-6);
-    padding: 1rem 0.75rem;
+    padding: 0.5rem 0.75rem; /* Tenčí řádky */
     text-align: left;
     cursor: pointer;
     white-space: nowrap;
     border-bottom: 2px solid var(--sl-color-hairline);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
   }
 
   td {
-    padding: 0.85rem 0.75rem;
+    padding: 0.4rem 0.75rem; /* Tenčí řádky */
     border-bottom: 1px solid var(--sl-color-hairline);
+    vertical-align: middle;
+  }
+
+  tr:hover td {
+    background: rgba(var(--sl-color-accent-rgb, 59, 130, 246), 0.05);
   }
 
   .mono {
     font-family: var(--sl-font-mono);
     color: var(--sl-color-accent-high);
-    font-weight: 600;
+    font-weight: 700;
+  }
+
+  .currency-name-cell {
+    font-weight: 500;
+    color: var(--sl-color-gray-2);
+  }
+
+  .text-center {
+    text-align: center;
   }
 
   .detail-link {
     text-decoration: none !important;
     color: inherit !important;
-    font-weight: 600;
   }
 
   .flag-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
+    gap: 0.25rem;
+  }
+
+  .fi {
+    width: 1.1em;
+    line-height: 1em;
+    border-radius: 1px;
   }
 
   th svg {
-    width: 14px;
-    height: 14px;
-    margin-left: 4px;
-    opacity: 0.4;
+    width: 12px;
+    height: 12px;
+    margin-left: 2px;
+    opacity: 0.5;
   }
 
   @media (max-width: 45rem) {
-    .table-controls { flex-direction: column; align-items: stretch; }
-    .export-group { justify-content: space-between; }
+    .table-controls { flex-direction: column; align-items: stretch; gap: 0.75rem; }
   }
 </style>
 
 <script>
+  // Script zůstává funkčně stejný, jen počítá s novým polem 'name'
   const searchInput = document.getElementById('tableSearch') as HTMLInputElement | null;
   const table = document.getElementById('currenciesTable') as HTMLTableElement | null;
   const tableBody = document.getElementById('tableBody');
@@ -250,7 +280,6 @@ const labels = {
   if (searchInput && table && tableBody) {
     const rows = Array.from(tableBody.querySelectorAll('tr'));
 
-    // Search
     searchInput.addEventListener('input', () => {
       const term = searchInput.value.toLowerCase();
       rows.forEach(row => {
@@ -258,7 +287,6 @@ const labels = {
       });
     });
 
-    // Sort s opravou číselného řazení
     table.querySelectorAll('th[data-sort]').forEach(th => {
       th.addEventListener('click', () => {
         const col = th.getAttribute('data-sort');
@@ -271,12 +299,10 @@ const labels = {
           const valA = dataA[col];
           const valB = dataB[col];
           
-          // Pokud řadíme usageCount, bereme to jako číslo
           if (col === 'usageCount') {
             return isAsc ? Number(valB) - Number(valA) : Number(valA) - Number(valB);
           }
           
-          // Ostatní řadíme abecedně
           return isAsc 
             ? String(valB).localeCompare(String(valA)) 
             : String(valA).localeCompare(String(valB));
@@ -289,7 +315,6 @@ const labels = {
       });
     });
 
-    // Export
     exportBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const type = btn.getAttribute('data-type');

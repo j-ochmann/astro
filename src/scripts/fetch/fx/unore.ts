@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 // @ts-ignore - Pokud by TS hlásil problém s mjs importem v ts souboru
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 import { XMLParser } from 'fast-xml-parser';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.UNORE);

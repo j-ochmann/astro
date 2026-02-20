@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.CZ);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.CZ);
@@ -61,7 +61,7 @@ export async function fetchCZ() {
     }
 
     // abecedně seřadit podle kódu
-    tempRates.sort((a, b) => a[0].localeCompare(b[0]));
+    tempRates.sort((a, b) => String(a[0]).localeCompare(String(b[0])));
 
     const rates = Object.fromEntries(tempRates);
 
@@ -92,7 +92,8 @@ export async function fetchCZ() {
     };
 
   } catch (error) {
-    console.error('❌ Error processing CNB data:', error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('❌ Error processing CNB data:', message);
     throw error;
   }
 }

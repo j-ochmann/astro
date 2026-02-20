@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.RU);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.RU);
@@ -30,7 +30,7 @@ export async function fetchRU() {
 
     const regex = /<CharCode>([^<]+)<\/CharCode>[\s\S]*?<Nominal>([^<]+)<\/Nominal>[\s\S]*?<Value>([^<]+)<\/Value>/g;
 
-    const rates = { RUB: 1 };
+    const rates: { [key: string]: number } = { RUB: 1 };
     let match;
 
     while ((match = regex.exec(rawText)) !== null) {
@@ -71,7 +71,8 @@ export async function fetchRU() {
     return { raw: rawFile, normalized: normalizedFile };
 
   } catch (error) {
-    console.error('❌ Error processing CBR data:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Error processing CBR data:', errorMessage);
     throw error;
   }
 }

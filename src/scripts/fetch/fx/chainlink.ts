@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createPublicClient, http, fallback, parseAbi } from 'viem';
 import { mainnet } from 'viem/chains';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 import { getAllCurrencies } from '../../../content/config/i18n.ts';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.CHAINLINK);

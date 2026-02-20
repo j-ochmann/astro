@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.mjs';
+import { PATHS } from '../fetch.config.js';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.AU);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.AU);
@@ -46,7 +46,7 @@ export async function fetchAU() {
       }
     }
 
-    tempRates.sort((a, b) => a[0].localeCompare(b[0]));
+    tempRates.sort((a, b) => String(a[0]).localeCompare(String(b[0])));
 
     const rates = Object.fromEntries(tempRates);
 
@@ -74,7 +74,7 @@ export async function fetchAU() {
     };
 
   } catch (error) {
-    console.error('❌ RBA failure:', error.message);
+    console.error('❌ RBA failure:', error instanceof Error ? error.message : String(error));
     throw error;
   }
 }
