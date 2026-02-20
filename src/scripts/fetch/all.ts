@@ -30,7 +30,7 @@ async function runAll() {
     const results = await Promise.allSettled([
       // fetchAU(),fetchCA(),fetchCH(),fetchCZ(),fetchEU(),fetchGB(),
       // fetchHK(),fetchIL(),fetchRO(),fetchRU(),fetchUZ(),fetchUS(),
-      // fetchUNORE(),
+       fetchUNORE(),
       // fetchNASDAQ(),
       //fetchPyth(),
       fetchChainlink(),
