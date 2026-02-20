@@ -33,7 +33,7 @@ async function runAll() {
       // fetchUNORE(),
       // fetchNASDAQ(),
       fetchPyth(),
-      fetchChainlink(),
+      // fetchChainlink(),
       // fetchIMF(),fetchCN(),fetchJP(),fetchSG(),
       // fetchSE()
     ]);

@@ -120,6 +120,11 @@ export default defineConfig({
           ],
         },
         { 
+          label: 'Market', 
+          translations: { cs: 'Trh' },
+          link: '/market/' 
+        },
+        { 
           label: 'Geo',
           translations: { cs: 'Geo' },
           collapsed: true,

@@ -5,74 +5,79 @@ import { PATHS } from '../fetch.config.mjs';
 const RAW_DIR = path.join(PATHS.RAW, PATHS.PYTH);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.PYTH);
 
-const PRICE_IDS = {
-  JPY: '0xef2c98c804ba503c6a707e38be4dfbb16683775f195b091252bf24693042fd52',
-  CAD: '0x3112b03a41c910ed446852aacf67118cb1bec67b2cd0b9a214c58cc0eaa2ecca',
-};
+async function getAllFxMetadata() {
+  const response = await fetch('https://hermes.pyth.network/v2/price_feeds?asset_type=fx');
+  if (!response.ok) throw new Error(`Metadata fetch failed: ${response.status}`);
+  return await response.json();
+}
 
 export async function fetchPyth() {
-  console.log('⏳ Fetching [Web3] Pyth Network (Hermes V2 Parsed)...');
+  console.log('⏳ Fetching [Web3] Pyth Network (Active FX Pairs Only)...');
 
   try {
     const timestamp = new Date().toISOString().replace(/[:]/g, '-');
+    const metadata = await getAllFxMetadata();
     
-    // Pro V2 endpoint se používá ids[]=0x... a musí se přidat parsed=true
-    const query = Object.values(PRICE_IDS)
-      .map(id => `ids[]=${id}`)
-      .join('&');
-
-    const url = `https://hermes.pyth.network/v2/updates/price/latest?${query}&parsed=true`;
-
-    const response = await fetch(url, {
-      headers: { 'Accept': 'application/json' }
+    const idToSymbol = {};
+    const ids = metadata.map(item => {
+      const fullId = item.id.startsWith('0x') ? item.id : `0x${item.id}`;
+      idToSymbol[fullId.toLowerCase()] = item.attributes.display_symbol;
+      return fullId;
     });
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(`Pyth V2 failed: ${response.status} - ${errorBody}`);
+    const BATCH_SIZE = 30;
+    const allParsedData = [];
+
+    for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+      const batch = ids.slice(i, i + BATCH_SIZE);
+      const query = batch.map(id => `ids[]=${id}`).join('&');
+      // Přidáváme parsed=true pro získání čitelných cen
+      const url = `https://hermes.pyth.network/v2/updates/price/latest?${query}&parsed=true`;
+
+      const response = await fetch(url);
+      if (!response.ok) continue;
+
+      const json = await response.json();
+      if (json.parsed) allParsedData.push(...json.parsed);
     }
 
-    const data = await response.json();
-
-    // V2 struktura má data v poli 'parsed'
-    if (!data.parsed || !Array.isArray(data.parsed)) {
-      throw new Error('Unexpected Pyth V2 response format (missing parsed array).');
-    }
-
-    if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
-    fs.writeFileSync(path.join(RAW_DIR, `pyth_${timestamp}.json`), JSON.stringify(data, null, 2));
-
-    const rates = { USD: 1 };
-
-    for (const item of data.parsed) {
+    const pairs = {};
+    for (const item of allParsedData) {
       const id = item.id.startsWith('0x') ? item.id.toLowerCase() : `0x${item.id.toLowerCase()}`;
-      const iso = Object.keys(PRICE_IDS).find(key => PRICE_IDS[key].toLowerCase() === id);
+      const symbol = idToSymbol[id];
 
-      if (iso && item.price) {
+      // KLÍČOVÁ ZMĚNA: Kontrola, zda cena existuje a není nula
+      if (symbol && item.price && item.price.price) {
         const price = Number(item.price.price);
         const expo = Number(item.price.expo);
         const realPrice = price * Math.pow(10, expo);
 
-        if (realPrice !== 0) {
-          // Normalizace: Většina Pyth FX je "cena měny v USD"
-          rates[iso] = 1 / realPrice;
+        // Uložíme pouze pokud je cena kladné číslo
+        if (realPrice > 0) {
+          pairs[symbol] = realPrice;
         }
       }
     }
 
-    const normalized = {
-      source: 'Pyth Network (Hermes V2)',
-      base: 'USD',
-      date: new Date().toISOString().split('T')[0],
+    if (Object.keys(pairs).length === 0) throw new Error('No active FX prices found.');
+
+    const result = {
+      source: 'Pyth Network (Hermes V2 All FX)',
       fetchedAt: new Date().toISOString(),
-      rates: Object.fromEntries(Object.entries(rates).sort((a, b) => a[0].localeCompare(b[0])))
+      pairs: Object.fromEntries(
+        Object.entries(pairs).sort((a, b) => a[0].localeCompare(b[0]))
+      )
     };
 
-    if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
-    fs.writeFileSync(path.join(NORMALIZED_DIR, `pyth_${timestamp}.json`), JSON.stringify(normalized, null, 2));
+    if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
+    fs.writeFileSync(path.join(RAW_DIR, `pyth_${timestamp}.json`), JSON.stringify(allParsedData, null, 2));
 
-    console.log(`✅ Pyth sync complete. Currencies: ${Object.keys(rates).length - 1}`);
+    if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
+    fs.writeFileSync(path.join(NORMALIZED_DIR, `pyth_${timestamp}.json`), JSON.stringify(result, null, 2));
+
+    console.log(`✅ Pyth sync complete. Active FX pairs: ${Object.keys(pairs).length}`);
     return true;
+
   } catch (error) {
     console.error('❌ Pyth error:', error.message);
     return null;
