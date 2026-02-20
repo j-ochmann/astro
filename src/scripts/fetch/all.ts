@@ -13,6 +13,7 @@ import { fetchUS } from './fx/us.ts'; // Federal Reserve Bank of St. Louis (FRED
 import { fetchUNORE } from './fx/unore.ts'; // United Nations Treasury 
 // import { fetchNASDAQ } from './fx/nasdaq.ts'; // NASDAQ 
 import { fetchPyth } from './fx/pyth.ts'; // Pyth Network - Hermes API (Web3)
+import { fetchPythAll } from './all/pyth.ts'; // Pyth Network - Hermes API (Web3)
 import { fetchChainlink } from './fx/chainlink.ts'; // Chainlink (Web3)
 /* invalid: CN,JP,SE,SG,International Monetary Fund */
 // import { fetchCN } from './fx/cn.ts'; // People's Bank of China
@@ -28,12 +29,13 @@ async function runAll() {
 
   try {
     const results = await Promise.allSettled([
-      fetchAU(),fetchCA(),fetchCH(),fetchCZ(),fetchEU(),fetchGB(),
-      fetchHK(),fetchIL(),fetchRO(),fetchRU(),fetchUZ(),fetchUS(),
-      fetchUNORE(),
-      // fetchNASDAQ(),
-      fetchPyth(),
-      fetchChainlink(),
+      // fetchAU(),fetchCA(),fetchCH(),fetchCZ(),fetchEU(),fetchGB(),
+      // fetchHK(),fetchIL(),fetchRO(),fetchRU(),fetchUZ(),fetchUS(),
+      // fetchUNORE(),
+      // // fetchNASDAQ(),
+      // fetchPyth(),
+      fetchPythAll(),
+      // fetchChainlink(),
       // fetchIMF(),fetchCN(),fetchJP(),fetchSG(),
       // fetchSE()
     ]);
