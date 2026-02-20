@@ -4,7 +4,6 @@ import { createPublicClient, http, fallback, parseAbi } from 'viem';
 import { mainnet } from 'viem/chains';
 import { PATHS } from '../fetch.config.mjs';
 import { getAllCurrencies } from '../../../content/config/i18n.ts';
-
 const RAW_DIR = path.join(PATHS.RAW, PATHS.CHAINLINK);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.CHAINLINK);
 
