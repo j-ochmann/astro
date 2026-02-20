@@ -1,0 +1,249 @@
+---
+// src/pages/[lang]/login.astro
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { Icon } from '@astrojs/starlight/components';
+import config from 'virtual:starlight/user-config';
+
+export function getStaticPaths() {
+  return Object.keys(config.locales || {}).map((lang) => ({
+    params: { lang },
+  }));
+}
+
+const { lang } = Astro.params;
+
+interface Translation {
+  title: string;
+  welcome: string;
+  desc: string;
+  email: string;
+  pass: string;
+  submit: string;
+  social: string;
+  noAccount: string;
+}
+
+const translations: Record<string, Translation> = {
+  cs: {
+    title: "Přihlášení",
+    welcome: "Vítejte zpět",
+    desc: "Přihlaste se ke svému účtu pro přístup k rozšířené dokumentaci.",
+    email: "E-mailová adresa",
+    pass: "Heslo",
+    submit: "Přihlásit se",
+    social: "Nebo pokračujte přes",
+    noAccount: "Nemáte účet? Zaregistrujte se."
+  },
+  en: {
+    title: "Login",
+    welcome: "Welcome Back",
+    desc: "Sign in to your account to access extended documentation.",
+    email: "Email Address",
+    pass: "Password",
+    submit: "Sign In",
+    social: "Or continue with",
+    noAccount: "Don't have an account? Sign up."
+  }
+};
+
+const t = (lang && translations[lang]) || translations.en;
+---
+
+<StarlightPage frontmatter={{ title: t.title, template: 'splash' }}>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo-circle">
+          <Icon name="rocket" size="2rem" />
+        </div>
+        <h1>{t.welcome}</h1>
+        <p>{t.desc}</p>
+      </div>
+
+      <form class="login-form" onsubmit="return false;">
+        <div class="field">
+          <label for="email">{t.email}</label>
+          <input type="email" id="email" placeholder="name@company.com" required />
+        </div>
+
+        <div class="field">
+          <label for="password">{t.pass}</label>
+          <input type="password" id="password" required />
+        </div>
+
+        <button type="submit" class="btn-primary">
+          {t.submit}
+          <Icon name="right-arrow" size="1.2rem" />
+        </button>
+      </form>
+
+      <div class="divider">
+        <span>{t.social}</span>
+      </div>
+
+      <div class="social-login">
+        <button class="btn-social">
+          <Icon name="github" size="1.2rem" /> GitHub
+        </button>
+        <button class="btn-social">
+          <Icon name="google" size="1.2rem" /> Google
+        </button>
+      </div>
+
+      <p class="footer-link">
+        <a href="#">{t.noAccount}</a>
+      </p>
+    </div>
+  </div>
+</StarlightPage>
+
+<style>
+  .login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    padding: 1rem;
+  }
+
+  .login-card {
+    background-color: var(--sl-color-bg-nav);
+    border: 1px solid var(--sl-color-gray-5);
+    padding: 2.5rem;
+    border-radius: 1rem;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: var(--sl-shadow-md);
+  }
+
+  .login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .logo-circle {
+    background: var(--sl-color-accent-low);
+    color: var(--sl-color-accent);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+  }
+
+  .login-header h1 {
+    font-size: 1.75rem !important;
+    margin-bottom: 0.5rem !important;
+    color: var(--sl-color-white) !important;
+  }
+
+  .login-header p {
+    color: var(--sl-color-gray-3);
+    font-size: 0.9rem;
+  }
+
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--sl-color-gray-2);
+  }
+
+  input {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--sl-color-bg);
+    border: 1px solid var(--sl-color-gray-4);
+    color: var(--sl-color-white);
+  }
+
+  /* Adaptace pro světlý režim */
+  :global([data-theme='light']) input {
+    background: var(--sl-color-gray-6);
+    color: var(--sl-color-black);
+  }
+
+  .btn-primary {
+    background: var(--sl-color-accent-high);
+    color: var(--sl-color-text-invert);
+    border: none;
+    padding: 0.8rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: filter 0.2s;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  .divider {
+    text-align: center;
+    border-bottom: 1px solid var(--sl-color-gray-5);
+    line-height: 0.1em;
+    margin: 2rem 0;
+  }
+
+  .divider span {
+    background: var(--sl-color-bg-nav);
+    padding: 0 10px;
+    color: var(--sl-color-gray-4);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+
+  .social-login {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-social {
+    background: var(--sl-color-bg);
+    border: 1px solid var(--sl-color-gray-4);
+    color: var(--sl-color-white);
+    padding: 0.6rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  :global([data-theme='light']) .btn-social {
+    background: var(--sl-color-gray-6);
+    color: var(--sl-color-black);
+  }
+
+  .footer-link {
+    text-align: center;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+  }
+
+  .footer-link a {
+    color: var(--sl-color-accent-high);
+    text-decoration: none;
+  }
+</style>

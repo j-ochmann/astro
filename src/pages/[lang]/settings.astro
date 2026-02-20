@@ -1,0 +1,272 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { Icon } from '@astrojs/starlight/components';
+import config from 'virtual:starlight/user-config';
+
+// 1. TYPOVÁ DEFINICE PRO PŘEKLADY
+interface Translation {
+  title: string;
+  browser: string;
+  pref: string;
+  currency: string;
+  langLabel: string;
+  preview: string;
+}
+
+// 2. GENEROVÁNÍ CEST (Astro i18n)
+export function getStaticPaths() {
+  const locales = config.locales || {};
+  return Object.keys(locales).map((lang) => ({
+    params: { lang },
+  }));
+}
+
+const { lang } = Astro.params;
+
+// 3. DEFINICE PŘEKLADŮ (Bezpečné typování)
+const translations: Record<string, Translation> = {
+  cs: { 
+    title: "Nastavení", 
+    browser: "Co o vás vidí prohlížeč", 
+    pref: "Vaše preference", 
+    currency: "Preferovaná měna", 
+    langLabel: "Jazyk rozhraní", 
+    preview: "Ukázka formátování" 
+  },
+  en: { 
+    title: "Settings", 
+    browser: "Browser Insights", 
+    pref: "Your Preferences", 
+    currency: "Preferred Currency", 
+    langLabel: "Interface Language", 
+    preview: "Formatting Preview" 
+  }
+};
+
+// Fallback pokud lang není v objektu
+const t = (lang && translations[lang]) || translations.en;
+
+// Bezpečné získání seznamu jazyků z konfigurace
+const localesEntries = Object.entries(config.locales || {});
+---
+
+<StarlightPage frontmatter={{ title: t.title }}>
+  <div class="settings-container">
+    
+    <!-- SEKCE: PROHLÍŽEČ -->
+    <section class="settings-card">
+      <div class="card-header">
+        <Icon name="magnifier" size="1.5rem" class="icon-accent" />
+        <h2>{t.browser}</h2>
+      </div>
+      <p class="description">Tyto parametry o vás aktuálně sdílí váš prohlížeč:</p>
+      <ul id="browser-data" class="info-grid">
+        <li>Načítám data...</li>
+      </ul>
+    </section>
+
+    <!-- SEKCE: PREFERENCE -->
+    <section class="settings-card">
+      <div class="card-header">
+        <Icon name="setting" size="1.5rem" class="icon-accent" />
+        <h2>{t.pref}</h2>
+      </div>
+      
+      <div class="controls-layout">
+        <div class="field">
+          <label for="currency-set">{t.currency}</label>
+          <select id="currency-set">
+            <option value="CZK">CZK (Kč)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="USD">USD ($)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="lang-set">{t.langLabel}</label>
+          <select id="lang-set">
+            {localesEntries.map(([key, loc]) => (
+              <option value={key} selected={key === lang}>
+                {/* @ts-ignore - Starlight types can be tricky */}
+                {loc?.label || key}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div class="preview-box">
+        <strong>{t.preview}:</strong> <span id="price-preview">...</span>
+      </div>
+    </section>
+  </div>
+</StarlightPage>
+
+<script is:inline>
+  const currSel = document.getElementById('currency-set');
+  const langSel = document.getElementById('lang-set');
+  const pricePre = document.getElementById('price-preview');
+
+  // Inicializace uložené měny
+  currSel.value = localStorage.getItem('user-currency') || 'CZK';
+
+  function updatePreview() {
+    const curr = currSel.value;
+    const currentDocLang = document.documentElement.lang || 'cs';
+    
+    localStorage.setItem('user-currency', curr);
+    
+    // Formátování ukázky pomocí Intl API
+    const formatter = new Intl.NumberFormat(currentDocLang, { style: 'currency', currency: curr });
+    pricePre.textContent = formatter.format(1250.50);
+  }
+
+  // Změna jazyka - Přesměrování
+  langSel.addEventListener('change', (e) => {
+    const newLang = e.target.value;
+    localStorage.setItem('user-lang-override', newLang);
+    
+    const currentPath = window.location.pathname;
+    const segments = currentPath.split('/');
+    // Najdeme segment, který odpovídá aktuálnímu jazyku a nahradíme ho
+    const langIndex = segments.findIndex(s => s === document.documentElement.lang);
+    
+    if (langIndex !== -1) {
+       segments[langIndex] = newLang;
+       window.location.pathname = segments.join('/');
+    } else {
+       // Fallback pokud URL nemá lang segment (např. root)
+       window.location.pathname = `/${newLang}/settings/`;
+    }
+  });
+
+  currSel.addEventListener('change', updatePreview);
+
+  // Výpis dat z prohlížeče
+  const options = Intl.DateTimeFormat().resolvedOptions();
+  document.getElementById('browser-data').innerHTML = `
+    <li><strong>Jazyk UI:</strong> <code>${navigator.language}</code></li>
+    <li><strong>Preferované:</strong> <code>${navigator.languages.slice(0,2).join(', ')}</code></li>
+    <li><strong>Region:</strong> <code>${options.locale}</code></li>
+    <li><strong>Zóna:</strong> <code>${options.timeZone}</code></li>
+  `;
+
+  updatePreview();
+</script>
+
+<style>
+  .settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 800px;
+    margin-top: 1rem;
+  }
+
+  .settings-card {
+    background-color: var(--sl-color-bg-nav);
+    border: 1px solid var(--sl-color-gray-5);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: var(--sl-shadow-sm);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .card-header h2 {
+    margin: 0 !important;
+    font-size: 1.5rem !important;
+    color: var(--sl-color-white) !important;
+  }
+
+  .icon-accent {
+    color: var(--sl-color-accent-high);
+  }
+
+  .description {
+    font-size: 0.9rem;
+    color: var(--sl-color-gray-3);
+    margin-bottom: 1.25rem;
+  }
+
+  .info-grid {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .info-grid li {
+    font-size: 0.85rem;
+    padding: 0.6rem;
+    background: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.4rem;
+    color: var(--sl-color-gray-2);
+  }
+
+  .controls-layout {
+    display: flex;
+    flex-wrap: wrap; /* Oprava odskakování gridu */
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .field {
+    flex: 1;
+    min-width: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  label {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--sl-color-gray-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  select {
+    width: 100%;
+    padding: 0.7rem;
+    border-radius: 0.4rem;
+    /* Důležité pro Light/Dark mode viditelnost */
+    background-color: var(--sl-color-bg);
+    color: var(--sl-color-text-invert) !important; 
+    /* Vynucení barvy textu pro selecty v některých prohlížečích */
+    color: var(--sl-color-white) !important;
+    border: 1px solid var(--sl-color-gray-4);
+    cursor: pointer;
+  }
+
+  /* Specifická oprava pro světlý režim, pokud Starlight proměnné nestačí */
+  :global([data-theme='light']) select {
+    background-color: var(--sl-color-gray-6);
+    color: var(--sl-color-black) !important;
+  }
+
+  .preview-box {
+    padding: 1.25rem;
+    background: var(--sl-color-accent-low);
+    color: var(--sl-color-accent-high);
+    border-radius: 0.5rem;
+    border-left: 4px solid var(--sl-color-accent);
+    margin-top: 0.5rem;
+    font-size: 1.1rem;
+  }
+
+  code {
+    background: var(--sl-color-gray-5);
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.25rem;
+    color: var(--sl-color-accent-high);
+  }
+</style>

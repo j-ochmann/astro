@@ -3,7 +3,7 @@ import mainImage from '@/assets/img/me/20250712_056.webp?url';
 import hoverImage from '@/assets/img/me/20250712_055.webp?url';
 import { Icon } from '@astrojs/starlight/components';
 import { getRelativeLocaleUrl } from 'astro:i18n';
-const lang = Astro.currentLocale || 'en';
+const lang = Astro.url.pathname.split('/').filter(Boolean)[0] || 'en';
 const landingLink = getRelativeLocaleUrl(lang, '/');
 ---
 
@@ -87,8 +87,8 @@ const landingLink = getRelativeLocaleUrl(lang, '/');
   </div>
 
   <div class="action-icons">
-    <a href="" class="icon-settings"><svg><use href="#icon-settings"></use></svg></a>
-    <a href="" class="icon-login"><svg><use href="#icon-login"></use></svg></a>
+    <a href={`/settings/`} class="icon-settings"><svg><use href="#icon-settings"></use></svg></a>
+    <a href={`/login/`} class="icon-login"><svg><use href="#icon-login"></use></svg></a>
   </div>
 </div>
 

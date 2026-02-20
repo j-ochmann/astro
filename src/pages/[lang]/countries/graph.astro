@@ -87,7 +87,17 @@ const t = translations[lang as keyof typeof translations] || translations.en;
   function initGraph() {
     var width = 960, height = 600;
     var graph = localizedGraphData;
-    var svg = d3.select("#main-graph").attr("viewBox", `0 0 ${width} ${height}`);
+    var selectedNode = null;
+
+    var svg = d3.select("#main-graph")
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .on("click", function() {
+            if (d3.event.target.tagName === 'svg') {
+                selectedNode = null;
+                highlightEnd();
+            }
+        });
+
     var g = svg.append("g");
 
     var simulation = d3.forceSimulation()
@@ -103,9 +113,17 @@ const t = translations[lang as keyof typeof translations] || translations.en;
     var link = g.append("g").attr("class", "links").selectAll("line").data(graph.links).enter().append("line");
     var node = g.append("g").attr("class", "nodes").selectAll(".node").data(graph.nodes).enter().append("g")
         .attr("class", "node")
-        .on("click", d => { window.location.href = d.url; })
-        .on("mouseover", highlightStart)
-        .on("mouseout", highlightEnd)
+        .on("click", d => {
+            d3.event.stopPropagation();
+            if (selectedNode === d.id) {
+                window.location.href = d.url;
+            } else {
+                selectedNode = d.id;
+                highlightStart(d);
+            }
+        })
+        .on("mouseover", d => { if (!selectedNode) highlightStart(d); })
+        .on("mouseout", d => { if (!selectedNode) highlightEnd(); })
         .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
 
     node.append("circle").attr("r", d => 5 + (d.neighbor_count/2)).attr("fill", d => colorMapping[d.continents[0]] || "#ccc");
@@ -120,7 +138,7 @@ const t = translations[lang as keyof typeof translations] || translations.en;
         node.style("stroke-opacity", n => (n.id === d.id || adj[d.id + "-" + n.id]) ? 1 : 0.1)
             .attr("fill-opacity", n => (n.id === d.id || adj[d.id + "-" + n.id]) ? 1 : 0.1);
         link.style("stroke-opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.1);
-        label.filter(n => n.id === d.id || adj[d.id + "-" + n.id]).style("display", "inline");
+        label.style("display", n => (n.id === d.id || adj[d.id + "-" + n.id]) ? "inline" : "none");
     }
 
     function highlightEnd() {
