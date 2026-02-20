@@ -21,7 +21,7 @@ export async function fetchNASDAQ() {
 
   console.log('⏳ Fetching [NASDAQ] Data Link...');
   const timestamp = new Date().toISOString().replace(/[:]/g, '-');
-  const rates = { "USD": 1 };
+  const rates: Record<string, number> = { "USD": 1 };
   let latestDate = null;
 
   try {
@@ -78,7 +78,7 @@ export async function fetchNASDAQ() {
     return true;
 
   } catch (error) {
-    console.error('❌ Nasdaq error:', error.message);
+    console.error('❌ Nasdaq error:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
