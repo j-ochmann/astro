@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { XMLParser } from 'fast-xml-parser';
-import { PATHS } from '../fetch.config.js';
+import { PATHS } from '../fetch.config.ts';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.IL);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.IL);

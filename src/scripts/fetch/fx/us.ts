@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.js';
+import { PATHS } from '../fetch.config.ts';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.US);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.US);
@@ -98,7 +98,7 @@ export async function fetchUS() {
 
     tempRates.push(['USD', 1]);
 
-    tempRates.sort((a, b) => a[0].localeCompare(b[0]));
+    tempRates.sort((a, b) => String(a[0]).localeCompare(String(b[0])));
 
     const rates = Object.fromEntries(tempRates);
 
@@ -129,7 +129,7 @@ export async function fetchUS() {
     };
 
   } catch (error) {
-    console.error('❌ Error processing FRED data:', error.message);
+    console.error('❌ Error processing FRED data:', error instanceof Error ? error.message : String(error));
     throw error;
   }
 }

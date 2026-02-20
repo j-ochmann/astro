@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { XMLParser } from 'fast-xml-parser'; // Předpokládám, že máš nebo doinstaluješ
-import { PATHS } from '../fetch.config.js';
+import { PATHS } from '../fetch.config.ts';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.RO);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.RO);

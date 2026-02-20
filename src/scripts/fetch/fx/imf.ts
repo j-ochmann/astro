@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.js';
+import { PATHS } from '../fetch.config.ts';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.IMF);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.IMF);
@@ -42,7 +42,7 @@ export async function fetchIMF() {
     }
 
     const rates: { [key: string]: number } = { XDR: 1 };
-    let latestDate = null;
+    let latestDate: string | null = null;
 
     const seriesArray = Array.isArray(series) ? series : [series];
 

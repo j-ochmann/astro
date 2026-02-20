@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.js';
+import { PATHS } from '../fetch.config.ts';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.UZ);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.UZ);
@@ -21,10 +21,10 @@ export async function fetchUZ() {
     fs.writeFileSync(path.join(RAW_DIR, PATHS.UZ+`_${timestamp}.json`), JSON.stringify(data, null, 2));
 
     // --- 2. NORMALIZE ---
-    const rates = {};
-    let latestDate = null;
+    const rates: Record<string, number> = {};
+    let latestDate: string | null = null;
 
-    data.forEach(item => {
+    data.forEach((item: any) => {
       // CBU vrací: "Rate" (kurz), "Ccy" (kód), "Date" (datum)
       const code = item.Ccy;
       const rate = parseFloat(item.Rate);
@@ -54,7 +54,7 @@ export async function fetchUZ() {
     return { normalized: normalizedFile };
 
   } catch (error) {
-    console.error('❌ CBU error:', error.message);
+    console.error('❌ CBU error:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PATHS } from '../fetch.config.js';
+import { PATHS } from '../fetch.config.ts';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.NASDAQ);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.NASDAQ);
@@ -22,7 +22,7 @@ export async function fetchNASDAQ() {
   console.log('⏳ Fetching [NASDAQ] Data Link...');
   const timestamp = new Date().toISOString().replace(/[:]/g, '-');
   const rates: Record<string, number> = { "USD": 1 };
-  let latestDate = null;
+  let latestDate: string | null = null;
 
   try {
     // Nasdaq vyžaduje dotaz pro každou měnu zvlášť v datasetu CURRFX
