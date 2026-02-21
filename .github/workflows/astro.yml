@@ -75,7 +75,7 @@ jobs:
       - name: Fetch Market Data
         run: |
           npm install -g ts-node typescript
-          ts-node scripts/fetch/all.ts
+          ts-node ./src/scripts/fetch/all.ts
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           NASDAQ_API_KEY: ${{ secrets.NASDAQ_API_KEY }}
