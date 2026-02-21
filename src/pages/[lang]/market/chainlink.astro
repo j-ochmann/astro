@@ -10,6 +10,8 @@ export async function getStaticPaths() {
 }
 
 const { lang } = Astro.params;
+const PUBLIC_DATA_PATH = `/raw/chainlink/chainlink_all/`; 
+
 const RAW_DIR = path.join(process.cwd(), PATHS.RAW, PATHS.CHAINLINK_ALL);
 
 let rawData = [];
@@ -76,11 +78,11 @@ const RAY_COUNT = 65;
       <div class="stats-grid">
         <div class="stat-card glass-panel">
           <span class="label">Total Feeds</span>
-          <span class="value">{feeds.length}</span>
+          <span class="value" id="stat-total">{feeds.length}</span>
         </div>
         <div class="stat-card glass-panel">
           <span class="label">Last Sync</span>
-          <span class="value">{humanTimestamp}</span>
+          <span class="value" id="stat-sync">{humanTimestamp}</span>
         </div>
       </div>
 
@@ -109,17 +111,17 @@ const RAY_COUNT = 65;
           </thead>
           <tbody>
             {feeds.map((f: any) => (
-              <tr data-json={JSON.stringify(f)} data-name={f.searchName}>
+              <tr data-id={f.address} data-json={JSON.stringify(f)} data-name={f.searchName}>
                 <td class="td-pair">
-                  <a href={`/${lang}/market/chainlink/${f.address}/`} class="pair-link" title={f.name}>
+                  <a href={`/${lang}/market/chainlink/${f.address}/`} class="pair-link">
                     {f.name}
                   </a>
                 </td>
-                <td class="cell-price">{f.price.toLocaleString(undefined, { maximumFractionDigits: 10 })}</td>
+                <td class="cell-price js-price">{f.price.toLocaleString(undefined, { maximumFractionDigits: 10 })}</td>
                 <td><div class={`status-dot ${f.price > 0 ? 'active' : 'inactive'}`}></div></td>
-                <td>{f.updatedAt ? f.updatedAt.toLocaleTimeString() : 'N/A'}</td>
-                <td class="cell-mono opacity-50">{f.address.slice(0, 10)}...</td>
-                <td class="cell-mono opacity-50">{f.roundId}</td>
+                <td class="js-update">{f.updatedAt ? f.updatedAt.toLocaleTimeString() : 'N/A'}</td>
+                <td class="cell-mono opacity-50">{f.address}</td>
+                <td class="cell-mono opacity-50 js-round">{f.roundId}</td>
                 <td><span class="badge-cat">{f.category}</span></td>
               </tr>
             ))}
@@ -130,7 +132,52 @@ const RAY_COUNT = 65;
   </div>
 </StarlightPage>
 
-<script is:inline>
+<script is:inline define:vars={{ latestFile, PUBLIC_DATA_PATH, lang }}>
+  const syncLabel = document.getElementById('stat-sync');
+
+  async function refreshData() {
+    try {
+      // Přidáváme timestamp, aby prohlížeč nebral soubor z cache
+      const response = await fetch(`${PUBLIC_DATA_PATH}${latestFile}?t=${Date.now()}`);
+      if (!response.ok) return;
+      const data = await response.json();
+
+      data.forEach(item => {
+        const address = item.proxyAddress || item.contractAddress;
+        const row = document.querySelector(`tr[data-id="${address}"]`);
+        
+        if (row) {
+          const priceCell = row.querySelector('.js-price');
+          const newPrice = item.liveData?.realPrice || 0;
+          const formattedPrice = newPrice.toLocaleString(undefined, { maximumFractionDigits: 10 });
+          
+          // Pokud se cena změnila
+          if (priceCell.innerText !== formattedPrice) {
+            priceCell.innerText = formattedPrice;
+            priceCell.classList.add('price-flash');
+            setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
+          }
+
+          if (item.liveData?.updatedAt) {
+            const date = new Date(item.liveData.updatedAt);
+            row.querySelector('.js-update').innerText = date.toLocaleTimeString();
+            
+            // Aktualizace globálního sync času podle nejnovějšího údaje v datech
+            const localSync = date.toLocaleString(lang === 'cs' ? 'cs-CZ' : 'en-US');
+            if (syncLabel) syncLabel.innerText = localSync;
+          }
+          
+          row.querySelector('.js-round').innerText = item.liveData?.roundId || 'N/A';
+        }
+      });
+    } catch (err) {
+      console.error('Live update error:', err);
+    }
+  }
+
+  setInterval(refreshData, 5000);
+
+  // Filtrování a Export (ponecháno beze změn)
   const searchInput = document.getElementById('oracleSearch');
   searchInput.addEventListener('input', () => {
     const term = searchInput.value.toLowerCase().replace(/\s+/g, '');
@@ -167,13 +214,19 @@ const RAY_COUNT = 65;
     max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; 
   }
   .sl-markdown-content > :first-child { margin-top: 0 !important; }
+  
+  /* Animace pro změnu ceny */
+  @keyframes flash-price {
+    0% { color: var(--sl-color-accent-high); text-shadow: 0 0 10px var(--sl-color-accent); }
+    100% { color: var(--sl-color-white); text-shadow: none; }
+  }
+  .price-flash { animation: flash-price 2s ease-out; }
 </style>
 
 <style>
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
 
-  /* Sjednocená Glass receptura */
   .glass-panel {
     background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
     backdrop-filter: blur(30px) !important;
@@ -184,28 +237,18 @@ const RAY_COUNT = 65;
   :root[data-theme='light'] .glass-panel {
     background: rgba(255, 255, 255, 0.8) !important;
     border-color: rgba(0, 0, 0, 0.1) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
   }
 
-  /* Grid a karty */
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-  .stat-card { 
-    padding: 1.5rem; border-radius: 0.75rem; min-height: 100px;
-    display: flex; flex-direction: column; justify-content: center; margin-top: 0 !important;
-  }
+  .stat-card { padding: 1.5rem; border-radius: 0.75rem; min-height: 100px; display: flex; flex-direction: column; justify-content: center; margin-top: 0 !important; }
   .label { font-size: 0.75rem; color: var(--sl-color-gray-3); text-transform: uppercase; margin-bottom: 0.25rem; }
   .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
   :root[data-theme='light'] .value { color: #000 !important; }
-  :root[data-theme='light'] .label { color: #444 !important; }
 
-  /* Search bar */
   .controls-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; height: 44px; align-items: stretch; }
-  #oracleSearch { 
-    flex: 1; padding: 0 1rem; border-radius: 0.5rem; color: var(--sl-color-white); height: 100%; outline: none;
-  }
+  #oracleSearch { flex: 1; padding: 0 1rem; border-radius: 0.5rem; color: var(--sl-color-white); height: 100%; outline: none; }
   :root[data-theme='light'] #oracleSearch { color: #000 !important; }
 
-  /* Tlačítka - sdílejí skleněný vzhled s barevným akcentem */
   .export-group { display: flex; gap: 0.5rem; height: 100%; }
   .glass-btn { 
     background: rgba(var(--sl-color-accent-rgb), 0.2) !important;
@@ -217,36 +260,18 @@ const RAY_COUNT = 65;
     height: 100%; display: flex; align-items: center; margin: 0 !important;
     transition: all 0.2s ease;
   }
-  .glass-btn:hover { 
-    background: var(--sl-color-accent) !important; 
-    border-color: var(--sl-color-accent-high) !important;
-    box-shadow: 0 0 15px rgba(var(--sl-color-accent-rgb), 0.4);
-  }
-  :root[data-theme='light'] .glass-btn { color: var(--sl-color-accent-high) !important; }
+  .glass-btn:hover { background: var(--sl-color-accent) !important; border-color: var(--sl-color-accent-high) !important; }
 
-  /* Tabulka */
   .table-container { border-radius: 0.75rem; overflow-x: auto; }
   table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 800px; }
-  th { 
-    background: rgba(var(--sl-color-accent-rgb), 0.1); 
-    padding: 1rem; text-align: left; color: var(--sl-color-accent-high); 
-    border-bottom: 2px solid var(--sl-color-gray-5);
-    font-size: 0.8rem; white-space: nowrap;
-  }
-
+  th { background: rgba(var(--sl-color-accent-rgb), 0.1); padding: 1rem; text-align: left; color: var(--sl-color-accent-high); border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; }
   tbody tr { background: rgba(255, 255, 255, 0.01); transition: background 0.1s ease; }
   tbody tr:hover { background: rgba(var(--sl-color-accent-rgb), 0.08); }
-
-  td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); white-space: nowrap; color: var(--sl-color-gray-2); }
-  :root[data-theme='light'] td { color: #333; border-bottom-color: rgba(0,0,0,0.05); }
+  td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); color: var(--sl-color-gray-2); }
 
   .th-pair { width: 160px; }
-  .td-pair { max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
   .pair-link { color: var(--sl-color-accent-high) !important; font-weight: bold; text-decoration: none; }
-  .pair-link:hover { text-decoration: underline; }
   .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); }
-  :root[data-theme='light'] .cell-price { color: #000; }
-  
   .status-dot { width: 10px; height: 10px; border-radius: 50%; margin: 0 auto; }
   .active { background: #10b981; box-shadow: 0 0 10px #10b981; }
   .inactive { background: #ef4444; }
@@ -255,6 +280,5 @@ const RAY_COUNT = 65;
   @media (max-width: 800px) {
     .stats-grid { grid-template-columns: 1fr; }
     .controls-row { height: auto; flex-direction: column; }
-    .export-group { justify-content: space-between; }
   }
 </style>
