@@ -17,8 +17,9 @@ let rawData = [];
 let latestFile = "";
 let humanTimestamp = "No data";
 
-try {
-  if (fs.existsSync(RAW_DIR)) {
+// Ošetření buildu, pokud data neexistují
+if (fs.existsSync(RAW_DIR)) {
+  try {
     const files = fs.readdirSync(RAW_DIR).filter(f => f.startsWith('pyth_full_'));
     latestFile = files.sort().reverse()[0];
     if (latestFile) {
@@ -29,30 +30,26 @@ try {
         humanTimestamp = !isNaN(dateObj.getTime()) ? dateObj.toLocaleString(lang === 'cs' ? 'cs-CZ' : 'en-US') : "N/A";
       }
     }
-  }
-} catch (e) { console.error(e); }
+  } catch (e) { console.error("Build fetch error:", e); }
+}
 
-const feeds = rawData
-  .map((f: any) => {
-    // Oprava mapování na live_data
-    const live = f.live_data?.price || { price: "0", expo: 0, publish_time: 0 };
-    return {
-      id: f.id,
-      name: f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown',
-      searchName: (f.attributes?.symbol || '').toLowerCase().replace(/\s+/g, ''),
-      price: parseFloat(live.price),
-      expo: live.expo,
-      updatedAt: live.publish_time ? new Date(live.publish_time * 1000) : null,
-      category: f.attributes?.asset_type || 'Asset'
-    };
-  })
-  .sort((a: any, b: any) => a.name.localeCompare(b.name));
+const feeds = rawData.map((f: any) => {
+  const live = f.live_data?.price || { price: "0", expo: 0, publish_time: 0 };
+  return {
+    id: f.id,
+    name: f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown',
+    searchName: (f.attributes?.symbol || '').toLowerCase().replace(/\s+/g, ''),
+    price: parseFloat(live.price),
+    expo: live.expo,
+    updatedAt: live.publish_time ? new Date(live.publish_time * 1000) : null,
+    category: f.attributes?.asset_type || 'Asset'
+  };
+}).sort((a: any, b: any) => a.name.localeCompare(b.name));
 
 const RAY_COUNT = 65;
 ---
 
 <StarlightPage frontmatter={{ title: "Pyth Network Explorer", tableOfContents: false }}>
-  
   <div class="explorer-visual-context">
     <div class="wormhole-background" aria-hidden="true">
       <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
@@ -112,9 +109,7 @@ const RAY_COUNT = 65;
           <tbody>
             {feeds.map((f: any) => (
               <tr data-id={f.id} data-json={JSON.stringify(f)} data-name={f.searchName}>
-                <td class="td-pair">
-                  <span class="pair-link">{f.name}</span>
-                </td>
+                <td class="td-pair"><span class="pair-link">{f.name}</span></td>
                 <td class="cell-price js-price">
                   {f.price > 0 ? (f.price * Math.pow(10, f.expo)).toLocaleString(undefined, { maximumFractionDigits: 8 }) : "0.00"}
                 </td>
@@ -135,64 +130,60 @@ const RAY_COUNT = 65;
   const syncLabel = document.getElementById('stat-sync');
 
   async function refreshData() {
+    if (!latestFile) return;
     try {
       const response = await fetch(`${PUBLIC_DATA_PATH}${latestFile}?t=${Date.now()}`);
-      if (!response.ok) return;
-      const data = await response.json();
+      if (response.ok) {
+        const data = await response.json();
+        data.forEach(item => {
+          const row = document.querySelector(`tr[data-id="${item.id}"]`);
+          if (row) {
+            const priceCell = row.querySelector('.js-price');
+            const priceObj = item.live_data?.price;
+            if (priceObj) {
+              const val = parseFloat(priceObj.price) || 0;
+              const expo = priceObj.expo || 0;
+              const newPrice = val * Math.pow(10, expo);
+              const formattedPrice = newPrice.toLocaleString(undefined, { maximumFractionDigits: 8 });
+              
+              if (priceCell.innerText !== formattedPrice && val > 0) {
+                priceCell.innerText = formattedPrice;
+                priceCell.classList.add('price-flash');
+                setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
+              }
 
-      data.forEach(item => {
-        const row = document.querySelector(`tr[data-id="${item.id}"]`);
-        if (row) {
-          const priceCell = row.querySelector('.js-price');
-          // Oprava cesty k ceně v live update
-          const priceObj = item.live_data?.price;
-          if (priceObj) {
-            const val = parseFloat(priceObj.price) || 0;
-            const expo = priceObj.expo || 0;
-            const newPrice = val * Math.pow(10, expo);
-            const formattedPrice = newPrice.toLocaleString(undefined, { maximumFractionDigits: 8 });
-            
-            if (priceCell.innerText !== formattedPrice && val > 0) {
-              priceCell.innerText = formattedPrice;
-              priceCell.classList.add('price-flash');
-              setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
-            }
-
-            if (priceObj.publish_time) {
-              const date = new Date(priceObj.publish_time * 1000);
-              row.querySelector('.js-update').innerText = date.toLocaleTimeString();
-              // Aktualizace horního labelu
-              if (syncLabel) syncLabel.innerText = date.toLocaleString(lang === 'cs' ? 'cs-CZ' : 'en-US');
+              if (priceObj.publish_time) {
+                const date = new Date(priceObj.publish_time * 1000);
+                row.querySelector('.js-update').innerText = date.toLocaleTimeString();
+                if (syncLabel) syncLabel.innerText = date.toLocaleString(lang === 'cs' ? 'cs-CZ' : 'en-US');
+              }
             }
           }
-        }
-      });
+        });
+      }
     } catch (err) { console.error('Pyth update error:', err); }
   }
 
   setInterval(refreshData, 5000);
 
-  // Search Logic
   const searchInput = document.getElementById('oracleSearch');
-  searchInput.addEventListener('input', () => {
-    const term = searchInput.value.toLowerCase().replace(/\s+/g, '');
-    document.querySelectorAll('#oracleTable tbody tr').forEach(row => {
-      row.style.display = row.getAttribute('data-name').includes(term) ? '' : 'none';
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const term = searchInput.value.toLowerCase().replace(/\s+/g, '');
+      document.querySelectorAll('#oracleTable tbody tr').forEach(row => {
+        row.style.display = row.getAttribute('data-name').includes(term) ? '' : 'none';
+      });
     });
-  });
+  }
 
-  // Export Logic (včetně XML a YAML)
   window.exportData = (type) => {
     const rows = Array.from(document.querySelectorAll('#oracleTable tbody tr:not([style*="none"])'))
       .map(tr => JSON.parse(tr.getAttribute('data-json')));
     if (!rows.length) return;
     
     let content = '', mime = 'text/plain';
-    
-    if (type === 'json') { 
-      content = JSON.stringify(rows, null, 2); 
-      mime = 'application/json'; 
-    } else if (type === 'csv') {
+    if (type === 'json') { content = JSON.stringify(rows, null, 2); mime = 'application/json'; }
+    else if (type === 'csv') {
       const keys = ['name', 'price', 'id', 'category'];
       content = [keys.join(','), ...rows.map(r => keys.map(k => `"${r[k]}"`).join(','))].join('\n');
       mime = 'text/csv';
@@ -211,65 +202,36 @@ const RAY_COUNT = 65;
 </script>
 
 <style is:global>
-  .main-frame, .content-panel, .sl-container { 
-    max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; 
-  }
-  @keyframes flash-price {
-    0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; }
-    100% { color: var(--sl-color-white); text-shadow: none; }
-  }
+  .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; }
+  @keyframes flash-price { 0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; } 100% { color: var(--sl-color-white); text-shadow: none; } }
   .price-flash { animation: flash-price 2s ease-out; }
 </style>
 
 <style>
+  /* Zbytek stylů zůstává stejný jako v předchozí verzi */
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
-
-  .glass-panel {
-    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
-    backdrop-filter: blur(30px) !important;
-    border: 1px solid var(--sl-color-gray-5) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  }
-
+  .glass-panel { background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
   .stat-card { padding: 1.5rem; border-radius: 0.75rem; min-height: 100px; display: flex; flex-direction: column; justify-content: center; margin-top: 0 !important; }
   .label { font-size: 0.75rem; color: var(--sl-color-gray-3); text-transform: uppercase; margin-bottom: 0.25rem; }
   .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
-
   .controls-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; height: 44px; align-items: stretch; }
   #oracleSearch { flex: 1; padding: 0 1rem; border-radius: 0.5rem; color: var(--sl-color-white); height: 100%; outline: none; }
-
   .export-group { display: flex; gap: 0.5rem; height: 100%; }
-  .glass-btn { 
-    background: rgba(157, 124, 253, 0.2) !important;
-    backdrop-filter: blur(30px) !important;
-    border: 1px solid var(--sl-color-gray-5) !important;
-    color: var(--sl-color-white) !important; 
-    padding: 0 1rem; border-radius: 0.5rem; 
-    cursor: pointer; font-size: 0.75rem; font-weight: bold;
-    height: 100%; display: flex; align-items: center; margin: 0 !important;
-    transition: all 0.2s ease;
-  }
+  .glass-btn { background: rgba(157, 124, 253, 0.2) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; color: var(--sl-color-white) !important; padding: 0 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.75rem; font-weight: bold; height: 100%; display: flex; align-items: center; margin: 0 !important; transition: all 0.2s ease; }
   .glass-btn:hover { background: #9d7cfd !important; border-color: #e6dafe !important; }
-
   .table-container { border-radius: 0.75rem; overflow-x: auto; }
   table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 800px; }
   th { background: rgba(157, 124, 253, 0.1); padding: 1rem; text-align: left; color: #9d7cfd; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; }
   tbody tr { background: rgba(255, 255, 255, 0.01); }
   tbody tr:hover { background: rgba(157, 124, 253, 0.08); }
   td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); color: var(--sl-color-gray-2); }
-
   .pair-link { color: #9d7cfd !important; font-weight: bold; }
   .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); }
   .status-dot { width: 10px; height: 10px; border-radius: 50%; margin: 0 auto; }
   .active { background: #10b981; box-shadow: 0 0 10px #10b981; }
   .inactive { background: #ef4444; }
   .badge-cat { font-size: 0.65rem; background: rgba(157, 124, 253, 0.15); border: 1px solid rgba(157, 124, 253, 0.2); padding: 0.2rem 0.5rem; border-radius: 4px; color: #9d7cfd; }
-
-  @media (max-width: 800px) {
-    .stats-grid { grid-template-columns: 1fr; }
-    .controls-row { height: auto; flex-direction: column; }
-    .export-group { flex-wrap: wrap; }
-  }
+  @media (max-width: 800px) { .stats-grid { grid-template-columns: 1fr; } .controls-row { height: auto; flex-direction: column; } .export-group { flex-wrap: wrap; } }
 </style>
