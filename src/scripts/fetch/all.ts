@@ -15,6 +15,7 @@ import { fetchUNORE } from './fx/unore.ts'; // United Nations Treasury
 import { fetchPyth } from './fx/pyth.ts'; // Pyth Network - Hermes API (Web3)
 import { fetchPythAll } from './all/pyth.ts'; // Pyth Network - Hermes API (Web3)
 import { fetchChainlink } from './fx/chainlink.ts'; // Chainlink (Web3)
+import { fetchChainlinkAll } from './all/chainlink.ts'; // Chainlink (Web3)
 /* invalid: CN,JP,SE,SG,International Monetary Fund */
 // import { fetchCN } from './fx/cn.ts'; // People's Bank of China
 // import { fetchJP } from './fx/jp.ts'; // Bank of Japan
@@ -35,6 +36,7 @@ async function runAll() {
       // // fetchNASDAQ(),
       // fetchPyth(),
       fetchPythAll(),
+      fetchChainlinkAll(),
       // fetchChainlink(),
       // fetchIMF(),fetchCN(),fetchJP(),fetchSG(),
       // fetchSE()

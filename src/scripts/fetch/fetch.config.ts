@@ -19,9 +19,10 @@ export const PATHS = {
   US: 'us',
   UNORE: 'unore',
   NASDAQ: 'nasdaq',
-  PYTH_ALL: 'pyth_all',
   PYTH: 'pyth',
+  PYTH_ALL: 'pyth_all',
   CHAINLINK: 'chainlink',
+  CHAINLINK_ALL: 'chainlink_all',
   /* invalid: CH,CN,GB,JP,SE,International Monetary Fund */
   CN: 'cn',
   JP: 'jp',
