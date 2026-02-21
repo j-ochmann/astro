@@ -3,7 +3,6 @@ import path from 'node:path';
 import { createPublicClient, http, fallback, parseAbi } from 'viem';
 import { mainnet } from 'viem/chains';
 import { PATHS } from '../fetch.config.ts';
-import { getAllCurrencies } from '../../../content/config/i18n.ts';
 
 const RAW_DIR = path.join(PATHS.RAW, PATHS.CHAINLINK_ALL);
 const NORMALIZED_DIR = path.join(PATHS.NORMALIZED, PATHS.CHAINLINK_ALL);
@@ -18,9 +17,12 @@ interface FeedMetadata {
   proxyAddress?: string;
   contractAddress?: string;
   assetName?: string;
+  assetClass?: string;
   feedCategory?: string;
   feedType?: string;
-  [key: string]: any; // Zachování veškerých dalších polí z JSON adresáře
+  docs?: any;
+  transmissionsAccount?: string;
+  [key: string]: any; 
 }
 
 interface ChainlinkEnrichedFeed extends FeedMetadata {
@@ -34,47 +36,22 @@ interface ChainlinkEnrichedFeed extends FeedMetadata {
 }
 
 async function getChainlinkFeeds(): Promise<FeedMetadata[]> {
-  console.log('   🔍 Step 1: Downloading directory...');
+  console.log('   🔍 Step 1: Downloading complete directory...');
   const url = 'https://reference-data-directory.vercel.app/feeds-mainnet.json';
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Directory fetch failed: ${response.status}`);
 
   const allFeeds: FeedMetadata[] = await response.json();
-  const currencies = await getAllCurrencies();
+  
+  // Odstraněn filtr na i18n měny - bereme vše, co má název a adresu
+  const validFeeds = allFeeds.filter(f => f.name && (f.proxyAddress || f.contractAddress));
 
-  const filtered = allFeeds.filter((feed: FeedMetadata) => {
-    if (!feed.name) return false;
-    const clean = feed.name.replace(/\s+/g, '').toUpperCase();
-    if (clean.includes('(') || clean.includes('CALCULATED') || clean.includes('EXCHANGERATE')) return false;
-
-    const parts = clean.split('/');
-    if (parts.length !== 2) return false;
-
-    const [base, quote] = parts;
-    return currencies.includes(base) && currencies.includes(quote);
-  });
-
-  console.log(`   ✅ Step 1: Found ${filtered.length} currency pairs.`);
-  return filtered;
+  console.log(`   ✅ Step 1: Found ${validFeeds.length} total feeds (Crypto, FX, Commodities, etc.).`);
+  return validFeeds;
 }
 
-function convertToUSDBase(pairs: Record<string, number>): Record<string, number> {
-  const rates: Record<string, number> = {};
-  for (const [symbol, price] of Object.entries(pairs)) {
-    const [base, quote] = symbol.split('/');
-    if (quote === 'USD') rates[base] = price;
-    else if (base === 'USD') rates[quote] = 1 / price;
-  }
-  for (const [symbol, price] of Object.entries(pairs)) {
-    const [base, quote] = symbol.split('/');
-    if (rates[base] && !rates[quote]) rates[quote] = rates[base] / price;
-    else if (rates[quote] && !rates[base]) rates[base] = rates[quote] * price;
-  }
-  return rates;
-}
-
-export async function fetchChainlink(): Promise<boolean | null> {
-  console.log('⏳ Fetching [Web3] Chainlink (Enriched Mode)...');
+export async function fetchChainlinkAll(): Promise<boolean | null> {
+  console.log('⏳ Fetching [Web3] Chainlink (Full Directory Mode)...');
 
   const client = createPublicClient({
     chain: mainnet,
@@ -89,16 +66,16 @@ export async function fetchChainlink(): Promise<boolean | null> {
     const feeds = await getChainlinkFeeds();
     const enrichedFeeds: ChainlinkEnrichedFeed[] = [];
 
-    const BATCH_SIZE = 5;
+    // Zvětšená dávka pro rychlejší zpracování velkého množství feedů
+    const BATCH_SIZE = 10;
 
     for (let i = 0; i < feeds.length; i += BATCH_SIZE) {
       const currentBatch = feeds.slice(i, i + BATCH_SIZE);
-      console.log(`   📦 Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(feeds.length / BATCH_SIZE)}`);
+      console.log(`   📦 Progress: ${i + currentBatch.length}/${feeds.length}`);
 
       const batchResults = await Promise.all(
         currentBatch.map(async (feed) => {
           const address = (feed.proxyAddress || feed.contractAddress) as `0x${string}`;
-          if (!address) return { ...feed, liveData: null };
 
           try {
             const [roundData, decimals] = await Promise.all([
@@ -107,9 +84,8 @@ export async function fetchChainlink(): Promise<boolean | null> {
             ]);
 
             const rawAnswer = roundData[1];
-            if (rawAnswer <= 0n) return { ...feed, liveData: null };
-
-            const realPrice = Number(rawAnswer) / Math.pow(10, Number(decimals));
+            // I u neplatné ceny (<=0) chceme metadata zachovat
+            const realPrice = rawAnswer > 0n ? Number(rawAnswer) / Math.pow(10, Number(decimals)) : 0;
 
             return {
               ...feed,
@@ -122,6 +98,7 @@ export async function fetchChainlink(): Promise<boolean | null> {
               }
             };
           } catch (err) {
+            // Při chybě RPC (např. deprecated feedy) uložíme aspoň metadata bez live dat
             return { ...feed, liveData: null };
           }
         })
@@ -130,44 +107,41 @@ export async function fetchChainlink(): Promise<boolean | null> {
       enrichedFeeds.push(...batchResults);
     }
 
-    // --- ULOŽENÍ RAW DAT (Kompletní obohacená metadata) ---
+    // --- ULOŽENÍ RAW DAT (Všechny Quotes + Metadata) ---
     if (!fs.existsSync(RAW_DIR)) fs.mkdirSync(RAW_DIR, { recursive: true });
     fs.writeFileSync(
       path.join(RAW_DIR, `chainlink_full_${timestamp}.json`),
       JSON.stringify(enrichedFeeds, null, 2)
     );
 
-    // --- NORMALIZACE ---
-    const pairs: Record<string, number> = {};
+    // --- NORMALIZACE (Všechny Quotes s platnou cenou) ---
+    const allQuotes: Record<string, number> = {};
     for (const feed of enrichedFeeds) {
-      if (feed.liveData) {
+      if (feed.liveData && feed.liveData.realPrice > 0) {
         const cleanName = feed.name.replace(/\s+/g, '');
-        pairs[cleanName] = feed.liveData.realPrice;
+        allQuotes[cleanName] = feed.liveData.realPrice;
       }
     }
 
     if (!fs.existsSync(NORMALIZED_DIR)) fs.mkdirSync(NORMALIZED_DIR, { recursive: true });
 
-    // 1️⃣ Všechny páry
+    const normalizedResult = {
+      source: 'Chainlink (All Quotes)',
+      fetchedAt: new Date().toISOString(),
+      count: Object.keys(allQuotes).length,
+      quotes: Object.fromEntries(
+        Object.entries(allQuotes).sort((a, b) => a[0].localeCompare(b[0]))
+      )
+    };
+
     fs.writeFileSync(
-      path.join(NORMALIZED_DIR, `fx_pairs_${timestamp}.json`),
-      JSON.stringify({ source: 'Chainlink (Currency Pairs)', fetchedAt: new Date().toISOString(), pairs }, null, 2)
+      path.join(NORMALIZED_DIR, `chainlink_normalized_${timestamp}.json`),
+      JSON.stringify(normalizedResult, null, 2)
     );
 
-    // 2️⃣ Base USD feed
-    const baseUSD = convertToUSDBase(pairs);
-    fs.writeFileSync(
-      path.join(NORMALIZED_DIR, PATHS.CHAINLINK_ALL + `_${timestamp}.json`),
-      JSON.stringify({ 
-        source: 'Chainlink (USD)', 
-        base: 'USD', 
-        date: new Date().toISOString().split('T')[0], 
-        fetchedAt: new Date().toISOString(), 
-        rates: baseUSD 
-      }, null, 2)
-    );
+    console.log(`✅ Chainlink complete. Enriched total: ${enrichedFeeds.length}`);
+    console.log(`✅ Normalized quotes: ${Object.keys(allQuotes).length}`);
 
-    console.log(`✅ Chainlink complete. Enriched: ${enrichedFeeds.length}, USD Rates: ${Object.keys(baseUSD).length}`);
     return true;
   } catch (error: any) {
     console.error('❌ Chainlink fatal error:', error.message);

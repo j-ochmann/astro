@@ -1,0 +1,275 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+import { PATHS } from '../../../scripts/fetch/fetch.config.ts'; 
+import { getI18nPaths } from '@/content/config/i18n';
+
+export async function getStaticPaths() {
+  return getI18nPaths();
+}
+
+const { lang } = Astro.params;
+const RAW_DIR = path.join(process.cwd(), PATHS.RAW, PATHS.CHAINLINK_ALL);
+
+let rawData = [];
+let latestFile = "";
+let humanTimestamp = "No data";
+
+try {
+  if (fs.existsSync(RAW_DIR)) {
+    const files = fs.readdirSync(RAW_DIR).filter(f => f.startsWith('chainlink_full_'));
+    latestFile = files.sort().reverse()[0];
+    
+    if (latestFile) {
+      rawData = JSON.parse(fs.readFileSync(path.join(RAW_DIR, latestFile), 'utf-8'));
+      
+      // OPRAVA PARSOVÁNÍ DATUMU: chainlink_full_2026-02-21T01-54-46.511Z.json
+      const timeMatch = latestFile.match(/(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})/);
+      if (timeMatch) {
+        // Převedeme pomlčky v čase na dvojtečky pro validní ISO formát
+        const isoString = timeMatch[1].replace(/-/g, (match, offset) => (offset > 10 ? ':' : '-')) + '.000Z';
+        const dateObj = new Date(isoString);
+        
+        if (!isNaN(dateObj.getTime())) {
+          humanTimestamp = dateObj.toLocaleString(lang === 'cs' ? 'cs-CZ' : 'en-US', {
+            dateStyle: 'medium',
+            timeStyle: 'medium'
+          });
+        }
+      }
+    }
+  }
+} catch (e) {
+  console.error("Error reading Chainlink RAW files:", e);
+}
+
+const feeds = rawData.map((f: any) => ({
+  name: f.name.trim(),
+  searchName: f.name.toLowerCase().replace(/\s+/g, ''),
+  category: f.feedCategory || 'Other',
+  price: f.liveData?.realPrice || 0,
+  decimals: f.liveData?.decimals || 0,
+  updatedAt: f.liveData?.updatedAt ? new Date(f.liveData.updatedAt) : null,
+  roundId: f.liveData?.roundId || 'N/A',
+  address: f.proxyAddress || f.contractAddress
+})).sort((a: any, b: any) => a.name.localeCompare(b.name));
+---
+
+<StarlightPage frontmatter={{ title: "Chainlink Oracle Explorer", tableOfContents: false }}>
+  
+  <div class="explorer-relative-wrapper">
+    <div class="glow-container">
+      <div class="glow-circle"></div>
+      <div class="glow-circle secondary"></div>
+    </div>
+
+    <div class="explorer-container">
+      <header class="stats-bar">
+        <div class="stat-card">
+          <span class="label">Total Feeds</span>
+          <span class="value">{feeds.length}</span>
+        </div>
+        <div class="stat-card">
+          <span class="label">Last Sync</span>
+          <span class="value">{humanTimestamp}</span>
+        </div>
+      </header>
+
+      <div class="search-box">
+        <input 
+          type="text" 
+          id="oracleSearch" 
+          placeholder={lang === 'cs' ? "Vyhledat pár (např. BTC/USD)..." : "Search pair (e.g. BTC/USD)..."}
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="table-wrapper">
+        <table class="cl-table" id="oracleTable">
+          <thead>
+            <tr>
+              <th>Pair</th>
+              <th>Category</th>
+              <th>Latest Price</th>
+              <th>Last Update</th>
+              <th class="mobile-hide">Round ID</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {feeds.map((feed: any) => {
+              const isStale = feed.updatedAt && (Date.now() - feed.updatedAt.getTime() > 3600000 * 24); 
+              const safeMax = Math.max(0, Math.min(20, feed.decimals));
+              const safeMin = Math.min(2, safeMax);
+
+              return (
+                <tr data-name={feed.searchName}>
+                  <td>
+                    <div class="pair-info">
+                      <span class="pair-name">{feed.name}</span>
+                      <span class="pair-address">{feed.address?.slice(0, 10)}...</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class={`badge cat-${feed.category.toLowerCase().replace(/\s+/g, '-')}`}>
+                      {feed.category}
+                    </span>
+                  </td>
+                  <td class="price-cell">
+                    {feed.price > 0 
+                      ? feed.price.toLocaleString(lang === 'cs' ? 'cs-CZ' : 'en-US', { 
+                          minimumFractionDigits: safeMin, 
+                          maximumFractionDigits: safeMax 
+                        }) 
+                      : <span class="no-data">No Data</span>
+                    }
+                  </td>
+                  <td class="time-cell">
+                    {feed.updatedAt ? feed.updatedAt.toLocaleTimeString(lang === 'cs' ? 'cs-CZ' : 'en-US') : 'N/A'}
+                  </td>
+                  <td class="mobile-hide font-mono text-xs opacity-50">{feed.roundId}</td>
+                  <td>
+                    <div class={`status-dot ${feed.price > 0 ? (isStale ? 'stale' : 'active') : 'inactive'}`}></div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</StarlightPage>
+
+<script>
+  // Search logika
+  const searchInput = document.getElementById('oracleSearch') as HTMLInputElement;
+  const tableRows = document.querySelectorAll('#oracleTable tbody tr');
+
+  searchInput?.addEventListener('input', (e) => {
+    const term = (e.target as HTMLInputElement).value.toLowerCase().replace(/\s+/g, '');
+    tableRows.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      (row as HTMLElement).style.display = name.includes(term) ? '' : 'none';
+    });
+  });
+</script>
+
+<style>
+  .explorer-relative-wrapper {
+    position: relative;
+    width: 100%;
+    min-height: 80vh;
+  }
+
+  /* Glow animace - výraznější */
+  .glow-container {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glow-circle {
+    position: absolute;
+    top: -10%; left: 10%;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(var(--sl-color-accent-rgb), 0.2) 0%, transparent 70%);
+    filter: blur(80px);
+    animation: drift 20s infinite alternate ease-in-out;
+  }
+
+  .glow-circle.secondary {
+    top: 30%; left: 50%;
+    animation-delay: -7s;
+    background: radial-gradient(circle, rgba(var(--sl-color-accent-rgb), 0.12) 0%, transparent 70%);
+  }
+
+  @keyframes drift {
+    from { transform: translate(-5%, -5%) scale(1); }
+    to { transform: translate(10%, 10%) scale(1.2); }
+  }
+
+  .explorer-container { position: relative; z-index: 1; }
+
+  /* Karty statistik */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--sl-color-bg-nav);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--sl-color-gray-5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 110px; /* Sjednocená výška */
+  }
+
+  .stat-card .label { font-size: 0.85rem; color: var(--sl-color-gray-3); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
+
+  /* Vyhledávání */
+  .search-box { margin-bottom: 1.5rem; }
+  .search-box input {
+    width: 100%;
+    background: var(--sl-color-bg-nav);
+    border: 1px solid var(--sl-color-gray-5);
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    color: white;
+    font-size: 1rem;
+    transition: all 0.2s;
+  }
+  .search-box input:focus {
+    outline: none;
+    border-color: var(--sl-color-accent);
+    box-shadow: 0 0 15px rgba(var(--sl-color-accent-rgb), 0.2);
+  }
+
+  /* Design tabulky */
+  .table-wrapper {
+    background: rgba(var(--sl-color-bg-nav-rgb), 0.6);
+    backdrop-filter: blur(16px);
+    border-radius: 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    overflow: hidden;
+  }
+
+  .cl-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .cl-table th {
+    text-align: left;
+    padding: 1.2rem 1rem;
+    background: rgba(var(--sl-color-gray-6), 0.3);
+    border-bottom: 1px solid var(--sl-color-gray-5);
+    color: var(--sl-color-gray-2);
+  }
+  .cl-table td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); }
+  .cl-table tr:hover { background: rgba(var(--sl-color-accent-rgb), 0.05); }
+
+  .pair-name { font-weight: bold; color: var(--sl-color-accent-high); display: block; }
+  .pair-address { font-size: 0.75rem; opacity: 0.4; font-family: monospace; }
+
+  .badge {
+    font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 6px;
+    font-weight: bold; background: var(--sl-color-gray-5);
+  }
+  .cat-crypto { color: #60a5fa; background: rgba(96, 165, 250, 0.1); border: 1px solid rgba(96, 165, 250, 0.2); }
+  .cat-forex { color: #34d399; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2); }
+
+  .price-cell { font-family: 'JetBrains Mono', monospace; font-weight: bold; }
+
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; margin: 0 auto; }
+  .status-dot.active { background: #10b981; box-shadow: 0 0 12px #10b981; }
+  .status-dot.stale { background: #f59e0b; }
+  .status-dot.inactive { background: #ef4444; }
+
+  @media (max-width: 768px) { .mobile-hide { display: none; } }
+</style>

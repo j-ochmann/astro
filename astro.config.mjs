@@ -122,7 +122,19 @@ export default defineConfig({
         { 
           label: 'Market', 
           translations: { cs: 'Trh' },
-          link: '/market/' 
+          collapsed: true,
+          items: [
+            { 
+              label: 'Chainlink', 
+              //translations: { cs: 'Chainlink' },
+              link: '/market/chainlink' 
+            },
+            { 
+              label: 'Pyth', 
+              //translations: { cs: 'Pyth' },
+              link: '/market/pyth' 
+            },
+          ]
         },
         { 
           label: 'Geo',
