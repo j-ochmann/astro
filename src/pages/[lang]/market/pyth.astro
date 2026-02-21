@@ -1,5 +1,6 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PATHS } from '../../../scripts/fetch/fetch.config.ts'; 
@@ -9,7 +10,7 @@ export async function getStaticPaths() {
   return getI18nPaths();
 }
 
-interface PythFeed {
+interface FeedItem {
   id: string;
   name: string;
   description: string;
@@ -26,10 +27,10 @@ interface PythFeed {
 const { lang } = Astro.params;
 const RAW_DIR = path.join(process.cwd(), PATHS.RAW, PATHS.PYTH_ALL);
 
-let rawData = [];
+let rawData: any[] = [];
 if (fs.existsSync(RAW_DIR)) {
   try {
-    const files = fs.readdirSync(RAW_DIR).filter(f => f.startsWith('pyth_full_'));
+    const files = fs.readdirSync(RAW_DIR).filter((f: string) => f.startsWith('pyth_full_'));
     const latestFile = files.sort().reverse()[0];
     if (latestFile) {
       rawData = JSON.parse(fs.readFileSync(path.join(RAW_DIR, latestFile), 'utf-8'));
@@ -38,318 +39,138 @@ if (fs.existsSync(RAW_DIR)) {
 }
 
 const NOW_TS = Math.floor(Date.now() / 1000);
-const ONE_HOUR = 3600;
-
-const allFeeds: PythFeed[] = rawData.map((f: any) => {
+const allFeeds: FeedItem[] = rawData.map((f: any): FeedItem => {
   const live = f.live_data?.price || { price: "0", conf: "0", expo: 0, publish_time: 0 };
   const fullId = f.id.startsWith('0x') ? f.id : `0x${f.id}`;
   const priceVal = parseFloat(live.price);
   const upAt = live.publish_time;
-  const isActive = priceVal > 0 && (NOW_TS - upAt < ONE_HOUR);
-
   return {
     id: fullId,
     name: f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown',
-    description: f.attributes?.description || f.attributes?.symbol || '',
+    description: f.attributes?.description || '',
     searchStr: `${f.attributes?.symbol} ${f.attributes?.description}`.toLowerCase(),
     price: priceVal,
     conf: parseFloat(live.conf),
     expo: live.expo,
     updatedAt: upAt,
     category: f.attributes?.asset_type || 'Other',
-    isActive,
+    isActive: priceVal > 0 && (NOW_TS - upAt < 3600),
     detailUrl: `/${lang}/market/pyth/${fullId}`
   };
-}).sort((a: PythFeed, b: PythFeed) => a.name.localeCompare(b.name));
+}).sort((a: FeedItem, b: FeedItem) => a.name.localeCompare(b.name));
 
-const activeTotal = allFeeds.filter(f => f.isActive).length;
-const catStats = allFeeds.reduce((acc: Record<string, number>, f) => {
-  if (!acc[f.category]) acc[f.category] = 0;
-  if (f.isActive) acc[f.category]++;
+const catStats = allFeeds.reduce((acc: Record<string, number>, f: FeedItem) => {
+  acc[f.category] = (acc[f.category] || 0) + (f.isActive ? 1 : 0);
   return acc;
 }, {});
 
-const categoryList = Object.keys(catStats).sort();
+const activeTotal = allFeeds.filter((f: FeedItem) => f.isActive).length;
+
+const categoryOptions = [
+  { label: 'All Assets', value: 'All', count: activeTotal },
+  ...Object.keys(catStats).sort().map((cat: string) => ({
+    label: cat.replace('Crypto Redemption Rate', 'Crypto RR'),
+    value: cat,
+    count: catStats[cat]
+  }))
+];
 ---
 
-<StarlightPage frontmatter={{ title: "Explorer", tableOfContents: false }}>
-  <div class="explorer-container">
+<StarlightPage frontmatter={{ title: "Pyth Explorer", tableOfContents: false }}>
+  <div class="explorer-visual-context">
     <div class="wormhole-background" aria-hidden="true">
-        <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="ray-gradient-pyth" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="10%" stop-color="#9d7cfd" stop-opacity="0" />
-                <stop offset="50%" stop-color="#9d7cfd" stop-opacity="0.15" />
-                <stop offset="90%" stop-color="#9d7cfd" stop-opacity="0" />
-              </linearGradient>
-            </defs>
-            <g transform="translate(850, 250)">
-              <g>
-                <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="240s" repeatCount="indefinite" />
-                {Array.from({ length: 65 }).map((_, i) => (
-                  <rect key={i} x="-1" y="100" width="1" height="1000" fill="url(#ray-gradient-pyth)" transform={`rotate(${(360 / 65) * i})`} />
-                ))}
-              </g>
-            </g>
-          </svg>
+      <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ray-gradient-pyth" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="10%" stop-color="#9d7cfd" stop-opacity="0" />
+            <stop offset="50%" stop-color="#9d7cfd" stop-opacity="0.15" />
+            <stop offset="90%" stop-color="#9d7cfd" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <g transform="translate(850, 250)">
+          <g>
+            <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="240s" repeatCount="indefinite" />
+            {Array.from({ length: 65 }).map((_, i) => (
+              <rect x="-1" y="100" width="1" height="1000" fill="url(#ray-gradient-pyth)" transform={`rotate(${(360 / 65) * i})`} />
+            ))}
+          </g>
+        </g>
+      </svg>
     </div>
 
-    <div class="top-bar">
-      <div class="search-wrapper glass-panel">
-          <input type="text" id="oracleSearch" placeholder="Search symbol or description..." autocomplete="off" />
+    <div class="explorer-content">
+      <SearchFilterBar 
+          searchPlaceholder="Search symbol or description..." 
+          filterLabel="Asset Classes"
+          filterOptions={categoryOptions}
+          viewLabel="View"
+          downloadLabel="Export"
+      />
+
+      <div class="table-container glass-panel">
+        <table id="oracleTable">
+          <thead>
+            <tr>
+              <th style="padding-left: 1.5rem; width: 150px">Symbol</th>
+              <th>Description</th>
+              <th style="width: 140px">Price</th>
+              <th class="text-center" style="width: 80px">Live</th>
+              <th style="width: 140px">Confidence</th>
+              <th style="text-align: right; padding-right: 1.5rem; width: 120px">Time</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
       </div>
-
-      <div class="action-group">
-          <div class="dropdown">
-              <button class="glass-btn" id="catBtn">
-                  Asset Classes <span class="badge">{activeTotal}</span>
-              </button>
-              <div class="dropdown-content glass-panel" id="catMenu">
-                  <button class="cat-item active" data-cat="All">All <span>{activeTotal}</span></button>
-                  {categoryList.map(cat => (
-                      <button key={cat} class="cat-item" data-cat={cat}>
-                          {cat === 'Crypto Redemption Rate' ? 'Crypto RR' : cat}
-                          <span>{catStats[cat]}</span>
-                      </button>
-                  ))}
-              </div>
-          </div>
-
-          <div class="dropdown">
-              <button class="glass-btn icon-btn" id="dlBtn">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              </button>
-              <div class="dropdown-content glass-panel dl-menu" id="dlMenu">
-                  <button onclick="exportData('json')">JSON</button>
-                  <button onclick="exportData('csv')">CSV</button>
-                  <button onclick="exportData('xml')">XML</button>
-              </div>
-          </div>
-      </div>
-    </div>
-
-    <div class="table-wrapper glass-panel">
-      <table id="oracleTable">
-        <thead>
-          <tr>
-            <th style="padding-left: 1.5rem; width: 15%">Symbol</th>
-            <th style="width: 25%">Description</th>
-            <th style="width: 15%">Price</th>
-            <th class="text-center" style="width: 8%">Live</th>
-            <th style="width: 15%">Confidence</th>
-            <th style="text-align: right; padding-right: 1.5rem; width: 12%">Time</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
     </div>
   </div>
 </StarlightPage>
 
 <script is:inline define:vars={{ allFeeds }}>
-  let currentCat = 'All';
-  let searchTerm = '';
-  const body = document.getElementById('tableBody');
-  const visibleIds = new Set();
-  
-  const toggleDrop = (id) => {
-    const el = document.getElementById(id);
-    const isShowing = el.classList.contains('show');
-    document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
-    if (!isShowing) el.classList.add('show');
-  };
-
-  document.getElementById('catBtn').onclick = (e) => { e.stopPropagation(); toggleDrop('catMenu'); };
-  document.getElementById('dlBtn').onclick = (e) => { e.stopPropagation(); toggleDrop('dlMenu'); };
-  window.onclick = () => document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      const id = e.target.dataset.id;
-      if (e.isIntersecting) visibleIds.add(id);
-      else visibleIds.delete(id);
-    });
-  }, { threshold: 0.1 });
-
-  const formatTime = (ts) => ts ? new Date(ts * 1000).toLocaleTimeString('en-GB', { hour12: false }) : 'N/A';
-
-  const getStatusData = (ts) => {
-    if (!ts) return { color: '#ef4444', glow: 'none' };
-    const age = Math.floor(Date.now() / 1000) - ts;
-    if (age < 30) return { color: '#10b981', glow: '0 0 10px #10b981' };
-    if (age < 120) return { color: '#f59e0b', glow: '0 0 10px #f59e0b' };
-    return { color: '#ef4444', glow: 'none' };
-  };
-
-  function renderTable() {
-    visibleIds.clear();
-    const filtered = allFeeds.filter(f => {
-      const matchCat = currentCat === 'All' || f.category === currentCat;
-      const matchSearch = f.searchStr.includes(searchTerm);
-      return matchCat && matchSearch;
-    });
-
-    body.innerHTML = filtered.map(f => {
-        const status = getStatusData(f.updatedAt);
-        return `
-          <tr data-id="${f.id}">
-            <td style="padding-left: 1.5rem;"><a href="${f.detailUrl}" class="pair-link">${f.name}</a></td>
-            <td class="small opacity-70">${f.description}</td>
-            <td class="js-price font-mono">${f.price > 0 ? (f.price * Math.pow(10, f.expo)).toLocaleString(undefined, {maximumFractionDigits: 8}) : '0.00'}</td>
-            <td class="text-center"><div class="status-dot js-status" style="background:${status.color}; box-shadow: ${status.glow}"></div></td>
-            <td class="js-conf font-mono opacity-70">${f.conf > 0 ? (f.conf * Math.pow(10, f.expo)).toLocaleString(undefined, {maximumFractionDigits: 8}) : '0.00'}</td>
-            <td class="js-time small font-mono" style="text-align: right; padding-right: 1.5rem;">${formatTime(f.updatedAt)}</td>
-          </tr>
-        `;
-    }).join('');
-    body.querySelectorAll('tr').forEach(tr => observer.observe(tr));
-  }
-
-  document.querySelectorAll('.cat-item').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.cat-item').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentCat = btn.dataset.cat;
-      renderTable();
-    };
-  });
-
-  document.getElementById('oracleSearch').oninput = (e) => { searchTerm = e.target.value.toLowerCase(); renderTable(); };
-
-  async function refresh() {
-    if (visibleIds.size === 0) return;
-    const ids = Array.from(visibleIds).slice(0, 40);
-    const query = ids.map(id => `ids[]=${id}`).join('&');
-    try {
-      const res = await fetch(`https://hermes.pyth.network/v2/updates/price/latest?${query}&parsed=true`);
-      const data = await res.json();
-      data.parsed?.forEach(item => {
-        const id = item.id.startsWith('0x') ? item.id : '0x' + item.id;
-        const row = body.querySelector(`tr[data-id="${id}"]`);
-        if (row) {
-          const status = getStatusData(item.price.publish_time);
-          const dot = row.querySelector('.js-status');
-          const pCell = row.querySelector('.js-price');
-          const cCell = row.querySelector('.js-conf');
-          const tCell = row.querySelector('.js-time');
-          
-          const newP = (item.price.price * Math.pow(10, item.price.expo)).toLocaleString(undefined, {maximumFractionDigits: 8});
-          if (pCell.innerText !== newP) { 
-            pCell.innerText = newP; 
-            pCell.classList.add('price-flash'); 
-            setTimeout(() => pCell.classList.remove('price-flash'), 1000); 
-          }
-          if (cCell) cCell.innerText = (item.price.conf * Math.pow(10, item.price.expo)).toLocaleString(undefined, {maximumFractionDigits: 8});
-          if (tCell) tCell.innerText = formatTime(item.price.publish_time);
-          if (dot) {
-            dot.style.background = status.color;
-            dot.style.boxShadow = status.glow;
-          }
-        }
-      });
-    } catch (e) {}
-  }
-
-  window.exportData = (type) => {
-    const data = allFeeds.filter(f => (currentCat === 'All' || f.category === currentCat) && f.searchStr.includes(searchTerm));
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `pyth_export.${type}`; a.click();
-  };
-
-  renderTable();
-  setInterval(refresh, 3000);
+  import { initExplorer } from '/src/scripts/pyth-explorer.js';
+  initExplorer(allFeeds);
 </script>
 
 <style is:global>
-  .main-frame { background: transparent !important; }
-  .content-panel { padding: 0 !important; max-width: 100% !important; }
-  .sl-container { max-width: 100% !important; margin: 0 !important; }
+  /* Reset Starlight */
+  .main-frame, .content-panel, .sl-container { 
+    max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; 
+  }
   header.header, h1 { display: none !important; }
   
-  .price-flash { animation: flash 1s ease-out; }
-  @keyframes flash { 0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; } 100% { inherit; } }
+  /* Reset pro zarovnání */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  @keyframes flash-price {
+    0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; }
+    100% { color: inherit; text-shadow: none; }
+  }
+  .price-flash { animation: flash-price 1s ease-out; }
 </style>
 
 <style>
-  .explorer-container { position: relative; padding: 2rem; min-height: 100vh; }
+  .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
 
-  /* Adaptivní Glassmorphism (Light/Dark) */
-  .glass-panel { 
-    background: var(--sl-color-bg-nav) !important;
-    backdrop-filter: blur(25px) saturate(160%); 
+  .glass-panel {
+    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
+    backdrop-filter: blur(30px) !important;
     border: 1px solid var(--sl-color-gray-5) !important;
-    opacity: 0.95;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .table-container { border-radius: 0.75rem; overflow: hidden; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  th { 
+    background: rgba(157, 124, 253, 0.1); 
+    padding: 1rem; 
+    text-align: left; 
+    color: #9d7cfd; 
+    border-bottom: 2px solid var(--sl-color-gray-5); 
+    font-size: 0.8rem; 
+    text-transform: uppercase; 
   }
   
-  /* Top Bar Zarovnání */
-  .top-bar { 
-    display: flex; 
-    align-items: stretch; /* Důležité pro stejnou výšku */
-    gap: 0.75rem; 
-    margin-bottom: 1.5rem; 
-    height: 46px;
-  }
-  
-  .search-wrapper { flex: 1; border-radius: 0.5rem; display: flex; align-items: center; padding: 0 1rem; }
-  #oracleSearch { background: transparent; border: none; color: var(--sl-color-white); width: 100%; height: 100%; outline: none; }
-
-  .action-group { display: flex; gap: 0.75rem; }
-  .dropdown { position: relative; height: 100%; }
-
-  .glass-btn { 
-    background: var(--sl-color-gray-6) !important; 
-    border: 1px solid var(--sl-color-gray-5) !important; 
-    color: var(--sl-color-white); 
-    padding: 0 1.25rem; 
-    border-radius: 0.5rem; 
-    cursor: pointer; 
-    height: 100%; 
-    display: flex; 
-    align-items: center; 
-    gap: 0.75rem; 
-    font-weight: 600;
-    transition: all 0.2s;
-  }
-  .glass-btn:hover { border-color: var(--sl-color-accent-high) !important; background: var(--sl-color-gray-5) !important; }
-  .badge { background: var(--sl-color-accent-high); color: white; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
-  .icon-btn { padding: 0 1rem; }
-
-  .dropdown-content { 
-    display: none; position: absolute; top: 54px; right: 0; 
-    min-width: 240px; z-index: 100; border-radius: 0.75rem; padding: 0.5rem;
-    box-shadow: var(--sl-shadow-lg);
-  }
-  .dropdown-content.show { display: block; animation: slideIn 0.2s ease-out; }
-  @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-  
-  .cat-item, .dropdown-content button { 
-    width: 100%; text-align: left; background: transparent; border: none; 
-    color: var(--sl-color-gray-2); padding: 0.75rem 1rem; border-radius: 0.5rem; 
-    cursor: pointer; display: flex; justify-content: space-between; font-size: 0.9rem;
-  }
-  .cat-item:hover, .dropdown-content button:hover { background: var(--sl-color-accent-low); color: var(--sl-color-white); }
-  .cat-item.active { background: var(--sl-color-accent-low); color: var(--sl-color-accent-high); font-weight: bold; }
-  .cat-item span { opacity: 0.6; font-family: monospace; }
-
-  /* Table */
-  .table-wrapper { border-radius: 0.75rem; overflow: hidden; }
-  table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
-  th, td { padding: 1.1rem 1rem; text-align: left; border-bottom: 1px solid var(--sl-color-gray-6); }
-  th { font-size: 0.75rem; color: var(--sl-color-accent-high); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; background: var(--sl-color-gray-6); }
-  
-  /* Linky bez podtržení */
-  .pair-link { 
-    color: var(--sl-color-accent-high) !important; 
-    font-weight: 700; 
-    text-decoration: none !important; 
-    border: none !important;
-  }
-  .pair-link:hover { color: var(--sl-color-accent) !important; text-decoration: none !important; }
-
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; transition: all 0.4s; }
-  .font-mono { font-family: 'JetBrains Mono', 'Roboto Mono', monospace; font-size: 0.85rem; }
-  .small { font-size: 0.8rem; }
   .text-center { text-align: center; }
 
   @media (max-width: 1000px) {

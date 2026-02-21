@@ -24,3 +24,9 @@ interface Props extends StarlightRouteData {}
     <DefaultSidebar {...Astro.props} />
   </div>
 </div>
+
+<style is:global>
+  .sidebar-pane {
+    border-right: 1px solid var(--sl-color-hairline);
+  }
+</style>

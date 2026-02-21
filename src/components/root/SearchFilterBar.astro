@@ -1,0 +1,199 @@
+---
+// src/components/root/SearchFilterBar.astro
+import { Icon } from '@astrojs/starlight/components';
+
+interface FilterOption {
+  label: string;
+  value: string;
+  count?: number;
+}
+
+interface Props {
+  searchPlaceholder?: string;
+  filterLabel?: string;
+  filterOptions?: FilterOption[];
+  viewLabel?: string;
+  downloadLabel?: string;
+}
+
+const { 
+  searchPlaceholder = "Search...", 
+  filterLabel = "Filters",
+  filterOptions = [],
+  viewLabel = "View",
+  downloadLabel = "Download"
+} = Astro.props;
+---
+
+<div class="controls-row">
+  <div class="search-icon-inside"><Icon name="magnifier" size="1.1rem" /></div>
+  <input
+    type="text"
+    id="searchTab"
+    class="glass-panel"
+    placeholder={searchPlaceholder}
+    autocomplete="off"
+  />
+
+  <div class="export-group">
+    {filterOptions.length > 0 && (
+      <div class="dropdown">
+        <button class="glass-btn" id="catBtn">
+          <Icon name="setting" size="1.1rem" />
+          <span class="btn-text">{filterLabel}</span>
+          <span class="badge-count" id="activeFilterCount">0</span>
+        </button>
+        <div class="dropdown-content glass-panel" id="catMenu">
+          {filterOptions.map(opt => (
+            <button class="cat-item" data-cat={opt.value}>
+              {opt.label}
+              {opt.count !== undefined && <span class="badge-cat">{opt.count}</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <div class="dropdown">
+      <button class="glass-btn" id="viewBtn">
+        <Icon name="list-format" size="1.1rem" />
+        <span class="btn-text">{viewLabel}</span>
+      </button>
+      <div class="dropdown-content glass-panel" id="viewMenu">
+        <button class="view-item active" data-view="table">Table</button>
+        <button class="view-item" data-view="grid">Grid</button>
+      </div>
+    </div>
+
+    <div class="dropdown">
+      <button class="glass-btn icon-only" id="dlBtn" title={downloadLabel}>
+        <Icon name="download" size="1.1rem" />
+      </button>
+      <div class="dropdown-content glass-panel dl-menu" id="dlMenu">
+        <button onclick="window.exportData('json')">JSON Export</button>
+        <button onclick="window.exportData('csv')">CSV Export</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* TOTÁLNÍ RESET PRO CELOU KOMPONENTU */
+  .controls-row, 
+  .controls-row *, 
+  .controls-row *::before, 
+  .controls-row *::after {
+    box-sizing: border-box !important;
+    margin: 0 !important; /* Vymaže skryté marginy Starlightu */
+    vertical-align: baseline !important;
+  }
+
+  .controls-row {
+    display: flex;
+    gap: 1rem;
+    height: 44px;
+    margin-bottom: 2rem !important; /* Tohle je jediný margin, který chceme */
+    align-items: stretch;
+    width: 100%;
+    position: relative;
+  }
+
+  .search-icon-inside {
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    z-index: 10;
+    color: var(--sl-color-gray-3);
+  }
+
+  .glass-panel {
+    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
+    backdrop-filter: blur(30px) !important;
+    border: 1px solid var(--sl-color-gray-5) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border-radius: 0.5rem;
+  }
+
+  #searchTab {
+    flex: 1;
+    padding: 0 1rem 0 3rem !important;
+    color: var(--sl-color-white) !important;
+    height: 100% !important;
+    outline: none !important;
+    font-size: 0.9rem;
+    box-shadow: none !important;
+    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
+  }
+
+  .export-group {
+    display: flex;
+    gap: 0.5rem;
+    height: 100%;
+    align-items: stretch; /* Klíčové pro srovnání tlačítek */
+  }
+
+  .dropdown {
+    position: relative;
+    height: 100%;
+    display: flex; /* Zajistí, že tlačítko uvnitř dropdownu poslechne stretch */
+    align-items: stretch;
+  }
+
+  .glass-btn {
+    background: rgba(var(--sl-color-accent-rgb), 0.2) !important;
+    backdrop-filter: blur(30px) !important;
+    border: 1px solid var(--sl-color-gray-5) !important;
+    color: var(--sl-color-white) !important;
+    padding: 0 1.25rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: bold;
+    height: 100% !important; /* Vynutí 44px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .icon-only {
+    padding: 0 0.85rem;
+  }
+
+  /* Reset ikon, aby neposouvaly řádek */
+  .glass-btn :global(svg) {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    z-index: 1000;
+  }
+
+  .dropdown-content.show {
+    display: block;
+  }
+
+  .badge-count {
+    background: var(--sl-color-accent-high);
+    padding: 0px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 900px) {
+    .btn-text { display: none; }
+  }
+</style>
