@@ -36,7 +36,6 @@ const feeds = rawData.map((f: any) => {
     expo: live.expo,
     updatedAt: live.publish_time ? new Date(live.publish_time * 1000) : null,
     category: f.attributes?.asset_type || 'Asset',
-    // Cesta na detail pro budoucí použití
     detailUrl: `/${lang}/market/pyth/${fullId}`
   };
 }).sort((a: any, b: any) => a.name.localeCompare(b.name));
@@ -111,7 +110,7 @@ const RAY_COUNT = 65;
                   {f.price > 0 ? (f.price * Math.pow(10, f.expo)).toLocaleString(undefined, { maximumFractionDigits: 8 }) : "0.00"}
                 </td>
                 <td class="td-status">
-                  <div class={`status-dot js-status ${f.price > 0 ? 'active' : 'inactive'}`}></div>
+                  <div class="status-dot js-status" style="background: #ef4444;"></div>
                 </td>
                 <td class="js-update cell-update">{f.updatedAt ? f.updatedAt.toLocaleTimeString() : 'N/A'}</td>
                 <td class="cell-mono opacity-50 small">{f.id.slice(0, 14)}...</td>
@@ -129,14 +128,18 @@ const RAY_COUNT = 65;
   const syncLabel = document.getElementById('stat-sync');
   const visibleIds = new Set();
 
-  // Opravený Observer - reaguje okamžitě při vstupu na obrazovku
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const id = entry.target.getAttribute('data-id');
+      const dot = entry.target.querySelector('.js-status');
       if (entry.isIntersecting) {
         visibleIds.add(id);
       } else {
         visibleIds.delete(id);
+        if (dot) {
+          dot.style.background = '#ef4444';
+          dot.style.boxShadow = 'none';
+        }
       }
     });
   }, { threshold: 0.01, rootMargin: '100px' });
@@ -146,17 +149,21 @@ const RAY_COUNT = 65;
   async function refreshData() {
     if (visibleIds.size === 0) return;
 
-    try {
-      const idsArray = Array.from(visibleIds);
-      const query = idsArray.map(id => `ids[]=${id}`).join('&');
+    const idsArray = Array.from(visibleIds);
+    const chunkSize = 25; 
+    const now = Math.floor(Date.now() / 1000);
+    
+    for (let i = 0; i < idsArray.length; i += chunkSize) {
+      const chunk = idsArray.slice(i, i + chunkSize);
+      const query = chunk.map(id => `ids[]=${id}`).join('&');
       const url = `https://hermes.pyth.network/v2/updates/price/latest?${query}&parsed=true`;
 
-      const response = await fetch(url);
-      if (response.ok) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) continue;
+        
         const data = await response.json();
-        if (data.parsed) {
-          if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString(lang === 'cs' ? 'cs-CZ' : 'en-US');
-          
+        if (data && data.parsed) {
           data.parsed.forEach(item => {
             const normId = item.id.startsWith('0x') ? item.id : '0x' + item.id;
             const row = document.querySelector(`tr[data-id="${normId}"]`);
@@ -167,67 +174,45 @@ const RAY_COUNT = 65;
               
               const val = parseFloat(item.price.price);
               const expo = parseInt(item.price.expo);
-              const newPrice = val * Math.pow(10, expo);
-              const formattedPrice = newPrice.toLocaleString(undefined, { maximumFractionDigits: 8 });
-              
-              if (priceCell.innerText !== formattedPrice && val > 0) {
-                priceCell.innerText = formattedPrice;
-                priceCell.classList.add('price-flash');
-                setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
-              }
+              const pubTime = parseInt(item.price.publish_time);
+              const age = now - pubTime;
 
-              // Oprava mizení - jen přepínáme třídy
-              statusDot.classList.remove('inactive');
-              statusDot.classList.add('active');
-              
-              const date = new Date(item.price.publish_time * 1000);
-              updateCell.innerText = date.toLocaleTimeString();
+              if (val > 0) {
+                const newPrice = val * Math.pow(10, expo);
+                const formattedPrice = newPrice.toLocaleString(undefined, { maximumFractionDigits: 8 });
+
+                // Update ceny a času
+                if (priceCell.innerText !== formattedPrice) {
+                  priceCell.innerText = formattedPrice;
+                  priceCell.classList.add('price-flash');
+                  setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
+                }
+                updateCell.innerText = new Date(pubTime * 1000).toLocaleTimeString();
+
+                // BARVA SVĚTÉLKA PODLE STÁŘÍ DAT
+                if (age < 15) {
+                   // ZELENÁ - Čerstvá data
+                   statusDot.style.background = '#10b981';
+                   statusDot.style.boxShadow = '0 0 10px #10b981';
+                } else if (age < 60) {
+                   // ORANŽOVÁ - Data přišla, ale trh stojí (stale)
+                   statusDot.style.background = '#f59e0b';
+                   statusDot.style.boxShadow = '0 0 10px #f59e0b';
+                } else {
+                   // ČERVENÁ - Data jsou stará víc jak minutu
+                   statusDot.style.background = '#ef4444';
+                   statusDot.style.boxShadow = 'none';
+                }
+              }
             }
           });
         }
-      }
-    } catch (err) { console.error('Pyth update error:', err); }
-  }
-
-  // Interval 3s je pro live data ideální
-  setInterval(refreshData, 3000);
-
-  // Search
-  const searchInput = document.getElementById('oracleSearch');
-  if (searchInput) {
-    searchInput.addEventListener('input', () => {
-      const term = searchInput.value.toLowerCase().replace(/\s+/g, '');
-      document.querySelectorAll('#oracleTable tbody tr').forEach(row => {
-        const isMatch = row.getAttribute('data-name').includes(term);
-        row.style.display = isMatch ? '' : 'none';
-        if (!isMatch) visibleIds.delete(row.getAttribute('data-id'));
-      });
-    });
-  }
-
-  window.exportData = (type) => {
-    const rows = Array.from(document.querySelectorAll('#oracleTable tbody tr:not([style*="none"])'))
-      .map(tr => JSON.parse(tr.getAttribute('data-json')));
-    if (!rows.length) return;
-    
-    let content = '', mime = 'text/plain';
-    if (type === 'json') { content = JSON.stringify(rows, null, 2); mime = 'application/json'; }
-    else if (type === 'csv') {
-      const keys = ['name', 'price', 'id', 'category'];
-      content = [keys.join(','), ...rows.map(r => keys.map(k => `"${r[k]}"`).join(','))].join('\n');
-      mime = 'text/csv';
-    } else if (type === 'xml') {
-      content = '<?xml version="1.0"?><root>' + rows.map(r => '<item>' + Object.entries(r).map(([k,v]) => `<${k}>${v}</${k}>`).join('') + '</item>').join('') + '</root>';
-      mime = 'application/xml';
-    } else if (type === 'yaml') {
-      content = rows.map(r => Object.entries(r).map(([k,v]) => `${k}: ${v}`).join('\n')).join('\n---\n');
+      } catch (err) { console.error('Pyth fetch fail:', err); }
     }
+    if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString();
+  }
 
-    const blob = new Blob([content], { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `pyth_export.${type}`; a.click();
-  };
+  setInterval(refreshData, 3000);
 </script>
 
 <style is:global>
@@ -239,7 +224,7 @@ const RAY_COUNT = 65;
 <style>
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
-  .glass-panel { background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+  .glass-panel { background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; }
   
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
   .stat-card { padding: 1.5rem; border-radius: 0.75rem; min-height: 100px; display: flex; flex-direction: column; justify-content: center; margin-top: 0 !important; }
@@ -250,13 +235,11 @@ const RAY_COUNT = 65;
   #oracleSearch { flex: 1; padding: 0 1rem; border-radius: 0.5rem; color: var(--sl-color-white); height: 100%; outline: none; }
   .export-group { display: flex; gap: 0.5rem; height: 100%; }
   
-  .glass-btn { background: rgba(157, 124, 253, 0.2) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; color: var(--sl-color-white) !important; padding: 0 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.75rem; font-weight: bold; height: 100%; display: flex; align-items: center; margin: 0 !important; transition: all 0.2s ease; }
-  .glass-btn:hover { background: #9d7cfd !important; border-color: #e6dafe !important; }
+  .glass-btn { background: rgba(157, 124, 253, 0.2) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; color: var(--sl-color-white) !important; padding: 0 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.75rem; font-weight: bold; height: 100%; display: flex; align-items: center; margin: 0 !important; }
 
   .table-container { border-radius: 0.75rem; overflow-x: auto; width: 100%; }
-  table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; } /* fixní layout pro roztažení */
+  table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
   
-  /* Nastavení šířek sloupců pro roztažení přes celou tabulku */
   th, td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .th-pair, .td-pair { width: 20%; }
   .th-price, .cell-price { width: 20%; }
@@ -269,21 +252,15 @@ const RAY_COUNT = 65;
   tbody tr { background: rgba(255, 255, 255, 0.01); }
   tbody tr:hover { background: rgba(157, 124, 253, 0.08); }
   
-  .pair-link { color: #9d7cfd !important; font-weight: bold; text-decoration: none; display: block; }
-  .pair-link:hover { text-decoration: underline; }
-  
+  .pair-link { color: #9d7cfd !important; font-weight: bold; text-decoration: none; }
   .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); }
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-  .active { background: #10b981; box-shadow: 0 0 10px #10b981; }
-  .inactive { background: #ef4444; }
   
-  .cell-mono { font-family: 'JetBrains Mono', monospace; }
-  .small { font-size: 0.75rem; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: all 0.3s ease; }
+  
   .badge-cat { font-size: 0.65rem; background: rgba(157, 124, 253, 0.15); border: 1px solid rgba(157, 124, 253, 0.2); padding: 0.2rem 0.5rem; border-radius: 4px; color: #9d7cfd; }
 
   @media (max-width: 1000px) {
-    table { table-layout: auto; } /* Na malých displejích vypneme fixní šířku */
-    .th-address, .cell-mono { display: none; } /* Schováme ID na mobilu */
+    table { table-layout: auto; }
+    .th-address, .cell-mono { display: none; }
   }
-  @media (max-width: 800px) { .stats-grid { grid-template-columns: 1fr; } .controls-row { height: auto; flex-direction: column; } .export-group { flex-wrap: wrap; } }
 </style>
