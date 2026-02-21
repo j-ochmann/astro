@@ -13,7 +13,7 @@ const { lang } = Astro.params;
 const RAW_DIR = path.join(process.cwd(), PATHS.RAW, PATHS.PYTH_ALL);
 
 let rawData = [];
-let humanTimestamp = "Connecting to Pyth...";
+let humanTimestamp = "Initializing Live Data...";
 
 if (fs.existsSync(RAW_DIR)) {
   try {
@@ -27,15 +27,17 @@ if (fs.existsSync(RAW_DIR)) {
 
 const feeds = rawData.map((f: any) => {
   const live = f.live_data?.price || { price: "0", expo: 0, publish_time: 0 };
+  const fullId = f.id.startsWith('0x') ? f.id : `0x${f.id}`;
   return {
-    // Zajištění 0x prefixu pro API
-    id: f.id.startsWith('0x') ? f.id : `0x${f.id}`,
+    id: fullId,
     name: f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown',
     searchName: (f.attributes?.symbol || '').toLowerCase().replace(/\s+/g, ''),
     price: parseFloat(live.price),
     expo: live.expo,
     updatedAt: live.publish_time ? new Date(live.publish_time * 1000) : null,
-    category: f.attributes?.asset_type || 'Asset'
+    category: f.attributes?.asset_type || 'Asset',
+    // Cesta na detail pro budoucí použití
+    detailUrl: `/${lang}/market/pyth/${fullId}`
   };
 }).sort((a: any, b: any) => a.name.localeCompare(b.name));
 
@@ -102,14 +104,18 @@ const RAY_COUNT = 65;
           <tbody>
             {feeds.map((f: any) => (
               <tr data-id={f.id} data-json={JSON.stringify(f)} data-name={f.searchName}>
-                <td class="td-pair"><span class="pair-link">{f.name}</span></td>
+                <td class="td-pair">
+                  <a href={f.detailUrl} class="pair-link">{f.name}</a>
+                </td>
                 <td class="cell-price js-price">
                   {f.price > 0 ? (f.price * Math.pow(10, f.expo)).toLocaleString(undefined, { maximumFractionDigits: 8 }) : "0.00"}
                 </td>
-                <td><div class={`status-dot js-status ${f.price > 0 ? 'active' : 'inactive'}`}></div></td>
-                <td class="js-update">{f.updatedAt ? f.updatedAt.toLocaleTimeString() : 'N/A'}</td>
-                <td class="cell-mono opacity-50">{f.id.slice(0, 12)}...</td>
-                <td><span class="badge-cat">{f.category}</span></td>
+                <td class="td-status">
+                  <div class={`status-dot js-status ${f.price > 0 ? 'active' : 'inactive'}`}></div>
+                </td>
+                <td class="js-update cell-update">{f.updatedAt ? f.updatedAt.toLocaleTimeString() : 'N/A'}</td>
+                <td class="cell-mono opacity-50 small">{f.id.slice(0, 14)}...</td>
+                <td class="td-cat"><span class="badge-cat">{f.category}</span></td>
               </tr>
             ))}
           </tbody>
@@ -123,7 +129,7 @@ const RAY_COUNT = 65;
   const syncLabel = document.getElementById('stat-sync');
   const visibleIds = new Set();
 
-  // Intersection Observer pro sledování viditelných řádků
+  // Opravený Observer - reaguje okamžitě při vstupu na obrazovku
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const id = entry.target.getAttribute('data-id');
@@ -133,7 +139,7 @@ const RAY_COUNT = 65;
         visibleIds.delete(id);
       }
     });
-  }, { threshold: 0.1 });
+  }, { threshold: 0.01, rootMargin: '100px' });
 
   document.querySelectorAll('#oracleTable tbody tr').forEach(row => observer.observe(row));
 
@@ -170,7 +176,10 @@ const RAY_COUNT = 65;
                 setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
               }
 
-              statusDot.className = 'status-dot active js-status';
+              // Oprava mizení - jen přepínáme třídy
+              statusDot.classList.remove('inactive');
+              statusDot.classList.add('active');
+              
               const date = new Date(item.price.publish_time * 1000);
               updateCell.innerText = date.toLocaleTimeString();
             }
@@ -180,7 +189,7 @@ const RAY_COUNT = 65;
     } catch (err) { console.error('Pyth update error:', err); }
   }
 
-  // Spustit každé 3 sekundy pouze pro viditelná data
+  // Interval 3s je pro live data ideální
   setInterval(refreshData, 3000);
 
   // Search
@@ -231,26 +240,50 @@ const RAY_COUNT = 65;
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
   .glass-panel { background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+  
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
   .stat-card { padding: 1.5rem; border-radius: 0.75rem; min-height: 100px; display: flex; flex-direction: column; justify-content: center; margin-top: 0 !important; }
   .label { font-size: 0.75rem; color: var(--sl-color-gray-3); text-transform: uppercase; margin-bottom: 0.25rem; }
   .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
+  
   .controls-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; height: 44px; align-items: stretch; }
   #oracleSearch { flex: 1; padding: 0 1rem; border-radius: 0.5rem; color: var(--sl-color-white); height: 100%; outline: none; }
   .export-group { display: flex; gap: 0.5rem; height: 100%; }
+  
   .glass-btn { background: rgba(157, 124, 253, 0.2) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; color: var(--sl-color-white) !important; padding: 0 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.75rem; font-weight: bold; height: 100%; display: flex; align-items: center; margin: 0 !important; transition: all 0.2s ease; }
   .glass-btn:hover { background: #9d7cfd !important; border-color: #e6dafe !important; }
-  .table-container { border-radius: 0.75rem; overflow-x: auto; }
-  table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 800px; }
-  th { background: rgba(157, 124, 253, 0.1); padding: 1rem; text-align: left; color: #9d7cfd; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; }
+
+  .table-container { border-radius: 0.75rem; overflow-x: auto; width: 100%; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; } /* fixní layout pro roztažení */
+  
+  /* Nastavení šířek sloupců pro roztažení přes celou tabulku */
+  th, td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .th-pair, .td-pair { width: 20%; }
+  .th-price, .cell-price { width: 20%; }
+  .th-status, .td-status { width: 8%; text-align: center; }
+  .th-update, .cell-update { width: 15%; }
+  .th-address { width: 22%; }
+  .th-cat, .td-cat { width: 15%; text-align: right; }
+
+  th { background: rgba(157, 124, 253, 0.1); text-align: left; color: #9d7cfd; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; }
   tbody tr { background: rgba(255, 255, 255, 0.01); }
   tbody tr:hover { background: rgba(157, 124, 253, 0.08); }
-  td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); color: var(--sl-color-gray-2); }
-  .pair-link { color: #9d7cfd !important; font-weight: bold; }
+  
+  .pair-link { color: #9d7cfd !important; font-weight: bold; text-decoration: none; display: block; }
+  .pair-link:hover { text-decoration: underline; }
+  
   .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); }
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; margin: 0 auto; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .active { background: #10b981; box-shadow: 0 0 10px #10b981; }
   .inactive { background: #ef4444; }
+  
+  .cell-mono { font-family: 'JetBrains Mono', monospace; }
+  .small { font-size: 0.75rem; }
   .badge-cat { font-size: 0.65rem; background: rgba(157, 124, 253, 0.15); border: 1px solid rgba(157, 124, 253, 0.2); padding: 0.2rem 0.5rem; border-radius: 4px; color: #9d7cfd; }
+
+  @media (max-width: 1000px) {
+    table { table-layout: auto; } /* Na malých displejích vypneme fixní šířku */
+    .th-address, .cell-mono { display: none; } /* Schováme ID na mobilu */
+  }
   @media (max-width: 800px) { .stats-grid { grid-template-columns: 1fr; } .controls-row { height: auto; flex-direction: column; } .export-group { flex-wrap: wrap; } }
 </style>
