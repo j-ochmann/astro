@@ -74,12 +74,10 @@ jobs:
       # --- FOR PYTH & CHAINLINK ---
       - name: Fetch Market Data
         run: |
-          npm install -g ts-node typescript
-          ts-node ./src/scripts/fetch/all.ts
+          npx tsx ./src/scripts/fetch/all.ts
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           NASDAQ_API_KEY: ${{ secrets.NASDAQ_API_KEY }}
-          NODE_PATH: .
       # -------------------------------
       - name: Build with Astro
         run: |
