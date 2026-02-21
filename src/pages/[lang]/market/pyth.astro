@@ -10,33 +10,26 @@ export async function getStaticPaths() {
 }
 
 const { lang } = Astro.params;
-const PUBLIC_DATA_PATH = `/raw/pyth/pyth_all/`; 
 const RAW_DIR = path.join(process.cwd(), PATHS.RAW, PATHS.PYTH_ALL);
 
 let rawData = [];
-let latestFile = "";
-let humanTimestamp = "No data";
+let humanTimestamp = "Connecting to Pyth...";
 
-// Ošetření buildu, pokud data neexistují
 if (fs.existsSync(RAW_DIR)) {
   try {
     const files = fs.readdirSync(RAW_DIR).filter(f => f.startsWith('pyth_full_'));
-    latestFile = files.sort().reverse()[0];
+    const latestFile = files.sort().reverse()[0];
     if (latestFile) {
       rawData = JSON.parse(fs.readFileSync(path.join(RAW_DIR, latestFile), 'utf-8'));
-      const parts = latestFile.replace('pyth_full_', '').replace('.json', '').split('T');
-      if (parts.length === 2) {
-        const dateObj = new Date(`${parts[0]}T${parts[1].replace(/-/g, ':')}`);
-        humanTimestamp = !isNaN(dateObj.getTime()) ? dateObj.toLocaleString(lang === 'cs' ? 'cs-CZ' : 'en-US') : "N/A";
-      }
     }
-  } catch (e) { console.error("Build fetch error:", e); }
+  } catch (e) { console.error("Build load error:", e); }
 }
 
 const feeds = rawData.map((f: any) => {
   const live = f.live_data?.price || { price: "0", expo: 0, publish_time: 0 };
   return {
-    id: f.id,
+    // Zajištění 0x prefixu pro API
+    id: f.id.startsWith('0x') ? f.id : `0x${f.id}`,
     name: f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown',
     searchName: (f.attributes?.symbol || '').toLowerCase().replace(/\s+/g, ''),
     price: parseFloat(live.price),
@@ -79,7 +72,7 @@ const RAY_COUNT = 65;
           <span class="value" id="stat-total">{feeds.length}</span>
         </div>
         <div class="stat-card glass-panel">
-          <span class="label">Last Sync</span>
+          <span class="label">Network Status</span>
           <span class="value" id="stat-sync">{humanTimestamp}</span>
         </div>
       </div>
@@ -113,7 +106,7 @@ const RAY_COUNT = 65;
                 <td class="cell-price js-price">
                   {f.price > 0 ? (f.price * Math.pow(10, f.expo)).toLocaleString(undefined, { maximumFractionDigits: 8 }) : "0.00"}
                 </td>
-                <td><div class={`status-dot ${f.price > 0 ? 'active' : 'inactive'}`}></div></td>
+                <td><div class={`status-dot js-status ${f.price > 0 ? 'active' : 'inactive'}`}></div></td>
                 <td class="js-update">{f.updatedAt ? f.updatedAt.toLocaleTimeString() : 'N/A'}</td>
                 <td class="cell-mono opacity-50">{f.id.slice(0, 12)}...</td>
                 <td><span class="badge-cat">{f.category}</span></td>
@@ -126,23 +119,48 @@ const RAY_COUNT = 65;
   </div>
 </StarlightPage>
 
-<script is:inline define:vars={{ latestFile, PUBLIC_DATA_PATH, lang }}>
+<script is:inline define:vars={{ lang }}>
   const syncLabel = document.getElementById('stat-sync');
+  const visibleIds = new Set();
+
+  // Intersection Observer pro sledování viditelných řádků
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const id = entry.target.getAttribute('data-id');
+      if (entry.isIntersecting) {
+        visibleIds.add(id);
+      } else {
+        visibleIds.delete(id);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('#oracleTable tbody tr').forEach(row => observer.observe(row));
 
   async function refreshData() {
-    if (!latestFile) return;
+    if (visibleIds.size === 0) return;
+
     try {
-      const response = await fetch(`${PUBLIC_DATA_PATH}${latestFile}?t=${Date.now()}`);
+      const idsArray = Array.from(visibleIds);
+      const query = idsArray.map(id => `ids[]=${id}`).join('&');
+      const url = `https://hermes.pyth.network/v2/updates/price/latest?${query}&parsed=true`;
+
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        data.forEach(item => {
-          const row = document.querySelector(`tr[data-id="${item.id}"]`);
-          if (row) {
-            const priceCell = row.querySelector('.js-price');
-            const priceObj = item.live_data?.price;
-            if (priceObj) {
-              const val = parseFloat(priceObj.price) || 0;
-              const expo = priceObj.expo || 0;
+        if (data.parsed) {
+          if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString(lang === 'cs' ? 'cs-CZ' : 'en-US');
+          
+          data.parsed.forEach(item => {
+            const normId = item.id.startsWith('0x') ? item.id : '0x' + item.id;
+            const row = document.querySelector(`tr[data-id="${normId}"]`);
+            if (row) {
+              const priceCell = row.querySelector('.js-price');
+              const statusDot = row.querySelector('.js-status');
+              const updateCell = row.querySelector('.js-update');
+              
+              const val = parseFloat(item.price.price);
+              const expo = parseInt(item.price.expo);
               const newPrice = val * Math.pow(10, expo);
               const formattedPrice = newPrice.toLocaleString(undefined, { maximumFractionDigits: 8 });
               
@@ -152,26 +170,28 @@ const RAY_COUNT = 65;
                 setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
               }
 
-              if (priceObj.publish_time) {
-                const date = new Date(priceObj.publish_time * 1000);
-                row.querySelector('.js-update').innerText = date.toLocaleTimeString();
-                if (syncLabel) syncLabel.innerText = date.toLocaleString(lang === 'cs' ? 'cs-CZ' : 'en-US');
-              }
+              statusDot.className = 'status-dot active js-status';
+              const date = new Date(item.price.publish_time * 1000);
+              updateCell.innerText = date.toLocaleTimeString();
             }
-          }
-        });
+          });
+        }
       }
     } catch (err) { console.error('Pyth update error:', err); }
   }
 
-  setInterval(refreshData, 5000);
+  // Spustit každé 3 sekundy pouze pro viditelná data
+  setInterval(refreshData, 3000);
 
+  // Search
   const searchInput = document.getElementById('oracleSearch');
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       const term = searchInput.value.toLowerCase().replace(/\s+/g, '');
       document.querySelectorAll('#oracleTable tbody tr').forEach(row => {
-        row.style.display = row.getAttribute('data-name').includes(term) ? '' : 'none';
+        const isMatch = row.getAttribute('data-name').includes(term);
+        row.style.display = isMatch ? '' : 'none';
+        if (!isMatch) visibleIds.delete(row.getAttribute('data-id'));
       });
     });
   }
@@ -208,7 +228,6 @@ const RAY_COUNT = 65;
 </style>
 
 <style>
-  /* Zbytek stylů zůstává stejný jako v předchozí verzi */
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
   .glass-panel { background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
