@@ -1,4 +1,5 @@
 ---
+// src/pages/[lang]/market/pyth.astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
 import fs from 'node:fs';
@@ -30,12 +31,15 @@ if (fs.existsSync(RAW_DIR)) {
 const feeds = rawData.map((f: any) => {
   const live = f.live_data?.price || { price: "0", expo: 0, publish_time: 0 };
   const fullId = f.id.startsWith('0x') ? f.id : `0x${f.id}`;
-  const categoryName = String(f.attributes?.asset_type || 'Asset');
+  const categoryName = f.attributes?.asset_type || 'Asset';
+  const description = f.attributes?.description || '';
+  const symbol = f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown';
   
   return {
     id: fullId,
-    name: String(f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown'),
-    searchName: String(f.attributes?.symbol || '').toLowerCase().replace(/\s+/g, ''),
+    name: symbol,
+    description: description,
+    searchName: `${symbol} ${description}`.toLowerCase(),
     price: parseFloat(live.price),
     expo: live.expo,
     updatedAt: live.publish_time ? new Date(live.publish_time * 1000) : null,
@@ -44,7 +48,6 @@ const feeds = rawData.map((f: any) => {
   };
 }).sort((a: any, b: any) => a.name.localeCompare(b.name));
 
-// Výpočet kategorií včetně počtu prvků (pro badge v komponentě)
 const categories = Array.from(new Set(feeds.map(f => f.category))).map(cat => ({
   label: String(cat),
   value: String(cat).toLowerCase(),
@@ -52,6 +55,13 @@ const categories = Array.from(new Set(feeds.map(f => f.category))).map(cat => ({
 }));
 
 const RAY_COUNT = 65;
+
+const timeOptions: Intl.DateTimeFormatOptions = {
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: false
+};
 ---
 
 <StarlightPage frontmatter={{ title: "Pyth Network Explorer", tableOfContents: false }}>
@@ -90,28 +100,39 @@ const RAY_COUNT = 65;
       </div>
 
       <SearchFilterBar 
-        searchPlaceholder="Search Pyth symbols..." 
+        searchPlaceholder="Search symbol or description..." 
         filterLabel="Asset Type"
         filterOptions={categories}
       />
 
       <div class="table-container explorer-glass">
         <table id="oracleTable">
+          <colgroup>
+            <col style="width: 120px;">
+            <col style="width: auto;">
+            <col style="width: 150px;">
+            <col style="width: 60px;">
+            <col style="width: 140px;">
+            <col style="width: 130px;">
+          </colgroup>
           <thead>
             <tr>
               <th class="th-pair">Symbol</th>
+              <th class="th-desc">Description</th>
               <th class="th-price">Price</th>
               <th class="th-status">Live</th>
               <th class="th-update">Publish Time</th>
-              <th class="th-address">Feed ID</th>
               <th class="th-cat">Type</th>
             </tr>
           </thead>
           <tbody>
             {feeds.map((f: any) => (
-              <tr data-id={f.id} data-category={f.category.toLowerCase()} data-name={f.searchName}>
+              <tr data-id={f.id} data-category={f.category.toLowerCase()} data-search={f.searchName}>
                 <td class="td-pair">
                   <a href={f.detailUrl} class="pair-link">{f.name}</a>
+                </td>
+                <td class="td-desc">
+                  <span class="asset-desc">{f.description}</span>
                 </td>
                 <td class="cell-price js-price">
                   {f.price > 0 ? (f.price * Math.pow(10, f.expo)).toLocaleString(undefined, { maximumFractionDigits: 8 }) : "0.00"}
@@ -119,8 +140,9 @@ const RAY_COUNT = 65;
                 <td class="td-status">
                   <div class="status-dot js-status" style="background: #ef4444;"></div>
                 </td>
-                <td class="js-update cell-update">{f.updatedAt ? f.updatedAt.toLocaleTimeString() : 'N/A'}</td>
-                <td class="cell-mono opacity-50 small">{f.id.slice(0, 14)}...</td>
+                <td class="js-update cell-update">
+                  {f.updatedAt ? f.updatedAt.toLocaleTimeString(lang, timeOptions) : 'N/A'}
+                </td>
                 <td class="td-cat"><span class="badge-row">{f.category}</span></td>
               </tr>
             ))}
@@ -139,40 +161,34 @@ const RAY_COUNT = 65;
   const syncLabel = document.getElementById('stat-sync');
   const searchInput = document.getElementById('searchTab');
   const tableRows = document.querySelectorAll('#oracleTable tbody tr');
-  const activeFilterCountBadge = document.getElementById('activeFilterCount');
   const visibleIds = new Set();
   
   let activeCategory = null;
 
+  const timeOptions = {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  };
+
   function filterTable() {
-    const term = searchInput ? searchInput.value.toLowerCase() : '';
-    let visibleCount = 0;
+    const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
     
     tableRows.forEach(row => {
-      const name = row.getAttribute('data-name') || '';
+      const searchData = row.getAttribute('data-search') || '';
       const category = row.getAttribute('data-category') || '';
-      const matchesSearch = name.includes(term);
+      const matchesSearch = searchData.includes(term);
       const matchesCategory = !activeCategory || category === activeCategory;
       
-      if (matchesSearch && matchesCategory) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
+      row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
     });
-
-    // Aktualizace badge na tlačítku filtru
-    if (activeFilterCountBadge) {
-      activeFilterCountBadge.innerText = activeCategory ? "1" : "0";
-    }
   }
 
   if (searchInput) {
     searchInput.addEventListener('input', filterTable);
   }
 
-  // Logika výběru kategorie
   document.querySelectorAll('.cat-item').forEach(item => {
     item.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -187,24 +203,10 @@ const RAY_COUNT = 65;
         item.classList.add('active');
       }
       filterTable();
-      // Zavřít dropdown po výběru
       item.parentElement.classList.remove('show');
     });
   });
 
-  // Přepínání View (Table/Grid) - UI část
-  document.querySelectorAll('.view-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.stopPropagation();
-      document.querySelectorAll('.view-item').forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-      const view = item.getAttribute('data-view');
-      console.log("Switching to", view);
-      item.parentElement.classList.remove('show');
-    });
-  });
-
-  // Dropdown Toggle
   document.querySelectorAll('.glass-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -221,7 +223,6 @@ const RAY_COUNT = 65;
     document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
   });
 
-  // Live Updates
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const id = entry.target.getAttribute('data-id');
@@ -276,7 +277,8 @@ const RAY_COUNT = 65;
                   priceCell.classList.add('price-flash');
                   setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
                 }
-                updateCell.innerText = new Date(pubTime * 1000).toLocaleTimeString();
+                updateCell.innerText = new Date(pubTime * 1000).toLocaleTimeString(lang, timeOptions);
+                
                 if (age < 15) {
                    statusDot.style.background = '#10b981';
                    statusDot.style.boxShadow = '0 0 10px #10b981';
@@ -293,7 +295,7 @@ const RAY_COUNT = 65;
         }
       } catch (err) { console.error('Pyth fetch fail:', err); }
     }
-    if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString();
+    if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString(lang, timeOptions);
   }
   setInterval(refreshData, 3000);
 </script>
@@ -302,6 +304,14 @@ const RAY_COUNT = 65;
   .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; }
   @keyframes flash-price { 0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; } 100% { color: var(--sl-color-white); text-shadow: none; } }
   .price-flash { animation: flash-price 2s ease-out; }
+
+  /* Striktní reset pro tabulky ve Starlightu */
+  #oracleTable tr { 
+    background-color: rgba(255, 255, 255, 0.02) !important; 
+  }
+  #oracleTable tr:nth-child(any) { 
+    background-color: rgba(255, 255, 255, 0.02) !important; 
+  }
 </style>
 
 <style>
@@ -320,26 +330,32 @@ const RAY_COUNT = 65;
   .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
 
   .table-container { border-radius: 0.75rem; overflow-x: auto; width: 100%; }
-  table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; }
   
-  th, td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .th-pair, .td-pair { width: 20%; }
-  .th-price, .cell-price { width: 20%; }
-  .th-status, .td-status { width: 8%; text-align: center; }
-  .th-update, .cell-update { width: 15%; }
-  .th-address { width: 22%; }
-  .th-cat, .td-cat { width: 15%; text-align: right; }
+  th, td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); vertical-align: middle; }
 
-  th { background: rgba(157, 124, 253, 0.1); text-align: left; color: #9d7cfd; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; }
-  tbody tr { background: rgba(255, 255, 255, 0.01); }
-  tbody tr:hover { background: rgba(157, 124, 253, 0.08); }
+  th { background: rgba(157, 124, 253, 0.1); text-align: left; color: #9d7cfd; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; white-space: nowrap; }
   
-  .pair-link { color: #9d7cfd !important; font-weight: bold; text-decoration: none; }
-  .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); }
+  /* Pevné pozadí řádků */
+  tbody tr { background: rgba(255, 255, 255, 0.02) !important; }
+  tbody tr:hover { background: rgba(157, 124, 253, 0.15) !important; }
   
+  .pair-link { color: #9d7cfd !important; font-weight: bold; text-decoration: none; font-size: 0.95rem; }
+
+  .asset-desc { 
+    font-size: 0.85rem; 
+    color: var(--sl-color-gray-3); 
+    display: block;
+    line-height: 1.4;
+    white-space: normal;
+    word-wrap: break-word;
+    max-width: 400px;
+  }
+
+  .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); white-space: nowrap; }
+  .cell-update { white-space: nowrap; }
   .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: all 0.3s ease; }
   
-  /* Badge v řádku tabulky */
   .badge-row { 
     font-size: 0.65rem; 
     background: rgba(157, 124, 253, 0.1); 
@@ -351,8 +367,10 @@ const RAY_COUNT = 65;
     font-weight: 600;
   }
 
+  .td-status { text-align: center; }
+  .td-cat { text-align: right; }
+
   @media (max-width: 1000px) {
-    table { table-layout: auto; }
-    .th-address, .cell-mono { display: none; }
+    .th-desc, .td-desc { display: none; }
   }
 </style>

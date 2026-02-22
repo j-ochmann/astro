@@ -24,7 +24,8 @@ const {
   downloadLabel = "Download"
 } = Astro.props;
 
-const totalOptions = filterOptions.length;
+const totalTypesCount = filterOptions.length;
+const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0), 0);
 ---
 
 <div class="controls-row">
@@ -38,14 +39,19 @@ const totalOptions = filterOptions.length;
   />
 
   <div class="export-group">
-    {totalOptions > 0 && (
+    {totalTypesCount > 0 && (
       <div class="dropdown">
         <button class="glass-btn glass-panel" id="catBtn">
           <i class="fa-solid fa-layer-group fa-fw"></i>
           <span class="btn-text">{filterLabel}</span>
-          <span class="badge-count">{totalOptions}</span>
+          <span class="badge-count">{totalTypesCount}</span>
         </button>
         <div class="dropdown-content glass-panel" id="catMenu">
+          <button class="cat-item menu-btn active" data-cat="">
+            <span class="item-label">All Assets</span>
+            <span class="badge-cat">{totalItemsSum}</span>
+          </button>
+          <div class="menu-divider"></div>
           {filterOptions.map(opt => (
             <button class="cat-item menu-btn" data-cat={opt.value}>
               <span class="item-label">{opt.label}</span>
@@ -119,29 +125,58 @@ const totalOptions = filterOptions.length;
     font-family: "Font Awesome 6 Free" !important;
     font-weight: 900 !important;
     display: inline-block !important;
-    font-style: normal !important;
   }
 
+  /* --- DARK MODE (Default) --- */
   .glass-panel.glass-panel {
     background: rgba(20, 20, 25, 0.5) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-    border-radius: 0.75rem !important;
     color: #ffffff !important;
+    border-radius: 0.75rem !important;
   }
 
+  .glass-btn i { color: #9d7cfd !important; }
+  .menu-btn { color: rgba(255, 255, 255, 0.7) !important; }
+
+  /* --- LIGHT MODE FIXES --- */
+  :global([data-theme="light"]) .glass-panel.glass-panel {
+    background: rgba(255, 255, 255, 0.4) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1) !important;
+    color: var(--sl-color-gray-1) !important;
+  }
+
+  :global([data-theme="light"]) .main-input::placeholder {
+    color: var(--sl-color-gray-3);
+  }
+
+  :global([data-theme="light"]) .glass-btn:hover {
+    background: rgba(157, 124, 253, 0.1) !important;
+  }
+
+  :global([data-theme="light"]) .menu-btn {
+    color: var(--sl-color-gray-2) !important;
+  }
+
+  :global([data-theme="light"]) .menu-btn:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: var(--sl-color-black) !important;
+  }
+
+  :global([data-theme="light"]) .menu-divider {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  /* Společné styly */
   .main-input.main-input {
     flex: 1;
     height: 44px !important;
     padding: 0 1rem 0 3.2rem !important;
     font-size: 0.9rem;
     outline: none !important;
-  }
-  
-  .main-input:focus {
-    border-color: rgba(157, 124, 253, 0.6) !important;
   }
 
   .search-icon-inside {
@@ -153,12 +188,7 @@ const totalOptions = filterOptions.length;
     color: var(--sl-color-gray-3);
   }
 
-  .export-group {
-    display: flex;
-    gap: 0.5rem;
-    height: 44px;
-  }
-
+  .export-group { display: flex; gap: 0.5rem; height: 44px; }
   .dropdown { position: relative; height: 44px; }
 
   .glass-btn.glass-btn {
@@ -174,34 +204,15 @@ const totalOptions = filterOptions.length;
     transition: all 0.3s ease !important;
   }
 
-  /* Styl pro Font Awesome ikony */
-  .glass-btn i {
-    font-size: 0.95rem !important;
-    color: #9d7cfd !important; /* Barva Pyth fialové, aby ikony svítily */
-  }
-
-  .menu-btn i {
-    font-size: 0.9rem !important;
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  .glass-btn:hover {
-    background: rgba(157, 124, 253, 0.2) !important;
-    border-color: rgba(157, 124, 253, 0.5) !important;
-  }
-
-  .icon-only.icon-only { padding: 0 1rem !important; }
-
   .badge-count.badge-count {
     background: rgba(157, 124, 253, 0.25) !important;
-    color: #d8ccff !important;
+    color: #9d7cfd !important;
     border: 1px solid rgba(157, 124, 253, 0.4) !important;
     min-width: 1.6rem;
     height: 1.3rem;
     border-radius: 0.4rem;
     font-size: 0.75rem;
     font-weight: 800;
-    font-family: var(--sl-font-mono);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -221,13 +232,14 @@ const totalOptions = filterOptions.length;
   }
   .dropdown-content.show { display: flex; }
 
+  .menu-divider { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 4px 8px; }
+
   .menu-btn.menu-btn {
     width: 100%;
     padding: 0.8rem 1rem;
     background: transparent !important;
     border: none !important;
     border-radius: 0.5rem;
-    color: rgba(255, 255, 255, 0.7) !important;
     font-size: 0.85rem;
     cursor: pointer;
     display: flex;
@@ -235,44 +247,20 @@ const totalOptions = filterOptions.length;
     align-items: center;
   }
 
-  .view-inner {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-  }
-
-  .menu-btn:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: #ffffff !important;
-  }
-
-  .menu-btn:hover i {
-    color: #9d7cfd !important;
-  }
-
-  .menu-btn.active {
-    background: rgba(157, 124, 253, 0.2) !important;
-    color: #9d7cfd !important;
-    font-weight: 700;
-  }
-
+  .view-inner { display: flex; align-items: center; gap: 0.8rem; }
+  .menu-btn.active { background: rgba(157, 124, 253, 0.15) !important; color: #9d7cfd !important; font-weight: 700; }
+  
   .badge-cat.badge-cat {
     font-size: 0.7rem;
-    background: rgba(157, 124, 253, 0.15) !important;
+    background: rgba(157, 124, 253, 0.1) !important;
     color: #9d7cfd !important;
     padding: 1px 7px;
     border-radius: 4px;
-    font-family: var(--sl-font-mono);
-    border: 1px solid rgba(157, 124, 253, 0.25) !important;
+    border: 1px solid rgba(157, 124, 253, 0.2) !important;
   }
 
-  .active-indicator {
-    opacity: 0;
-    color: #9d7cfd;
-  }
+  .active-indicator { opacity: 0; color: #9d7cfd; }
   .active .active-indicator { opacity: 1; }
 
-  @media (max-width: 900px) {
-    .btn-text { display: none; }
-  }
+  @media (max-width: 900px) { .btn-text { display: none; } }
 </style>
