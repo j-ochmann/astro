@@ -9,7 +9,6 @@ import { getI18nPaths } from '@/content/config/i18n';
 export async function getStaticPaths() {
   const i18nPaths = getI18nPaths();
   const RAW_DIR = path.join(process.cwd(), PATHS.RAW, PATHS.PYTH_ALL);
-  
   let allIds: string[] = [];
   try {
     if (fs.existsSync(RAW_DIR)) {
@@ -20,17 +19,14 @@ export async function getStaticPaths() {
         allIds = rawData.map((f: any) => f.id.startsWith('0x') ? f.id : `0x${f.id}`);
       }
     }
-  } catch (e) { console.error("Error generating paths:", e); }
-
-  return i18nPaths.flatMap(langPath => 
-    allIds.map(id => ({ params: { lang: langPath.params.lang, id: id } }))
-  );
+  } catch (e) { console.error(e); }
+  return i18nPaths.flatMap(langPath => allIds.map(id => ({ params: { lang: langPath.params.lang, id: id } })));
 }
 
 const { lang, id } = Astro.params;
 const RAW_DIR = path.join(process.cwd(), PATHS.RAW, PATHS.PYTH_ALL);
-
 let asset: any = null;
+
 if (fs.existsSync(RAW_DIR)) {
   const files = fs.readdirSync(RAW_DIR).filter(f => f.startsWith('pyth_full_'));
   const latestFile = files.sort().reverse()[0];
@@ -41,113 +37,98 @@ if (fs.existsSync(RAW_DIR)) {
 }
 
 if (!asset) return Astro.redirect(`/${lang}/404`);
-
 const attr = asset.attributes || {};
 const symbol = attr.display_symbol || attr.symbol || 'Unknown';
-const description = attr.description || '';
+
+// Odstranění 0x pro iframe pokud je přítomno
+const cleanId = id.startsWith('0x') ? id.substring(2) : id;
+const RAY_COUNT = 65;
 ---
 
-<StarlightPage frontmatter={{ title: `${symbol} | Pyth Oracle Detail`, tableOfContents: false }}>
+<StarlightPage frontmatter={{ title: `${symbol} Detail`, tableOfContents: false }}>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   
-  <div class="explorer-visual-context">
-    <div class="wormhole-background" aria-hidden="true">
-      <div class="bg-glow"></div>
+  <div class="detail-wrapper">
+    <div class="wormhole-bg-fixed" aria-hidden="true">
+      <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(850, 250)">
+          <g>
+            <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="240s" repeatCount="indefinite" />
+            {Array.from({ length: RAY_COUNT }).map((_, i) => (
+              <rect x="-1" y="100" width="1" height="1000" fill="#9d7cfd" fill-opacity="0.1" transform={`rotate(${(360 / RAY_COUNT) * i})`} />
+            ))}
+          </g>
+        </g>
+      </svg>
     </div>
 
-    <div class="detail-container">
-      <div class="header-nav">
-        <a href={`/${lang}/market/pyth/`} class="back-link">
-          <i class="fas fa-arrow-left"></i> Back to Pyth Explorer
-        </a>
-      </div>
+    <div class="header-nav">
+      <a href={`/${lang}/market/pyth/`} class="back-btn"><i class="fas fa-arrow-left"></i> Explorer</a>
+    </div>
 
-      <div class="main-layout">
-        <div class="content-column">
-          <div class="detail-card glass-panel main-info">
-            <div class="badge-row">
-              <span class="badge asset-type">{attr.asset_type}</span>
-              {attr.country && <span class="badge country">{attr.country}</span>}
-            </div>
-            <h1>{symbol}</h1>
-            <p class="description">{description}</p>
-            
-            <div class="live-price-container">
-              <div class="price-block">
-                <span class="label">Live Price (USD)</span>
-                <div class="price-wrap">
-                  <span id="live-price" class="price-value">---</span>
-                  <span id="price-diff" class="diff-value"></span>
-                </div>
-              </div>
-              <div class="confidence-block">
-                <span class="label">Confidence Interval (±)</span>
-                <div id="live-conf" class="conf-value">---</div>
-              </div>
-            </div>
-
-            <div class="status-footer">
-              <div class="status-indicator">
-                <div id="status-dot" class="status-dot"></div>
-                <span id="last-update">Syncing with Hermes...</span>
-              </div>
-              <div class="slot-info">
-                Slot: <span id="live-slot" class="mono">---</span>
-              </div>
+    <div class="main-grid">
+      <div class="primary-column">
+        <div class="glass-panel info-hero">
+          <div class="top-row">
+            <span class="type-tag">{attr.asset_type} {attr.country || ''}</span>
+            <div class="live-indicator">
+              <div id="status-dot" class="dot"></div>
+              <span id="last-update" class="mono">Syncing...</span>
             </div>
           </div>
-
-          <div class="detail-card glass-panel chart-card">
-            <div class="card-header">
-              <h3>Price History</h3>
+          <h1 class="asset-title">{symbol}</h1>
+          <p class="sub-text">{attr.description}</p>
+          
+          <div class="price-stack">
+            <div class="price-item">
+              <label>Current Price (USD)</label>
+              <div id="live-price" class="val-large mono">---</div>
             </div>
-            <div class="chart-wrapper">
-              <div id="pyth-chart"></div>
+            <div class="price-item">
+              <label>Confidence (±)</label>
+              <div id="live-conf" class="val-medium mono">---</div>
             </div>
           </div>
         </div>
 
-        <div class="sidebar-column">
-          <div class="detail-card glass-panel">
-            <h3>Feed Metadata</h3>
-            <div class="meta-list">
-              <div class="meta-item">
-                <span class="meta-label">Feed ID</span>
-                <div class="copy-box" id="copy-id">
-                  <span class="mono truncate">{id}</span>
-                  <i class="fas fa-copy"></i>
-                </div>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">Base Asset</span>
-                <span class="meta-value">{attr.base}</span>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">Quote Currency</span>
-                <span class="meta-value">{attr.quote_currency}</span>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">Publish Interval</span>
-                <span class="meta-value">{attr.publish_interval}s</span>
-              </div>
-              {attr.tenor && (
-                <div class="meta-item">
-                  <span class="meta-label">Tenor</span>
-                  <span class="meta-value">{attr.tenor}</span>
-                </div>
-              )}
+        <div class="glass-panel chart-box">
+          <div class="box-label"><i class="fas fa-chart-line"></i> Price History</div>
+          <div class="chart-container-inner" id="chart-parent">
+            <iframe
+              id="pyth-iframe"
+              src={`https://pyth.network/chart/${cleanId}?theme=dark`}
+              width="100%"
+              height="400px"
+              style="border: none;"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="secondary-column">
+        <div class="glass-panel side-info">
+          <h3>Specifications</h3>
+          <div class="spec-row">
+            <label>Price Feed ID</label>
+            <div class="copy-field" id="copy-id">
+              <span class="mono">{id}</span>
+              <i class="fas fa-copy"></i>
             </div>
           </div>
+          <div class="spec-row">
+            <label>Pair</label>
+            <span class="val">{attr.base} / {attr.quote_currency}</span>
+          </div>
+          <div class="spec-row">
+            <label>Network Slot</label>
+            <span id="live-slot" class="val mono">---</span>
+          </div>
+        </div>
 
-          <div class="detail-card glass-panel">
-            <h3>Market Schedule</h3>
-            <div class="schedule-box">
-              <p class="schedule-text mono">{attr.schedule}</p>
-              <div class="schedule-info">
-                <i class="fas fa-clock"></i>
-                <span>Times are in New York (EST/EDT)</span>
-              </div>
-            </div>
+        <div class="glass-panel side-info">
+          <h3>Market Schedule</h3>
+          <div class="schedule-wrap">
+            <code class="mono">{attr.schedule}</code>
           </div>
         </div>
       </div>
@@ -155,132 +136,114 @@ const description = attr.description || '';
   </div>
 </StarlightPage>
 
-<script is:inline src="https://pyth.network/js/pyth-charts.js"></script>
-<script is:inline define:vars={{ id, symbol }}>
-  const priceEl = document.getElementById('live-price');
-  const confEl = document.getElementById('live-conf');
-  const dotEl = document.getElementById('status-dot');
-  const updateEl = document.getElementById('last-update');
-  const slotEl = document.getElementById('live-slot');
-
-  let lastPrice = 0;
-
-  async function updateHermes() {
+<script is:inline define:vars={{ id }}>
+  async function updatePrice() {
     try {
       const res = await fetch(`https://hermes.pyth.network/v2/updates/price/latest?ids[]=${id}&parsed=true`);
-      const data = await res.json();
-      const p = data.parsed?.[0]?.price;
-      const meta = data.parsed?.[0]?.metadata;
-
+      const d = await res.json();
+      const p = d.parsed?.[0]?.price;
       if (p) {
-        const val = parseFloat(p.price) * Math.pow(10, p.expo);
-        const confVal = parseFloat(p.conf) * Math.pow(10, p.expo);
-        const formatted = val.toLocaleString(undefined, { maximumFractionDigits: 8 });
-        
-        // Price animation
-        if (priceEl.innerText !== formatted) {
-          priceEl.classList.remove('up', 'down');
-          priceEl.classList.add(val > lastPrice ? 'up' : 'down');
-          priceEl.innerText = formatted;
-          lastPrice = val;
-        }
-
-        confEl.innerText = confVal.toLocaleString(undefined, { maximumFractionDigits: 8 });
-        slotEl.innerText = meta?.slot || '---';
-
-        const now = Math.floor(Date.now() / 1000);
-        const age = now - parseInt(p.publish_time);
-        dotEl.style.background = age < 15 ? '#10b981' : (age < 60 ? '#f59e0b' : '#ef4444');
-        updateEl.innerText = `Update age: ${age}s`;
+        const v = parseFloat(p.price) * Math.pow(10, p.expo);
+        const c = parseFloat(p.conf) * Math.pow(10, p.expo);
+        document.getElementById('live-price').innerText = v.toLocaleString(undefined, { maximumFractionDigits: 8 });
+        document.getElementById('live-conf').innerText = c.toLocaleString(undefined, { maximumFractionDigits: 8 });
+        document.getElementById('live-slot').innerText = d.parsed?.[0]?.metadata?.slot || '---';
+        const age = Math.floor(Date.now() / 1000) - parseInt(p.publish_time);
+        document.getElementById('status-dot').style.background = age < 30 ? '#10b981' : '#ef4444';
+        document.getElementById('last-update').innerText = age + 's ago';
       }
-    } catch (e) { console.error("Hermes error:", e); }
+    } catch (e) {}
   }
 
-  // Init Chart
-  if (window.PythCharts) {
-    new window.PythCharts.PriceChart({
-      container: document.getElementById('pyth-chart'),
-      pair: symbol,
-      feed: id,
-      theme: 'dark',
-    });
-  }
+  // Přepínání theme pro iframe
+  const observer = new MutationObserver(() => {
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    const iframe = document.getElementById('pyth-iframe');
+    if (iframe) {
+        const cleanId = id.startsWith('0x') ? id.substring(2) : id;
+        iframe.src = `https://pyth.network/chart/${cleanId}?theme=${isDark ? 'dark' : 'light'}`;
+    }
+  });
+  observer.observe(document.documentElement, { attributes: true });
 
-  // Copy Logic
-  document.getElementById('copy-id').addEventListener('click', function() {
-    navigator.clipboard.writeText(id);
-    const span = this.querySelector('span');
-    const original = span.innerText;
-    span.innerText = "COPIED!";
-    setTimeout(() => span.innerText = original, 1000);
+  window.addEventListener('load', () => {
+    updatePrice();
+    setInterval(updatePrice, 3000);
   });
 
-  setInterval(updateHermes, 3000);
-  updateHermes();
+  document.getElementById('copy-id').onclick = function() {
+    navigator.clipboard.writeText(id);
+    this.style.borderColor = "#9d7cfd";
+    setTimeout(() => this.style.borderColor = "var(--sl-color-gray-5)", 1000);
+  };
 </script>
 
-<style>
-  .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; min-height: 100vh; color: var(--sl-color-white); }
-  .bg-glow { position: fixed; top: 0; right: 0; width: 60vw; height: 60vh; background: radial-gradient(circle, rgba(157, 124, 253, 0.1) 0%, transparent 70%); z-index: -1; }
-  
-  .detail-container { max-width: 1400px; margin: 0 auto; }
-  .header-nav { margin-bottom: 2rem; }
-  .back-link { color: var(--sl-color-gray-3); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: color 0.2s; }
-  .back-link:hover { color: #9d7cfd; }
+<style is:global>
+  .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; background: transparent !important; }
+</style>
 
-  .main-layout { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; align-items: start; }
-  
+<style>
+  .detail-wrapper { position: relative; width: 100%; color: var(--sl-color-text); }
+  .wormhole-bg-fixed { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
+  .header-nav { margin-bottom: 1rem; }
+  .back-btn { color: var(--sl-color-gray-3); text-decoration: none; font-size: 0.9rem; font-weight: bold; }
+  .back-btn:hover { color: #9d7cfd; }
+
+  .main-grid { display: flex; flex-wrap: wrap; gap: 1rem; width: 100%; align-items: start; }
+  .primary-column { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 1rem; }
+  .secondary-column { width: 320px; display: flex; flex-direction: column; gap: 1rem; }
+
   .glass-panel {
-    background: rgba(var(--sl-color-bg-nav-rgb), 0.7) !important;
+    background: var(--sl-color-bg-nav) !important;
     backdrop-filter: blur(20px);
     border: 1px solid var(--sl-color-gray-5) !important;
-    border-radius: 1rem;
-    padding: 2rem;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
   }
 
-  .detail-card { margin-bottom: 2rem; }
+  .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .type-tag { font-size: 0.7rem; text-transform: uppercase; background: rgba(157, 124, 253, 0.15); color: #9d7cfd; padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: bold; border: 1px solid rgba(157, 124, 253, 0.3); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
   
-  .badge-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-  .badge { padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
-  .asset-type { background: rgba(157, 124, 253, 0.2); color: #9d7cfd; }
-  .country { background: rgba(255, 255, 255, 0.1); color: var(--sl-color-gray-2); }
+  .asset-title { font-size: 2.5rem; margin: 0 !important; color: var(--sl-color-white) !important; }
+  .sub-text { color: var(--sl-color-gray-3); margin: 0.5rem 0 1.5rem 0; font-size: 1rem; }
 
-  h1 { font-size: 3rem; margin: 0; }
-  .description { color: var(--sl-color-gray-3); font-size: 1.1rem; margin-top: 0.5rem; }
+  .price-stack { padding-top: 1.5rem; border-top: 1px solid var(--sl-color-gray-6); display: flex; flex-direction: column; gap: 1.5rem; }
+  .price-item label { display: block; font-size: 0.75rem; color: var(--sl-color-gray-4); text-transform: uppercase; margin-bottom: 0.25rem; letter-spacing: 0.05rem; }
+  .val-large { font-size: 3.2rem; font-weight: bold; line-height: 1; color: var(--sl-color-white); }
+  .val-medium { font-size: 1.6rem; color: #9d7cfd; font-weight: bold; }
 
-  .live-price-container { display: flex; gap: 4rem; margin: 2.5rem 0; padding: 2rem; background: rgba(255,255,255,0.03); border-radius: 1rem; }
-  .label { display: block; font-size: 0.75rem; color: var(--sl-color-gray-4); text-transform: uppercase; letter-spacing: 0.05rem; margin-bottom: 0.5rem; }
-  .price-value { font-size: 3.5rem; font-weight: bold; font-family: 'JetBrains Mono', monospace; transition: color 0.3s; }
-  .price-value.up { color: #10b981; }
-  .price-value.down { color: #ef4444; }
-  .conf-value { font-size: 1.8rem; font-family: 'JetBrains Mono', monospace; opacity: 0.9; }
+  .chart-box { padding: 0; overflow: hidden; }
+  .box-label { padding: 1rem 1.5rem; font-size: 0.8rem; color: #9d7cfd; border-bottom: 1px solid var(--sl-color-gray-6); font-weight: bold; text-transform: uppercase; }
+  .chart-container-inner { background: #131722; height: 400px; width: 100%; }
 
-  .status-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--sl-color-gray-6); color: var(--sl-color-gray-4); font-size: 0.85rem; }
-  .status-indicator { display: flex; align-items: center; gap: 0.5rem; }
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; transition: all 0.3s; }
-
-  /* Chart Area */
-  .chart-wrapper { height: 450px; width: 100%; border-radius: 0.5rem; overflow: hidden; margin-top: 1rem; background: #131722; }
-
-  /* Sidebar */
-  h3 { font-size: 1rem; color: #9d7cfd; text-transform: uppercase; margin-bottom: 1.5rem; border-left: 3px solid #9d7cfd; padding-left: 0.75rem; }
-  .meta-list { display: flex; flex-direction: column; gap: 1.25rem; }
-  .meta-item { display: flex; flex-direction: column; gap: 0.25rem; }
-  .meta-label { font-size: 0.7rem; color: var(--sl-color-gray-4); text-transform: uppercase; }
-  .meta-value { color: var(--sl-color-white); font-weight: 500; }
+  h3 { font-size: 0.85rem; color: #9d7cfd; text-transform: uppercase; margin-bottom: 1.25rem !important; border-bottom: 1px solid var(--sl-color-gray-6); padding-bottom: 0.5rem; letter-spacing: 0.05rem; }
+  .spec-row { margin-bottom: 1rem; }
+  .spec-row label { display: block; font-size: 0.7rem; color: var(--sl-color-gray-4); text-transform: uppercase; margin-bottom: 0.2rem; }
+  .val { color: var(--sl-color-white); font-weight: 500; font-size: 0.95rem; }
   
-  .copy-box { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 0.5rem 0.75rem; border-radius: 0.5rem; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
-  .copy-box:hover { border-color: #9d7cfd; background: rgba(157, 124, 253, 0.05); }
-  .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px; }
+  .copy-field { 
+    background: var(--sl-color-bg-inline-code); 
+    padding: 0.6rem; 
+    border-radius: 4px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    cursor: pointer;
+    font-size: 0.75rem;
+    border: 1px solid var(--sl-color-gray-5);
+    transition: all 0.2s;
+  }
+  .copy-field:hover { border-color: #9d7cfd; }
+  .copy-field span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
 
-  .schedule-box { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--sl-color-gray-6); }
-  .schedule-text { font-size: 0.75rem; line-height: 1.5; color: #9d7cfd; word-break: break-all; }
-  .schedule-info { display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; font-size: 0.7rem; color: var(--sl-color-gray-4); }
+  .schedule-wrap { background: var(--sl-color-bg-inline-code); padding: 0.75rem; border-radius: 4px; border: 1px solid var(--sl-color-gray-5); }
+  .schedule-wrap code { font-size: 0.7rem; color: #9d7cfd; word-break: break-all; background: transparent !important; }
 
-  .mono { font-family: 'JetBrains Mono', monospace; }
+  .mono { font-family: var(--sl-font-mono); }
 
-  @media (max-width: 1100px) {
-    .main-layout { grid-template-columns: 1fr; }
-    .live-price-container { flex-direction: column; gap: 2rem; }
+  @media (max-width: 800px) {
+    .secondary-column { width: 100%; }
+    .val-large { font-size: 2.4rem; }
   }
 </style>
