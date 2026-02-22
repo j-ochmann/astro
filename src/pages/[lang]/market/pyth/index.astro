@@ -1,5 +1,5 @@
 ---
-// src/pages/[lang]/market/pyth.astro
+// src/pages/[lang]/market/pyth/index.astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
 import fs from 'node:fs';
@@ -364,6 +364,11 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
 </style>
 
 <style>
+  .explorer-content { /* Přebarvení SearchFilterBar pro Pyth Network */
+    --filter-accent-color: #9d7cfd;
+    --filter-accent-bg: rgba(157, 124, 253, 0.15);
+    --filter-accent-border: rgba(157, 124, 253, 0.4);
+  }
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
   

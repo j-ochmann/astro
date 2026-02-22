@@ -28,7 +28,7 @@ const totalTypesCount = filterOptions.length;
 const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0), 0);
 ---
 
-<div class="controls-row">
+<div class="controls-row dynamic-accent">
   <div class="search-container">
     <div class="search-icon-inside"><Icon name="magnifier" size="1.1rem" /></div>
     <input
@@ -128,11 +128,14 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
 </div>
 
 <style>
-  .controls-row, 
-  .search-container,
-  .export-group, 
-  .dropdown-wrapper,
-  .dropdown {
+  /* Definice CSS proměnných pro barvy */
+  .dynamic-accent {
+    --accent-color: var(--filter-accent-color, #9d7cfd);
+    --accent-bg: var(--filter-accent-bg, rgba(157, 124, 253, 0.15));
+    --accent-border: var(--filter-accent-border, rgba(157, 124, 253, 0.4));
+  }
+
+  .controls-row, .search-container, .export-group, .dropdown-wrapper, .dropdown {
     display: flex !important;
     align-items: center !important;
     height: 44px !important;
@@ -150,16 +153,9 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
   .search-container { flex: 1; position: relative; }
   .export-group { gap: 0.5rem; }
 
-  :global(.fa-solid), :global(.fas) {
-    font-family: "Font Awesome 6 Free" !important;
-    font-weight: 900 !important;
-    display: inline-block !important;
-  }
-
   .glass-panel.glass-panel {
     background: rgba(20, 20, 25, 0.5) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
     color: #ffffff !important;
@@ -169,7 +165,6 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
   :global([data-theme="light"]) .glass-panel.glass-panel {
     background: rgba(255, 255, 255, 0.4) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1) !important;
     color: var(--sl-color-gray-1) !important;
   }
 
@@ -179,6 +174,10 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     padding: 0 1rem 0 3.2rem !important;
     font-size: 0.9rem;
     outline: none !important;
+  }
+
+  .main-input:focus {
+    border-color: var(--accent-color) !important;
   }
 
   .search-icon-inside {
@@ -198,25 +197,16 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     gap: 0.7rem !important;
     font-size: 0.85rem !important;
     font-weight: 600 !important;
-    line-height: 1 !important;
-    white-space: nowrap;
     transition: all 0.3s ease !important;
   }
 
-  .glass-btn i { color: #9d7cfd !important; }
-  .icon-only { width: 44px !important; padding: 0 !important; }
-
-  .glass-btn i, .glass-btn :global(svg) {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    width: 1rem;
-  }
+  .glass-btn i { color: var(--accent-color) !important; }
+  .glass-btn:hover { border-color: var(--accent-color) !important; }
 
   .badge-count.badge-count {
-    background: rgba(157, 124, 253, 0.25) !important;
-    color: #9d7cfd !important;
-    border: 1px solid rgba(157, 124, 253, 0.4) !important;
+    background: var(--accent-bg) !important;
+    color: var(--accent-color) !important;
+    border: 1px solid var(--accent-border) !important;
     min-width: 1.6rem;
     height: 1.3rem;
     border-radius: 0.4rem;
@@ -228,7 +218,6 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     margin-left: 0.2rem;
   }
 
-  .dropdown { position: relative; }
   .dropdown-content.glass-panel {
     display: none;
     position: absolute;
@@ -258,21 +247,22 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
 
   :global([data-theme="light"]) .menu-btn { color: var(--sl-color-gray-2) !important; }
 
-  .menu-divider { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 4px 8px; }
-  .view-inner { display: flex; align-items: center; gap: 0.8rem; }
-  .menu-btn.active { background: rgba(157, 124, 253, 0.15) !important; color: #9d7cfd !important; font-weight: 700; }
-  
-  .badge-cat {
-    font-size: 0.7rem;
-    background: rgba(157, 124, 253, 0.1) !important;
-    color: #9d7cfd !important;
-    padding: 1px 7px;
-    border-radius: 4px;
-    border: 1px solid rgba(157, 124, 253, 0.2) !important;
+  .menu-btn.active { 
+    background: var(--accent-bg) !important; 
+    color: var(--accent-color) !important; 
+    font-weight: 700; 
   }
 
-  .ext-tag { font-size: 0.65rem; color: var(--sl-color-gray-3); opacity: 0.7; }
-  .active-indicator { opacity: 0; color: #9d7cfd; }
+  .badge-cat {
+    font-size: 0.7rem;
+    background: var(--accent-bg) !important;
+    color: var(--accent-color) !important;
+    padding: 1px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--accent-border) !important;
+  }
+
+  .active-indicator { opacity: 0; color: var(--accent-color); }
   .active .active-indicator { opacity: 1; }
 
   @media (max-width: 900px) { .btn-text { display: none; } }
