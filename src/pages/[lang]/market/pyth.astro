@@ -1,7 +1,7 @@
 ---
 // src/pages/[lang]/market/pyth.astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import SearchFilterBarTest from '@/components/root/SearchFilterBarTest.astro';
+// import SearchFilterBarTest from '@/components/root/SearchFilterBarTest.astro';
 import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -100,11 +100,11 @@ const timeOptions: Intl.DateTimeFormatOptions = {
         </div>
       </div>
 
-      <SearchFilterBarTest 
+      <!-- <SearchFilterBarTest 
         searchPlaceholder="Search symbol or description..." 
         filterLabel="Asset Type"
         filterOptions={categories}
-      />
+      /> -->
       <SearchFilterBar 
         searchPlaceholder="Search symbol or description..." 
         filterLabel="Asset Type"

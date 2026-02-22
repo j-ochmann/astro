@@ -29,38 +29,43 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
 ---
 
 <div class="controls-row">
-  <div class="search-icon-inside"><Icon name="magnifier" size="1.1rem" /></div>
-  <input
-    type="text"
-    id="searchTab"
-    class="glass-panel main-input"
-    placeholder={searchPlaceholder}
-    autocomplete="off"
-  />
+  <div class="search-container">
+    <div class="search-icon-inside"><Icon name="magnifier" size="1.1rem" /></div>
+    <input
+      type="text"
+      id="searchTab"
+      class="glass-panel main-input"
+      placeholder={searchPlaceholder}
+      autocomplete="off"
+    />
+  </div>
 
   <div class="export-group">
-    {totalTypesCount > 0 && (
-      <div class="dropdown">
-        <button class="glass-btn glass-panel" id="catBtn">
-          <i class="fa-solid fa-layer-group fa-fw"></i>
-          <span class="btn-text">{filterLabel}</span>
-          <span class="badge-count">{totalTypesCount}</span>
-        </button>
-        <div class="dropdown-content glass-panel" id="catMenu">
-          <button class="cat-item menu-btn active" data-cat="">
-            <span class="item-label">All Assets</span>
-            <span class="badge-cat">{totalItemsSum}</span>
+    {/* Logika dropdown-wrapperu, který drží baseline */}
+    <div class="dropdown-wrapper">
+      {totalTypesCount > 0 && (
+        <div class="dropdown">
+          <button class="glass-btn glass-panel" id="catBtn">
+            <i class="fa-solid fa-layer-group fa-fw"></i>
+            <span class="btn-text">{filterLabel}</span>
+            <span class="badge-count">{totalTypesCount}</span>
           </button>
-          <div class="menu-divider"></div>
-          {filterOptions.map(opt => (
-            <button class="cat-item menu-btn" data-cat={opt.value}>
-              <span class="item-label">{opt.label}</span>
-              {opt.count !== undefined && <span class="badge-cat">{opt.count}</span>}
+          <div class="dropdown-content glass-panel" id="catMenu">
+            <button class="cat-item menu-btn active" data-cat="">
+              <span class="item-label">All Assets</span>
+              <span class="badge-cat">{totalItemsSum}</span>
             </button>
-          ))}
+            <div class="menu-divider"></div>
+            {filterOptions.map(opt => (
+              <button class="cat-item menu-btn" data-cat={opt.value}>
+                <span class="item-label">{opt.label}</span>
+                {opt.count !== undefined && <span class="badge-cat">{opt.count}</span>}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-    )}
+      )}
+    </div>
 
     <div class="dropdown">
       <button class="glass-btn glass-panel" id="viewBtn">
@@ -110,15 +115,33 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
 </div>
 
 <style>
+  /* FIX: Vynucené sjednocení všech kontejnerů na flex-center */
+  .controls-row, 
+  .search-container,
+  .export-group, 
+  .dropdown-wrapper,
+  .dropdown {
+    display: flex !important;
+    align-items: center !important;
+    height: 44px !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+
   .controls-row {
-    display: flex;
-    gap: 0.75rem;
-    height: 44px;
-    margin-bottom: 1.5rem;
-    align-items: center;
     width: 100%;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem !important;
     position: relative;
-    box-sizing: border-box;
+  }
+
+  .search-container {
+    flex: 1;
+    position: relative;
+  }
+
+  .export-group {
+    gap: 0.5rem;
   }
 
   /* Font Awesome Global Fix */
@@ -128,7 +151,7 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     display: inline-block !important;
   }
 
-  /* --- DARK MODE (Default) --- */
+  /* Stylování panelů */
   .glass-panel.glass-panel {
     background: rgba(20, 20, 25, 0.5) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
@@ -137,13 +160,9 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
     color: #ffffff !important;
     border-radius: 0.75rem !important;
-    box-sizing: border-box !important;
   }
 
-  .glass-btn i { color: #9d7cfd !important; }
-  .menu-btn { color: rgba(255, 255, 255, 0.7) !important; }
-
-  /* --- LIGHT MODE FIXES --- */
+  /* Light mode korekce */
   :global([data-theme="light"]) .glass-panel.glass-panel {
     background: rgba(255, 255, 255, 0.4) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
@@ -151,85 +170,51 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     color: var(--sl-color-gray-1) !important;
   }
 
-  :global([data-theme="light"]) .main-input::placeholder {
-    color: var(--sl-color-gray-3);
-  }
-
-  :global([data-theme="light"]) .glass-btn:hover {
-    background: rgba(157, 124, 253, 0.1) !important;
-  }
-
-  :global([data-theme="light"]) .menu-btn {
-    color: var(--sl-color-gray-2) !important;
-  }
-
-  :global([data-theme="light"]) .menu-btn:hover {
-    background: rgba(0, 0, 0, 0.05) !important;
-    color: var(--sl-color-black) !important;
-  }
-
-  :global([data-theme="light"]) .menu-divider {
-    background: rgba(0, 0, 0, 0.05);
-  }
-
-  /* Společné styly */
+  /* Main Input */
   .main-input.main-input {
-    flex: 1;
+    width: 100%;
     height: 44px !important;
     padding: 0 1rem 0 3.2rem !important;
     font-size: 0.9rem;
     outline: none !important;
-    box-sizing: border-box !important;
   }
 
   .search-icon-inside {
     position: absolute;
     left: 1.2rem;
-    top: 50%;
-    transform: translateY(-50%);
     z-index: 10;
     color: var(--sl-color-gray-3);
-    display: flex;
-    align-items: center;
   }
 
-  .export-group { 
-    display: flex; 
-    gap: 0.5rem; 
-    height: 44px;
-    align-items: center;
-  }
-
-  .dropdown { 
-    position: relative; 
-    height: 44px;
-    display: flex; /* Nutné pro sjednocení výšky buttonu uvnitř */
-    align-items: center;
-  }
-
+  /* Tlačítka postavená na FLEX místo INLINE-FLEX */
   .glass-btn.glass-btn {
     height: 44px !important;
     padding: 0 1.1rem !important;
     cursor: pointer !important;
-    display: inline-flex !important; /* Změna na inline-flex pro stabilitu baseline */
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 0.7rem !important;
     font-size: 0.85rem !important;
     font-weight: 600 !important;
-    margin: 0 !important;
-    transition: all 0.3s ease !important;
-    vertical-align: middle !important; /* Klíčové pro srovnání s ostatními buttony */
-    box-sizing: border-box !important;
     line-height: 1 !important;
+    white-space: nowrap;
+    transition: all 0.3s ease !important;
   }
 
-  /* Oprava pro ikony uvnitř tlačítek */
+  .glass-btn i { color: #9d7cfd !important; }
+
+  .icon-only {
+    width: 44px !important;
+    padding: 0 !important;
+  }
+
+  /* Ikony a Badge - sjednocení na flex */
   .glass-btn i, .glass-btn :global(svg) {
-    display: inline-flex !important;
+    display: flex !important;
     align-items: center;
     justify-content: center;
-    margin: 0 !important;
+    width: 1rem;
   }
 
   .badge-count.badge-count {
@@ -241,17 +226,18 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     border-radius: 0.4rem;
     font-size: 0.75rem;
     font-weight: 800;
-    display: inline-flex; /* Změna na inline-flex */
+    display: flex;
     align-items: center;
     justify-content: center;
     margin-left: 0.2rem;
-    line-height: 1;
   }
 
+  /* Dropdown Obsah */
+  .dropdown { position: relative; }
   .dropdown-content.glass-panel {
     display: none;
     position: absolute;
-    top: calc(100% + 10px);
+    top: 54px;
     right: 0;
     min-width: 240px;
     z-index: 1000;
@@ -260,8 +246,6 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     gap: 4px;
   }
   .dropdown-content.show { display: flex; }
-
-  .menu-divider { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 4px 8px; }
 
   .menu-btn.menu-btn {
     width: 100%;
@@ -274,12 +258,16 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     display: flex;
     justify-content: space-between;
     align-items: center;
+    color: rgba(255, 255, 255, 0.7) !important;
   }
 
+  :global([data-theme="light"]) .menu-btn { color: var(--sl-color-gray-2) !important; }
+
+  .menu-divider { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 4px 8px; }
   .view-inner { display: flex; align-items: center; gap: 0.8rem; }
   .menu-btn.active { background: rgba(157, 124, 253, 0.15) !important; color: #9d7cfd !important; font-weight: 700; }
   
-  .badge-cat.badge-cat {
+  .badge-cat {
     font-size: 0.7rem;
     background: rgba(157, 124, 253, 0.1) !important;
     color: #9d7cfd !important;
