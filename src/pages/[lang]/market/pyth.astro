@@ -1,5 +1,6 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PATHS } from '../../../scripts/fetch/fetch.config.ts'; 
@@ -12,7 +13,7 @@ export async function getStaticPaths() {
 const { lang } = Astro.params;
 const RAW_DIR = path.join(process.cwd(), PATHS.RAW, PATHS.PYTH_ALL);
 
-let rawData = [];
+let rawData: any[] = [];
 let humanTimestamp = "Initializing Live Data...";
 
 if (fs.existsSync(RAW_DIR)) {
@@ -28,17 +29,24 @@ if (fs.existsSync(RAW_DIR)) {
 const feeds = rawData.map((f: any) => {
   const live = f.live_data?.price || { price: "0", expo: 0, publish_time: 0 };
   const fullId = f.id.startsWith('0x') ? f.id : `0x${f.id}`;
+  const categoryName = String(f.attributes?.asset_type || 'Asset');
+  
   return {
     id: fullId,
-    name: f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown',
-    searchName: (f.attributes?.symbol || '').toLowerCase().replace(/\s+/g, ''),
+    name: String(f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown'),
+    searchName: String(f.attributes?.symbol || '').toLowerCase().replace(/\s+/g, ''),
     price: parseFloat(live.price),
     expo: live.expo,
     updatedAt: live.publish_time ? new Date(live.publish_time * 1000) : null,
-    category: f.attributes?.asset_type || 'Asset',
+    category: categoryName,
     detailUrl: `/${lang}/market/pyth/${fullId}`
   };
 }).sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+const categories = Array.from(new Set(feeds.map(f => f.category))).map(cat => ({
+  label: String(cat),
+  value: String(cat).toLowerCase()
+}));
 
 const RAY_COUNT = 65;
 ---
@@ -68,27 +76,23 @@ const RAY_COUNT = 65;
 
     <div class="explorer-content">
       <div class="stats-grid">
-        <div class="stat-card glass-panel">
+        <div class="stat-card explorer-glass">
           <span class="label">Pyth Feeds</span>
           <span class="value" id="stat-total">{feeds.length}</span>
         </div>
-        <div class="stat-card glass-panel">
+        <div class="stat-card explorer-glass">
           <span class="label">Network Status</span>
           <span class="value" id="stat-sync">{humanTimestamp}</span>
         </div>
       </div>
 
-      <div class="controls-row">
-        <input type="text" id="oracleSearch" class="glass-panel" placeholder="Search symbol..." autocomplete="off" />
-        <div class="export-group">
-          <button onclick="exportData('json')" class="glass-btn">JSON</button>
-          <button onclick="exportData('csv')" class="glass-btn">CSV</button>
-          <button onclick="exportData('xml')" class="glass-btn">XML</button>
-          <button onclick="exportData('yaml')" class="glass-btn">YAML</button>
-        </div>
-      </div>
+      <SearchFilterBar 
+        searchPlaceholder="Search Pyth symbols..." 
+        filterLabel="Asset Type"
+        filterOptions={categories}
+      />
 
-      <div class="table-container glass-panel">
+      <div class="table-container explorer-glass">
         <table id="oracleTable">
           <thead>
             <tr>
@@ -102,7 +106,7 @@ const RAY_COUNT = 65;
           </thead>
           <tbody>
             {feeds.map((f: any) => (
-              <tr data-id={f.id} data-json={JSON.stringify(f)} data-name={f.searchName}>
+              <tr data-id={f.id} data-category={f.category.toLowerCase()} data-name={f.searchName}>
                 <td class="td-pair">
                   <a href={f.detailUrl} class="pair-link">{f.name}</a>
                 </td>
@@ -125,9 +129,69 @@ const RAY_COUNT = 65;
 </StarlightPage>
 
 <script is:inline define:vars={{ lang }}>
-  const syncLabel = document.getElementById('stat-sync');
-  const visibleIds = new Set();
+  window.exportData = (type) => {
+    console.log(`Exporting as ${type}...`);
+  };
 
+  const syncLabel = document.getElementById('stat-sync');
+  const searchInput = document.getElementById('searchTab');
+  const tableRows = document.querySelectorAll('#oracleTable tbody tr');
+  const visibleIds = new Set();
+  
+  let activeCategory = null;
+
+  function filterTable() {
+    const term = searchInput ? searchInput.value.toLowerCase() : '';
+    
+    tableRows.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const category = row.getAttribute('data-category') || '';
+      const matchesSearch = name.includes(term);
+      const matchesCategory = !activeCategory || category === activeCategory;
+      row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterTable);
+  }
+
+  // Category Filter Logic
+  document.querySelectorAll('.cat-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cat = item.getAttribute('data-cat');
+      
+      if (activeCategory === cat) {
+        activeCategory = null;
+        item.classList.remove('active');
+      } else {
+        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+        activeCategory = cat;
+        item.classList.add('active');
+      }
+      filterTable();
+    });
+  });
+
+  // Dropdown UI Handlers - Používáme třídy z komponenty
+  document.querySelectorAll('.glass-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dropdown = btn.nextElementSibling;
+      if (dropdown && dropdown.classList.contains('dropdown-content')) {
+        const isShown = dropdown.classList.contains('show');
+        document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+        if (!isShown) dropdown.classList.add('show');
+      }
+    });
+  });
+
+  window.addEventListener('click', () => {
+    document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+  });
+
+  // Live Updates
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const id = entry.target.getAttribute('data-id');
@@ -144,11 +208,10 @@ const RAY_COUNT = 65;
     });
   }, { threshold: 0.01, rootMargin: '100px' });
 
-  document.querySelectorAll('#oracleTable tbody tr').forEach(row => observer.observe(row));
+  tableRows.forEach(row => observer.observe(row));
 
   async function refreshData() {
     if (visibleIds.size === 0) return;
-
     const idsArray = Array.from(visibleIds);
     const chunkSize = 25; 
     const now = Math.floor(Date.now() / 1000);
@@ -161,7 +224,6 @@ const RAY_COUNT = 65;
       try {
         const response = await fetch(url);
         if (!response.ok) continue;
-        
         const data = await response.json();
         if (data && data.parsed) {
           data.parsed.forEach(item => {
@@ -171,7 +233,6 @@ const RAY_COUNT = 65;
               const priceCell = row.querySelector('.js-price');
               const statusDot = row.querySelector('.js-status');
               const updateCell = row.querySelector('.js-update');
-              
               const val = parseFloat(item.price.price);
               const expo = parseInt(item.price.expo);
               const pubTime = parseInt(item.price.publish_time);
@@ -180,26 +241,19 @@ const RAY_COUNT = 65;
               if (val > 0) {
                 const newPrice = val * Math.pow(10, expo);
                 const formattedPrice = newPrice.toLocaleString(undefined, { maximumFractionDigits: 8 });
-
-                // Update ceny a času
                 if (priceCell.innerText !== formattedPrice) {
                   priceCell.innerText = formattedPrice;
                   priceCell.classList.add('price-flash');
                   setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
                 }
                 updateCell.innerText = new Date(pubTime * 1000).toLocaleTimeString();
-
-                // BARVA SVĚTÉLKA PODLE STÁŘÍ DAT
                 if (age < 15) {
-                   // ZELENÁ - Čerstvá data
                    statusDot.style.background = '#10b981';
                    statusDot.style.boxShadow = '0 0 10px #10b981';
                 } else if (age < 60) {
-                   // ORANŽOVÁ - Data přišla, ale trh stojí (stale)
                    statusDot.style.background = '#f59e0b';
                    statusDot.style.boxShadow = '0 0 10px #f59e0b';
                 } else {
-                   // ČERVENÁ - Data jsou stará víc jak minutu
                    statusDot.style.background = '#ef4444';
                    statusDot.style.boxShadow = 'none';
                 }
@@ -211,7 +265,6 @@ const RAY_COUNT = 65;
     }
     if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString();
   }
-
   setInterval(refreshData, 3000);
 </script>
 
@@ -219,23 +272,40 @@ const RAY_COUNT = 65;
   .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; }
   @keyframes flash-price { 0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; } 100% { color: var(--sl-color-white); text-shadow: none; } }
   .price-flash { animation: flash-price 2s ease-out; }
+  
+  /* Tyto styly se aplikují na položky uvnitř dropdownu SearchFilterBaru */
+  .cat-item, .view-item {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--sl-color-gray-3);
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cat-item:hover, .view-item:hover { background: rgba(var(--sl-color-accent-rgb), 0.1); color: var(--sl-color-white); }
+  .cat-item.active { color: var(--sl-color-accent-high); font-weight: bold; }
 </style>
 
 <style>
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
-  .glass-panel { background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; }
+  
+  /* Přejmenováno na explorer-glass, aby se nepletlo s .glass-panel v komponentě */
+  .explorer-glass { 
+    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; 
+    backdrop-filter: blur(30px) !important; 
+    border: 1px solid var(--sl-color-gray-5) !important; 
+  }
   
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
   .stat-card { padding: 1.5rem; border-radius: 0.75rem; min-height: 100px; display: flex; flex-direction: column; justify-content: center; margin-top: 0 !important; }
   .label { font-size: 0.75rem; color: var(--sl-color-gray-3); text-transform: uppercase; margin-bottom: 0.25rem; }
   .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
-  
-  .controls-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; height: 44px; align-items: stretch; }
-  #oracleSearch { flex: 1; padding: 0 1rem; border-radius: 0.5rem; color: var(--sl-color-white); height: 100%; outline: none; }
-  .export-group { display: flex; gap: 0.5rem; height: 100%; }
-  
-  .glass-btn { background: rgba(157, 124, 253, 0.2) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; color: var(--sl-color-white) !important; padding: 0 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.75rem; font-weight: bold; height: 100%; display: flex; align-items: center; margin: 0 !important; }
 
   .table-container { border-radius: 0.75rem; overflow-x: auto; width: 100%; }
   table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
@@ -256,7 +326,6 @@ const RAY_COUNT = 65;
   .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); }
   
   .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: all 0.3s ease; }
-  
   .badge-cat { font-size: 0.65rem; background: rgba(157, 124, 253, 0.15); border: 1px solid rgba(157, 124, 253, 0.2); padding: 0.2rem 0.5rem; border-radius: 4px; color: #9d7cfd; }
 
   @media (max-width: 1000px) {

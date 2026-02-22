@@ -78,26 +78,17 @@ const {
 </div>
 
 <style>
-  /* TOTÁLNÍ RESET PRO CELOU KOMPONENTU */
-  .controls-row, 
-  .controls-row *, 
-  .controls-row *::before, 
-  .controls-row *::after {
-    box-sizing: border-box !important;
-    margin: 0 !important; /* Vymaže skryté marginy Starlightu */
-    vertical-align: baseline !important;
-  }
-
   .controls-row {
     display: flex;
     gap: 1rem;
-    height: 44px;
-    margin-bottom: 2rem !important; /* Tohle je jediný margin, který chceme */
+    height: 44px; /* Fixní výška pro všechny přímé potomky */
+    margin-bottom: 1.5rem;
     align-items: stretch;
     width: 100%;
     position: relative;
   }
 
+  /* Ikona lupy napozicovaná absolutně "přes" input */
   .search-icon-inside {
     position: absolute;
     left: 1rem;
@@ -116,31 +107,31 @@ const {
     border: 1px solid var(--sl-color-gray-5) !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border-radius: 0.5rem;
+    box-sizing: border-box;
   }
 
+  /* Input je teď přímo v controls-row, stejně jako v Chainlinku */
   #searchTab {
     flex: 1;
-    padding: 0 1rem 0 3rem !important;
+    padding: 0 1rem 0 3rem !important; /* Vlevo místo pro lupu */
     color: var(--sl-color-white) !important;
     height: 100% !important;
     outline: none !important;
     font-size: 0.9rem;
+    margin: 0 !important;
     box-shadow: none !important;
-    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
   }
 
   .export-group {
     display: flex;
     gap: 0.5rem;
     height: 100%;
-    align-items: stretch; /* Klíčové pro srovnání tlačítek */
+    align-items: stretch;
   }
 
   .dropdown {
     position: relative;
     height: 100%;
-    display: flex; /* Zajistí, že tlačítko uvnitř dropdownu poslechne stretch */
-    align-items: stretch;
   }
 
   .glass-btn {
@@ -153,23 +144,23 @@ const {
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: bold;
-    height: 100% !important; /* Vynutí 44px */
+    height: 100%; /* Vyplní 44px díky stretch v export-group */
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.6rem;
+    margin: 0 !important;
+    box-sizing: border-box;
     transition: all 0.2s ease;
-    white-space: nowrap;
   }
 
   .icon-only {
     padding: 0 0.85rem;
   }
 
-  /* Reset ikon, aby neposouvaly řádek */
+  /* Fix pro Starlight ikony v tlačítkách */
   .glass-btn :global(svg) {
-    display: block;
-    flex-shrink: 0;
+    margin: 0 !important;
   }
 
   .dropdown-content {
@@ -187,10 +178,9 @@ const {
 
   .badge-count {
     background: var(--sl-color-accent-high);
-    padding: 0px 6px;
+    padding: 1px 6px;
     border-radius: 4px;
     font-size: 0.7rem;
-    line-height: 1.4;
   }
 
   @media (max-width: 900px) {
