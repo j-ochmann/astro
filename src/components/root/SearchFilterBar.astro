@@ -23,6 +23,8 @@ const {
   viewLabel = "View",
   downloadLabel = "Download"
 } = Astro.props;
+
+const totalOptions = filterOptions.length;
 ---
 
 <div class="controls-row">
@@ -30,23 +32,23 @@ const {
   <input
     type="text"
     id="searchTab"
-    class="glass-panel"
+    class="glass-panel main-input"
     placeholder={searchPlaceholder}
     autocomplete="off"
   />
 
   <div class="export-group">
-    {filterOptions.length > 0 && (
+    {totalOptions > 0 && (
       <div class="dropdown">
-        <button class="glass-btn" id="catBtn">
+        <button class="glass-btn glass-panel" id="catBtn">
           <Icon name="setting" size="1.1rem" />
           <span class="btn-text">{filterLabel}</span>
-          <span class="badge-count" id="activeFilterCount">0</span>
+          <span class="badge-count" id="activeFilterCount">{totalOptions}</span>
         </button>
         <div class="dropdown-content glass-panel" id="catMenu">
           {filterOptions.map(opt => (
-            <button class="cat-item" data-cat={opt.value}>
-              {opt.label}
+            <button class="cat-item menu-btn" data-cat={opt.value}>
+              <span class="item-label">{opt.label}</span>
               {opt.count !== undefined && <span class="badge-cat">{opt.count}</span>}
             </button>
           ))}
@@ -55,135 +57,201 @@ const {
     )}
 
     <div class="dropdown">
-      <button class="glass-btn" id="viewBtn">
+      <button class="glass-btn glass-panel" id="viewBtn">
         <Icon name="list-format" size="1.1rem" />
         <span class="btn-text">{viewLabel}</span>
       </button>
       <div class="dropdown-content glass-panel" id="viewMenu">
-        <button class="view-item active" data-view="table">Table</button>
-        <button class="view-item" data-view="grid">Grid</button>
+        <button class="view-item menu-btn active" data-view="table">
+          <span>Table</span>
+          <Icon name="right-arrow" size="0.8rem" class="active-indicator" />
+        </button>
+        <button class="view-item menu-btn" data-view="grid">
+          <span>Grid</span>
+          <Icon name="right-arrow" size="0.8rem" class="active-indicator" />
+        </button>
       </div>
     </div>
 
     <div class="dropdown">
-      <button class="glass-btn icon-only" id="dlBtn" title={downloadLabel}>
+      <button class="glass-btn glass-panel icon-only" id="dlBtn" title={downloadLabel}>
         <Icon name="download" size="1.1rem" />
       </button>
       <div class="dropdown-content glass-panel dl-menu" id="dlMenu">
-        <button onclick="window.exportData('json')">JSON Export</button>
-        <button onclick="window.exportData('csv')">CSV Export</button>
+        <button class="menu-btn" onclick="window.exportData('json')">
+          <span>JSON Export</span>
+          <span class="ext-tag">.json</span>
+        </button>
+        <button class="menu-btn" onclick="window.exportData('csv')">
+          <span>CSV Export</span>
+          <span class="ext-tag">.csv</span>
+        </button>
       </div>
     </div>
   </div>
 </div>
 
 <style>
+  /* Kontejner */
   .controls-row {
     display: flex;
-    gap: 1rem;
-    height: 44px; /* Fixní výška pro všechny přímé potomky */
+    gap: 0.75rem;
+    height: 44px;
     margin-bottom: 1.5rem;
-    align-items: stretch;
+    align-items: center;
     width: 100%;
     position: relative;
   }
 
-  /* Ikona lupy napozicovaná absolutně "přes" input */
+  /* UNIVERZÁLNÍ SKLENĚNÝ STYL - s extrémní prioritou */
+  .glass-panel.glass-panel {
+    background: rgba(20, 20, 25, 0.5) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    border-radius: 0.75rem !important;
+    color: #ffffff !important;
+  }
+
+  /* Input fix */
+  .main-input.main-input {
+    flex: 1;
+    height: 44px !important;
+    padding: 0 1rem 0 3.2rem !important;
+    font-size: 0.9rem;
+    outline: none !important;
+  }
+  
+  .main-input:focus {
+    border-color: rgba(157, 124, 253, 0.6) !important;
+    background: rgba(20, 20, 25, 0.8) !important;
+  }
+
   .search-icon-inside {
     position: absolute;
-    left: 1rem;
-    top: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    pointer-events: none;
+    left: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 10;
     color: var(--sl-color-gray-3);
-  }
-
-  .glass-panel {
-    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
-    backdrop-filter: blur(30px) !important;
-    border: 1px solid var(--sl-color-gray-5) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    border-radius: 0.5rem;
-    box-sizing: border-box;
-  }
-
-  /* Input je teď přímo v controls-row, stejně jako v Chainlinku */
-  #searchTab {
-    flex: 1;
-    padding: 0 1rem 0 3rem !important; /* Vlevo místo pro lupu */
-    color: var(--sl-color-white) !important;
-    height: 100% !important;
-    outline: none !important;
-    font-size: 0.9rem;
-    margin: 0 !important;
-    box-shadow: none !important;
+    pointer-events: none;
+    line-height: 0;
   }
 
   .export-group {
     display: flex;
     gap: 0.5rem;
-    height: 100%;
-    align-items: stretch;
+    height: 44px;
   }
 
-  .dropdown {
-    position: relative;
-    height: 100%;
+  .dropdown { position: relative; height: 44px; }
+
+  /* Tlačítka s vynuceným stylem */
+  .glass-btn.glass-btn {
+    height: 44px !important;
+    padding: 0 1.1rem !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.6rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important; /* Proti Starlight defaultu */
   }
 
-  .glass-btn {
-    background: rgba(var(--sl-color-accent-rgb), 0.2) !important;
-    backdrop-filter: blur(30px) !important;
-    border: 1px solid var(--sl-color-gray-5) !important;
-    color: var(--sl-color-white) !important;
-    padding: 0 1.25rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
+  .glass-btn:hover {
+    background: rgba(157, 124, 253, 0.2) !important;
+    border-color: rgba(157, 124, 253, 0.5) !important;
+    transform: translateY(-1px);
+  }
+
+  .icon-only.icon-only { padding: 0 0.9rem !important; }
+
+  /* Badge v hlavním tlačítku */
+  .badge-count.badge-count {
+    background: rgba(157, 124, 253, 0.25) !important;
+    color: #d8ccff !important;
+    border: 1px solid rgba(157, 124, 253, 0.4) !important;
+    min-width: 1.6rem;
+    height: 1.3rem;
+    border-radius: 0.4rem;
     font-size: 0.75rem;
-    font-weight: bold;
-    height: 100%; /* Vyplní 44px díky stretch v export-group */
+    font-weight: 800;
+    font-family: var(--sl-font-mono);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    margin: 0 !important;
-    box-sizing: border-box;
+    margin-left: 0.2rem;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
+  }
+
+  /* Dropdown Menu */
+  .dropdown-content.glass-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 240px;
+    z-index: 1000;
+    padding: 0.6rem !important;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .dropdown-content.show { display: flex; }
+
+  /* Položky v menu */
+  .menu-btn.menu-btn {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0.5rem;
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     transition: all 0.2s ease;
   }
 
-  .icon-only {
-    padding: 0 0.85rem;
+  .menu-btn:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
   }
 
-  /* Fix pro Starlight ikony v tlačítkách */
-  .glass-btn :global(svg) {
-    margin: 0 !important;
+  .menu-btn.active {
+    background: rgba(157, 124, 253, 0.2) !important;
+    color: #9d7cfd !important;
+    font-weight: 700;
   }
 
-  .dropdown-content {
-    display: none;
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    min-width: 200px;
-    z-index: 1000;
-  }
-
-  .dropdown-content.show {
-    display: block;
-  }
-
-  .badge-count {
-    background: var(--sl-color-accent-high);
-    padding: 1px 6px;
-    border-radius: 4px;
+  /* Badge u položek v dropdownu */
+  .badge-cat.badge-cat {
     font-size: 0.7rem;
+    background: rgba(157, 124, 253, 0.15) !important;
+    color: #9d7cfd !important;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-family: var(--sl-font-mono);
+    border: 1px solid rgba(157, 124, 253, 0.25) !important;
   }
+
+  .active-indicator {
+    opacity: 0;
+    color: #9d7cfd;
+  }
+  .active .active-indicator { opacity: 1; }
 
   @media (max-width: 900px) {
     .btn-text { display: none; }
+  }
+
+  /* Globální fix pro ikony v komponentě */
+  .glass-btn :global(svg) {
+    color: rgba(255, 255, 255, 0.8) !important;
   }
 </style>

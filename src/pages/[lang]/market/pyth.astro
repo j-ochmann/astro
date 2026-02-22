@@ -43,9 +43,11 @@ const feeds = rawData.map((f: any) => {
   };
 }).sort((a: any, b: any) => a.name.localeCompare(b.name));
 
+// Výpočet kategorií včetně počtu prvků (pro badge v komponentě)
 const categories = Array.from(new Set(feeds.map(f => f.category))).map(cat => ({
   label: String(cat),
-  value: String(cat).toLowerCase()
+  value: String(cat).toLowerCase(),
+  count: feeds.filter(f => f.category === cat).length
 }));
 
 const RAY_COUNT = 65;
@@ -118,7 +120,7 @@ const RAY_COUNT = 65;
                 </td>
                 <td class="js-update cell-update">{f.updatedAt ? f.updatedAt.toLocaleTimeString() : 'N/A'}</td>
                 <td class="cell-mono opacity-50 small">{f.id.slice(0, 14)}...</td>
-                <td class="td-cat"><span class="badge-cat">{f.category}</span></td>
+                <td class="td-cat"><span class="badge-row">{f.category}</span></td>
               </tr>
             ))}
           </tbody>
@@ -136,27 +138,40 @@ const RAY_COUNT = 65;
   const syncLabel = document.getElementById('stat-sync');
   const searchInput = document.getElementById('searchTab');
   const tableRows = document.querySelectorAll('#oracleTable tbody tr');
+  const activeFilterCountBadge = document.getElementById('activeFilterCount');
   const visibleIds = new Set();
   
   let activeCategory = null;
 
   function filterTable() {
     const term = searchInput ? searchInput.value.toLowerCase() : '';
+    let visibleCount = 0;
     
     tableRows.forEach(row => {
       const name = row.getAttribute('data-name') || '';
       const category = row.getAttribute('data-category') || '';
       const matchesSearch = name.includes(term);
       const matchesCategory = !activeCategory || category === activeCategory;
-      row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+      
+      if (matchesSearch && matchesCategory) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
     });
+
+    // Aktualizace badge na tlačítku filtru
+    if (activeFilterCountBadge) {
+      activeFilterCountBadge.innerText = activeCategory ? "1" : "0";
+    }
   }
 
   if (searchInput) {
     searchInput.addEventListener('input', filterTable);
   }
 
-  // Category Filter Logic
+  // Logika výběru kategorie
   document.querySelectorAll('.cat-item').forEach(item => {
     item.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -171,10 +186,24 @@ const RAY_COUNT = 65;
         item.classList.add('active');
       }
       filterTable();
+      // Zavřít dropdown po výběru
+      item.parentElement.classList.remove('show');
     });
   });
 
-  // Dropdown UI Handlers - Používáme třídy z komponenty
+  // Přepínání View (Table/Grid) - UI část
+  document.querySelectorAll('.view-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.view-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      const view = item.getAttribute('data-view');
+      console.log("Switching to", view);
+      item.parentElement.classList.remove('show');
+    });
+  });
+
+  // Dropdown Toggle
   document.querySelectorAll('.glass-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -272,33 +301,15 @@ const RAY_COUNT = 65;
   .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; }
   @keyframes flash-price { 0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; } 100% { color: var(--sl-color-white); text-shadow: none; } }
   .price-flash { animation: flash-price 2s ease-out; }
-  
-  /* Tyto styly se aplikují na položky uvnitř dropdownu SearchFilterBaru */
-  .cat-item, .view-item {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    text-align: left;
-    background: transparent;
-    border: none;
-    color: var(--sl-color-gray-3);
-    cursor: pointer;
-    font-size: 0.85rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .cat-item:hover, .view-item:hover { background: rgba(var(--sl-color-accent-rgb), 0.1); color: var(--sl-color-white); }
-  .cat-item.active { color: var(--sl-color-accent-high); font-weight: bold; }
 </style>
 
 <style>
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
   
-  /* Přejmenováno na explorer-glass, aby se nepletlo s .glass-panel v komponentě */
   .explorer-glass { 
-    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; 
-    backdrop-filter: blur(30px) !important; 
+    background: rgba(var(--sl-color-bg-nav-rgb), 0.7) !important; 
+    backdrop-filter: blur(20px) !important; 
     border: 1px solid var(--sl-color-gray-5) !important; 
   }
   
@@ -326,7 +337,18 @@ const RAY_COUNT = 65;
   .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); }
   
   .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: all 0.3s ease; }
-  .badge-cat { font-size: 0.65rem; background: rgba(157, 124, 253, 0.15); border: 1px solid rgba(157, 124, 253, 0.2); padding: 0.2rem 0.5rem; border-radius: 4px; color: #9d7cfd; }
+  
+  /* Badge v řádku tabulky */
+  .badge-row { 
+    font-size: 0.65rem; 
+    background: rgba(157, 124, 253, 0.1); 
+    border: 1px solid rgba(157, 124, 253, 0.2); 
+    padding: 0.2rem 0.5rem; 
+    border-radius: 4px; 
+    color: #9d7cfd; 
+    text-transform: uppercase;
+    font-weight: 600;
+  }
 
   @media (max-width: 1000px) {
     table { table-layout: auto; }
