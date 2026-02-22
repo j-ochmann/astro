@@ -1,7 +1,6 @@
 ---
 // src/pages/[lang]/market/pyth.astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-// import SearchFilterBarTest from '@/components/root/SearchFilterBarTest.astro';
 import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -56,13 +55,7 @@ const categories = Array.from(new Set(feeds.map(f => f.category))).map(cat => ({
 }));
 
 const RAY_COUNT = 65;
-
-const timeOptions: Intl.DateTimeFormatOptions = {
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: false
-};
+const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
 ---
 
 <StarlightPage frontmatter={{ title: "Pyth Network Explorer", tableOfContents: false }}>
@@ -90,28 +83,23 @@ const timeOptions: Intl.DateTimeFormatOptions = {
 
     <div class="explorer-content">
       <div class="stats-grid">
-        <div class="stat-card explorer-glass">
+        <div class="stat-card glass-panel">
           <span class="label">Pyth Feeds</span>
           <span class="value" id="stat-total">{feeds.length}</span>
         </div>
-        <div class="stat-card explorer-glass">
+        <div class="stat-card glass-panel">
           <span class="label">Network Status</span>
           <span class="value" id="stat-sync">{humanTimestamp}</span>
         </div>
       </div>
 
-      <!-- <SearchFilterBarTest 
-        searchPlaceholder="Search symbol or description..." 
-        filterLabel="Asset Type"
-        filterOptions={categories}
-      /> -->
       <SearchFilterBar 
         searchPlaceholder="Search symbol or description..." 
         filterLabel="Asset Type"
         filterOptions={categories}
       />
 
-      <div class="table-container explorer-glass">
+      <div class="table-container glass-panel" id="mainViewContainer">
         <table id="oracleTable">
           <thead>
             <tr>
@@ -152,160 +140,113 @@ const timeOptions: Intl.DateTimeFormatOptions = {
 </StarlightPage>
 
 <script is:inline define:vars={{ lang }}>
-  window.exportData = (type) => {
-    console.log(`Exporting as ${type}...`);
-  };
-
   const syncLabel = document.getElementById('stat-sync');
   const searchInput = document.getElementById('searchTab');
   const tableRows = document.querySelectorAll('#oracleTable tbody tr');
+  const viewContainer = document.getElementById('mainViewContainer');
   const visibleIds = new Set();
   
   let activeCategory = null;
+  const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
 
-  const timeOptions = {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  };
-
-  function filterTable() {
+  function filterAll() {
     const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    
     tableRows.forEach(row => {
-      const searchData = row.getAttribute('data-search') || '';
-      const category = row.getAttribute('data-category') || '';
-      const matchesSearch = searchData.includes(term);
-      const matchesCategory = !activeCategory || category === activeCategory;
+      const rowSearch = row.getAttribute('data-search') || '';
+      const rowCat = row.getAttribute('data-category') || '';
+      const matchesSearch = rowSearch.includes(term);
+      const matchesCategory = !activeCategory || rowCat === activeCategory;
       
       if (matchesSearch && matchesCategory) {
-        row.style.display = '';
+        row.style.setProperty('display', '', 'important');
       } else {
-        row.style.display = 'none';
+        row.style.setProperty('display', 'none', 'important');
       }
     });
   }
 
-  if (searchInput) {
-    searchInput.addEventListener('input', filterTable);
-  }
+  if (searchInput) searchInput.addEventListener('input', filterAll);
 
-  document.querySelectorAll('.cat-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const cat = item.getAttribute('data-cat');
-      
-      if (activeCategory === cat) {
-        activeCategory = null;
-        item.classList.remove('active');
-      } else {
-        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
-        activeCategory = cat;
-        item.classList.add('active');
-      }
-      filterTable();
-      item.parentElement.classList.remove('show');
-    });
-  });
-
-  document.querySelectorAll('.view-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.stopPropagation();
-      document.querySelectorAll('.view-item').forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-      item.parentElement.classList.remove('show');
-    });
-  });
-
-  document.querySelectorAll('.glass-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.glass-btn');
+    if (btn) {
       e.stopPropagation();
       const dropdown = btn.nextElementSibling;
-      if (dropdown && dropdown.classList.contains('dropdown-content')) {
-        const isShown = dropdown.classList.contains('show');
-        document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
-        if (!isShown) dropdown.classList.add('show');
-      }
-    });
-  });
+      const isShown = dropdown?.classList.contains('show');
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+      if (!isShown) dropdown?.classList.add('show');
+      return;
+    }
 
-  window.addEventListener('click', () => {
-    document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+    const catItem = e.target.closest('.cat-item');
+    if (catItem) {
+      const val = catItem.getAttribute('data-cat');
+      document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
+      catItem.classList.add('active');
+      activeCategory = val || null;
+      filterAll();
+      catItem.closest('.dropdown-content')?.classList.remove('show');
+      return;
+    }
+
+    const viewItem = e.target.closest('.view-item');
+    if (viewItem) {
+      const view = viewItem.getAttribute('data-view');
+      document.querySelectorAll('.view-item').forEach(i => i.classList.remove('active'));
+      viewItem.classList.add('active');
+      if (view === 'grid') viewContainer.classList.add('view-grid');
+      else viewContainer.classList.remove('view-grid');
+      filterAll();
+      viewItem.closest('.dropdown-content')?.classList.remove('show');
+      return;
+    }
+
+    if (!e.target.closest('.dropdown')) {
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+    }
   });
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const id = entry.target.getAttribute('data-id');
-      const dot = entry.target.querySelector('.js-status');
-      if (entry.isIntersecting) {
-        visibleIds.add(id);
-      } else {
-        visibleIds.delete(id);
-        if (dot) {
-          dot.style.background = '#ef4444';
-          dot.style.boxShadow = 'none';
-        }
-      }
+      if (entry.isIntersecting) visibleIds.add(id); else visibleIds.delete(id);
     });
-  }, { threshold: 0.01, rootMargin: '100px' });
+  }, { threshold: 0.01 });
 
   tableRows.forEach(row => observer.observe(row));
 
   async function refreshData() {
     if (visibleIds.size === 0) return;
     const idsArray = Array.from(visibleIds);
-    const chunkSize = 25; 
     const now = Math.floor(Date.now() / 1000);
-    
-    for (let i = 0; i < idsArray.length; i += chunkSize) {
-      const chunk = idsArray.slice(i, i + chunkSize);
-      const query = chunk.map(id => `ids[]=${id}`).join('&');
-      const url = `https://hermes.pyth.network/v2/updates/price/latest?${query}&parsed=true`;
+    const query = idsArray.map(id => `ids[]=${id}`).join('&');
+    const url = `https://hermes.pyth.network/v2/updates/price/latest?${query}&parsed=true`;
 
-      try {
-        const response = await fetch(url);
-        if (!response.ok) continue;
-        const data = await response.json();
-        if (data && data.parsed) {
-          data.parsed.forEach(item => {
-            const normId = item.id.startsWith('0x') ? item.id : '0x' + item.id;
-            const row = document.querySelector(`tr[data-id="${normId}"]`);
-            if (row) {
-              const priceCell = row.querySelector('.js-price');
-              const statusDot = row.querySelector('.js-status');
-              const updateCell = row.querySelector('.js-update');
-              const val = parseFloat(item.price.price);
-              const expo = parseInt(item.price.expo);
-              const pubTime = parseInt(item.price.publish_time);
-              const age = now - pubTime;
-
-              if (val > 0) {
-                const newPrice = val * Math.pow(10, expo);
-                const formattedPrice = newPrice.toLocaleString(undefined, { maximumFractionDigits: 8 });
-                if (priceCell.innerText !== formattedPrice) {
-                  priceCell.innerText = formattedPrice;
-                  priceCell.classList.add('price-flash');
-                  setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
-                }
-                updateCell.innerText = new Date(pubTime * 1000).toLocaleTimeString(lang, timeOptions);
-                
-                if (age < 15) {
-                   statusDot.style.background = '#10b981';
-                   statusDot.style.boxShadow = '0 0 10px #10b981';
-                } else if (age < 60) {
-                   statusDot.style.background = '#f59e0b';
-                   statusDot.style.boxShadow = '0 0 10px #f59e0b';
-                } else {
-                   statusDot.style.background = '#ef4444';
-                   statusDot.style.boxShadow = 'none';
-                }
-              }
-            }
-          });
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      data?.parsed?.forEach(item => {
+        const normId = item.id.startsWith('0x') ? item.id : '0x' + item.id;
+        const row = document.querySelector(`tr[data-id="${normId}"]`);
+        if (row) {
+          const priceCell = row.querySelector('.js-price');
+          const statusDot = row.querySelector('.js-status');
+          const updateCell = row.querySelector('.js-update');
+          const val = parseFloat(item.price.price) * Math.pow(10, item.price.expo);
+          const age = now - parseInt(item.price.publish_time);
+          const formatted = val.toLocaleString(undefined, { maximumFractionDigits: 8 });
+          
+          if (priceCell.innerText !== formatted) {
+            priceCell.innerText = formatted;
+            priceCell.classList.add('price-flash');
+            setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
+          }
+          updateCell.innerText = new Date(item.price.publish_time * 1000).toLocaleTimeString(lang, timeOptions);
+          statusDot.style.background = age < 15 ? '#10b981' : (age < 60 ? '#f59e0b' : '#ef4444');
+          statusDot.style.boxShadow = age < 60 ? `0 0 10px ${statusDot.style.background}` : 'none';
         }
-      } catch (err) { console.error('Pyth fetch fail:', err); }
-    }
+      });
+    } catch (err) {}
     if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString(lang, timeOptions);
   }
   setInterval(refreshData, 3000);
@@ -313,7 +254,22 @@ const timeOptions: Intl.DateTimeFormatOptions = {
 
 <style is:global>
   .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; }
-  @keyframes flash-price { 0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; } 100% { color: var(--sl-color-white); text-shadow: none; } }
+  
+  /* GRID VIEW */
+  .view-grid { background: transparent !important; border: none !important; backdrop-filter: none !important; box-shadow: none !important; }
+  .view-grid table, .view-grid thead, .view-grid tbody, .view-grid tr, .view-grid td { display: block !important; border: none !important; margin: 0 !important; }
+  .view-grid thead { display: none !important; }
+  .view-grid tbody { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important; gap: 1.25rem !important; align-items: stretch !important; }
+  .view-grid tr { display: flex !important; flex-direction: column !important; background: rgba(var(--sl-color-bg-nav-rgb), 0.6) !important; backdrop-filter: blur(20px) !important; border: 1px solid var(--sl-color-gray-5) !important; border-radius: 1rem !important; padding: 1.5rem !important; height: 100% !important; min-height: 240px !important; position: relative !important; }
+  .view-grid tr[style*="display: none"] { display: none !important; }
+  .view-grid td { width: 100% !important; padding: 0.3rem 0 !important; background: transparent !important; border: none !important; }
+  .view-grid .td-pair { order: 1; }
+  .view-grid .pair-link { font-size: 1.3rem; color: #9d7cfd !important; }
+  .view-grid .td-desc { order: 2; flex-grow: 1; margin: 0.5rem 0 !important; }
+  .view-grid .cell-price { order: 3; font-size: 1.6rem; border-top: 1px solid var(--sl-color-gray-6) !important; padding-top: 0.8rem !important; margin-top: auto; font-family: 'JetBrains Mono', monospace; }
+  .view-grid .td-status { position: absolute !important; top: 1.5rem; right: 1.5rem; width: auto !important; padding: 0 !important; }
+
+  @keyframes flash-price { 0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; } 100% { color: inherit; text-shadow: none; } }
   .price-flash { animation: flash-price 2s ease-out; }
 </style>
 
@@ -321,23 +277,23 @@ const timeOptions: Intl.DateTimeFormatOptions = {
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
   
-  .explorer-glass { 
-    background: rgba(var(--sl-color-bg-nav-rgb), 0.7) !important; 
-    backdrop-filter: blur(20px) !important; 
-    border: 1px solid var(--sl-color-gray-5) !important; 
+  /* PŘEVZATO Z CHAINLINK.ASTRO PRO IDENTICKOU VÝŠKU */
+  .glass-panel {
+    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
+    backdrop-filter: blur(30px) !important;
+    border: 1px solid var(--sl-color-gray-5) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
-  
+
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
   .stat-card { padding: 1.5rem; border-radius: 0.75rem; min-height: 100px; display: flex; flex-direction: column; justify-content: center; margin-top: 0 !important; }
   .label { font-size: 0.75rem; color: var(--sl-color-gray-3); text-transform: uppercase; margin-bottom: 0.25rem; }
   .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
-
+  
   .table-container { border-radius: 0.75rem; overflow-x: auto; width: 100%; }
   table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
-  
   th, td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); vertical-align: middle; }
   
-  /* Upravené zalamování a šířky */
   .th-pair, .td-pair { width: 100px; }
   .th-desc, .td-desc { width: auto; min-width: 200px; }
   .th-price, .cell-price { width: 130px; }
@@ -345,43 +301,17 @@ const timeOptions: Intl.DateTimeFormatOptions = {
   .th-update, .cell-update { width: 120px; }
   .th-cat, .td-cat { width: 130px; text-align: right; }
 
-  th { background: rgba(157, 124, 253, 0.1); text-align: left; color: #9d7cfd; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; }
-  tbody tr:hover { background: rgba(157, 124, 253, 0.08); }
+  th { background: rgba(157, 124, 253, 0.1); color: #9d7cfd; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; text-align: left; }
+  tbody tr:hover { background: rgba(157, 124, 253, 0.05); }
   
-  .pair-link { 
-    color: #9d7cfd !important; 
-    font-weight: bold; 
-    text-decoration: none; 
-    font-size: 0.95rem;
-    word-break: break-all;
-  }
+  .pair-link { color: #9d7cfd !important; font-weight: bold; text-decoration: none; }
+  .asset-desc { font-size: 0.85rem; color: var(--sl-color-gray-3); line-height: 1.4; }
+  .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .badge-row { font-size: 0.65rem; background: rgba(157, 124, 253, 0.1); padding: 0.2rem 0.5rem; border-radius: 4px; color: #9d7cfd; font-weight: 600; }
 
-  .asset-desc { 
-    font-size: 0.85rem; 
-    color: var(--sl-color-gray-3); 
-    display: block;
-    line-height: 1.4;
-    white-space: normal; /* Povolí zalomení */
-    word-wrap: break-word;
-  }
-
-  .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); }
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: all 0.3s ease; }
-  
-  .badge-row { 
-    font-size: 0.65rem; 
-    background: rgba(157, 124, 253, 0.1); 
-    border: 1px solid rgba(157, 124, 253, 0.2); 
-    padding: 0.2rem 0.5rem; 
-    border-radius: 4px; 
-    color: #9d7cfd; 
-    text-transform: uppercase;
-    font-weight: 600;
-  }
-
-  /* Table layout fixed vyžaduje definici šířek, ale 'auto' u desc to uvolní */
   @media (max-width: 1000px) {
-    table { table-layout: auto; }
+    .stats-grid { grid-template-columns: 1fr; }
     .th-desc, .td-desc { display: none; }
   }
 </style>
