@@ -41,7 +41,6 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
   </div>
 
   <div class="export-group">
-    {/* Logika dropdown-wrapperu, který drží baseline */}
     <div class="dropdown-wrapper">
       {totalTypesCount > 0 && (
         <div class="dropdown">
@@ -95,19 +94,33 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
         <i class="fa-solid fa-download"></i>
       </button>
       <div class="dropdown-content glass-panel dl-menu" id="dlMenu">
-        <button class="menu-btn" onclick="window.exportData('json')">
+        <button class="menu-btn export-item" data-export="json">
           <span class="view-inner">
             <i class="fa-solid fa-file-code fa-fw"></i>
-            <span>JSON Export</span>
+            <span>JSON Snapshot</span>
           </span>
           <span class="ext-tag">.json</span>
         </button>
-        <button class="menu-btn" onclick="window.exportData('csv')">
+        <button class="menu-btn export-item" data-export="csv">
           <span class="view-inner">
             <i class="fa-solid fa-file-csv fa-fw"></i>
-            <span>CSV Export</span>
+            <span>CSV Snapshot</span>
           </span>
           <span class="ext-tag">.csv</span>
+        </button>
+        <button class="menu-btn export-item" data-export="xml">
+          <span class="view-inner">
+            <i class="fa-solid fa-file-export fa-fw"></i>
+            <span>XML Snapshot</span>
+          </span>
+          <span class="ext-tag">.xml</span>
+        </button>
+        <button class="menu-btn export-item" data-export="yaml">
+          <span class="view-inner">
+            <i class="fa-solid fa-file-lines fa-fw"></i>
+            <span>YAML Snapshot</span>
+          </span>
+          <span class="ext-tag">.yaml</span>
         </button>
       </div>
     </div>
@@ -115,7 +128,6 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
 </div>
 
 <style>
-  /* FIX: Vynucené sjednocení všech kontejnerů na flex-center */
   .controls-row, 
   .search-container,
   .export-group, 
@@ -135,23 +147,15 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     position: relative;
   }
 
-  .search-container {
-    flex: 1;
-    position: relative;
-  }
+  .search-container { flex: 1; position: relative; }
+  .export-group { gap: 0.5rem; }
 
-  .export-group {
-    gap: 0.5rem;
-  }
-
-  /* Font Awesome Global Fix */
   :global(.fa-solid), :global(.fas) {
     font-family: "Font Awesome 6 Free" !important;
     font-weight: 900 !important;
     display: inline-block !important;
   }
 
-  /* Stylování panelů */
   .glass-panel.glass-panel {
     background: rgba(20, 20, 25, 0.5) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
@@ -162,7 +166,6 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     border-radius: 0.75rem !important;
   }
 
-  /* Light mode korekce */
   :global([data-theme="light"]) .glass-panel.glass-panel {
     background: rgba(255, 255, 255, 0.4) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
@@ -170,7 +173,6 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     color: var(--sl-color-gray-1) !important;
   }
 
-  /* Main Input */
   .main-input.main-input {
     width: 100%;
     height: 44px !important;
@@ -186,7 +188,6 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     color: var(--sl-color-gray-3);
   }
 
-  /* Tlačítka postavená na FLEX místo INLINE-FLEX */
   .glass-btn.glass-btn {
     height: 44px !important;
     padding: 0 1.1rem !important;
@@ -203,13 +204,8 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
   }
 
   .glass-btn i { color: #9d7cfd !important; }
+  .icon-only { width: 44px !important; padding: 0 !important; }
 
-  .icon-only {
-    width: 44px !important;
-    padding: 0 !important;
-  }
-
-  /* Ikony a Badge - sjednocení na flex */
   .glass-btn i, .glass-btn :global(svg) {
     display: flex !important;
     align-items: center;
@@ -232,7 +228,6 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     margin-left: 0.2rem;
   }
 
-  /* Dropdown Obsah */
   .dropdown { position: relative; }
   .dropdown-content.glass-panel {
     display: none;
@@ -276,6 +271,7 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     border: 1px solid rgba(157, 124, 253, 0.2) !important;
   }
 
+  .ext-tag { font-size: 0.65rem; color: var(--sl-color-gray-3); opacity: 0.7; }
   .active-indicator { opacity: 0; color: #9d7cfd; }
   .active .active-indicator { opacity: 1; }
 

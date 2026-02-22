@@ -44,7 +44,6 @@ const feeds = rawData.map((f: any) => {
     expo: live.expo,
     updatedAt: live.publish_time ? new Date(live.publish_time * 1000) : null,
     category: categoryName,
-    // detailUrl: `/${lang}/market/pyth/${fullId}`
     detailUrl: `/${lang}/market/pyth/asset/?id=${fullId}`
   };
 }).sort((a: any, b: any) => a.name.localeCompare(b.name));
@@ -64,7 +63,7 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
     <div class="wormhole-background" aria-hidden="true">
       <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="ray-gradient-pyth" x1="0%" y1="0%" x2="0%" y2="100%">
+          <linearGradient id="ray-gradient-pyth" x1="0%" x2="0%" y1="0%" y2="100%">
             <stop offset="10%" stop-color="#e6dafe" stop-opacity="0" />
             <stop offset="40%" stop-color="#9d7cfd" stop-opacity="0.3" />
             <stop offset="90%" stop-color="#6633ee" stop-opacity="0" />
@@ -168,7 +167,8 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
 
   if (searchInput) searchInput.addEventListener('input', filterAll);
 
-  document.addEventListener('click', (e) => {
+  // Global click listener for UI controls and export
+  document.addEventListener('click', async (e) => {
     const btn = e.target.closest('.glass-btn');
     if (btn) {
       e.stopPropagation();
@@ -176,6 +176,15 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
       const isShown = dropdown?.classList.contains('show');
       document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
       if (!isShown) dropdown?.classList.add('show');
+      return;
+    }
+
+    // Capture Export Clicks from SearchFilterBar
+    const exportItem = e.target.closest('.export-item');
+    if (exportItem) {
+      const format = exportItem.getAttribute('data-export');
+      await handleSnapshotExport(format, exportItem);
+      exportItem.closest('.dropdown-content')?.classList.remove('show');
       return;
     }
 
@@ -207,6 +216,86 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
     }
   });
 
+  // Snapshot Export Logic
+  async function handleSnapshotExport(format, element) {
+    const visibleRows = Array.from(tableRows).filter(row => row.style.display !== 'none');
+    if (visibleRows.length === 0) return alert('No data to export.');
+
+    const originalContent = element.innerHTML;
+    element.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Fetching...';
+    
+    try {
+      const ids = visibleRows.map(row => row.getAttribute('data-id'));
+      const chunkSize = 100;
+      let freshData = [];
+
+      // Query Hermes in batches
+      for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+        const query = chunk.map(id => `ids[]=${id}`).join('&');
+        const res = await fetch(`https://hermes.pyth.network/v2/updates/price/latest?${query}&parsed=true`);
+        const data = await res.json();
+        if (data.parsed) freshData = freshData.concat(data.parsed);
+      }
+
+      // Merge current table metadata with fresh prices
+      const snapshot = visibleRows.map(row => {
+        const id = row.getAttribute('data-id');
+        const hermes = freshData.find(h => (h.id.startsWith('0x') ? h.id : '0x'+h.id) === id);
+        const priceVal = hermes ? parseFloat(hermes.price.price) * Math.pow(10, hermes.price.expo) : null;
+        
+        return {
+          id: id,
+          symbol: row.querySelector('.pair-link').innerText,
+          description: row.querySelector('.asset-desc').innerText,
+          price: priceVal,
+          type: row.querySelector('.badge-row').innerText,
+          timestamp: hermes ? new Date(hermes.price.publish_time * 1000).toISOString() : null
+        };
+      });
+
+      downloadFormattedFile(snapshot, format);
+    } catch (err) {
+      console.error("Snapshot export failed:", err);
+      alert("Export failed.");
+    } finally {
+      element.innerHTML = originalContent;
+    }
+  }
+
+  function downloadFormattedFile(data, format) {
+    let content = '';
+    let mime = '';
+    const ts = new Date().getTime();
+    const fileName = `pyth_snapshot_${ts}.${format}`;
+
+    if (format === 'json') {
+      content = JSON.stringify(data, null, 2);
+      mime = 'application/json';
+    } else if (format === 'csv') {
+      const cols = ['symbol', 'price', 'type', 'description', 'id', 'timestamp'];
+      content = [cols.join(','), ...data.map(d => cols.map(c => `"${d[c] || ''}"`).join(','))].join('\n');
+      mime = 'text/csv';
+    } else if (format === 'xml') {
+      content = '<?xml version="1.0" encoding="UTF-8"?>\n<pyth_snapshot>\n' + 
+        data.map(d => `  <asset>\n    <symbol>${d.symbol}</symbol>\n    <price>${d.price}</price>\n    <type>${d.type}</type>\n    <id>${d.id}</id>\n    <updated>${d.timestamp}</updated>\n  </asset>`).join('\n') + 
+        '\n</pyth_snapshot>';
+      mime = 'application/xml';
+    } else if (format === 'yaml') {
+      content = data.map(d => `- symbol: ${d.symbol}\n  price: ${d.price}\n  type: ${d.type}\n  id: ${d.id}\n  updated: ${d.timestamp}`).join('\n');
+      mime = 'text/yaml';
+    }
+
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Live Refresh Observer Logic
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const id = entry.target.getAttribute('data-id');
@@ -278,7 +367,6 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
   
-  /* PŘEVZATO Z CHAINLINK.ASTRO PRO IDENTICKOU VÝŠKU */
   .glass-panel {
     background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
     backdrop-filter: blur(30px) !important;
