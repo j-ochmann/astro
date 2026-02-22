@@ -41,7 +41,7 @@ const feeds = rawData
       updatedAt: f.liveData?.updatedAt ? new Date(f.liveData.updatedAt) : null,
       category: f.feedCategory && f.feedCategory !== 'medium' ? f.feedCategory : 'Asset',
       threshold: f.threshold || 0,
-      heartbeat: f.heartbeat || 0,
+      heartbeat: f.heartbeat || 3600,
       detailUrl: `/${lang}/market/chainlink/asset/?id=${address}&symbol=${encodeURIComponent(f.name)}&decimals=${f.liveData?.decimals || 8}`
     };
   }).sort((a: any, b: any) => a.name.localeCompare(b.name));
@@ -59,24 +59,24 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
 <StarlightPage frontmatter={{ title: "Chainlink Oracle Explorer", tableOfContents: false }}>
   <div class="explorer-visual-context">
     <div class="wormhole-background" aria-hidden="true">
-      <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="ray-gradient-cl" x1="0%" x2="0%" y1="0%" y2="100%">
-            <stop offset="10%" stop-color="#375bd2" stop-opacity="0" />
-            <stop offset="40%" stop-color="#375bd2" stop-opacity="0.3" />
-            <stop offset="90%" stop-color="#2a4ad0" stop-opacity="0" />
-          </linearGradient>
-        </defs>
-        <g transform="translate(850, 250)">
-          <g>
-            <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="240s" repeatCount="indefinite" />
-            {Array.from({ length: RAY_COUNT }).map((_, i) => (
-              <rect x="-1" y="100" width="1" height="1000" fill="url(#ray-gradient-cl)" transform={`rotate(${(360 / RAY_COUNT) * i})`} />
-            ))}
-          </g>
-          <circle r="180" fill="var(--sl-color-bg)" filter="blur(50px)" />
-        </g>
-      </svg>
+        <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="ray-gradient-cl" x1="0%" x2="0%" y1="0%" y2="100%">
+                <stop offset="10%" stop-color="#375bd2" stop-opacity="0" />
+                <stop offset="40%" stop-color="#375bd2" stop-opacity="0.3" />
+                <stop offset="90%" stop-color="#2a4ad0" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <g transform="translate(850, 250)">
+              <g>
+                <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="240s" repeatCount="indefinite" />
+                {Array.from({ length: RAY_COUNT }).map((_, i) => (
+                  <rect x="-1" y="100" width="1" height="1000" fill="url(#ray-gradient-cl)" transform={`rotate(${(360 / RAY_COUNT) * i})`} />
+                ))}
+              </g>
+              <circle r="180" fill="var(--sl-color-bg)" filter="blur(50px)" />
+            </g>
+          </svg>
     </div>
 
     <div class="explorer-content">
@@ -105,17 +105,17 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
               <th class="th-price">Latest Price</th>
               <th class="th-status">Live</th>
               <th class="th-update">Last Update</th>
-              <th class="th-params">Dev / Heartbeat</th>
+              <th class="th-params">Threshold / HB</th>
               <th class="th-cat">Type</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="chainlink-body">
             {feeds.map((f: any) => (
-              <tr data-id={f.id} data-decimals={f.decimals} data-category={f.category.toLowerCase()} data-search={f.searchName}>
+              <tr data-id={f.id} data-decimals={f.decimals} data-heartbeat={f.heartbeat} data-category={f.category.toLowerCase()} data-search={f.searchName} class="oracle-row">
                 <td class="td-pair">
                   <a href={f.detailUrl} class="pair-link">{f.name}</a>
                 </td>
-                <td class="cell-price js-price" data-raw-price={f.price}>
+                <td class="cell-price js-price">
                   {f.price.toLocaleString(undefined, { maximumFractionDigits: 10 })}
                 </td>
                 <td class="td-status">
@@ -138,51 +138,104 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
 </StarlightPage>
 
 <script is:inline define:vars={{ lang }}>
+document.addEventListener('DOMContentLoaded', () => {
+  const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
   const syncLabel = document.getElementById('stat-sync');
   const searchInput = document.getElementById('searchTab');
-  const tableRows = document.querySelectorAll('#oracleTable tbody tr');
-  const viewContainer = document.getElementById('mainViewContainer');
-  const visibleIds = new Set();
+  const tableRows = document.querySelectorAll('#chainlink-body tr');
+  const mainViewContainer = document.getElementById('mainViewContainer');
   
-  let activeCategory = null;
-  const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-
-  const RPC_URLS = [
-    'https://eth.llamarpc.com',
-    'https://rpc.ankr.com/eth',
-    'https://ethereum.publicnode.com'
-  ];
+  let activeCategory = 'all';
+  const visibleIds = new Set();
+  const RPC_URLS = ["https://ethereum.publicnode.com", "https://rpc.ankr.com/eth", "https://eth.llamarpc.com"];
   let currentRpcIndex = 0;
 
+  const rowMap = new Map();
+  tableRows.forEach(row => rowMap.set(row.getAttribute('data-id'), row));
+
+  function decodeLatestRoundData(hex) {
+    if (!hex || hex.length < 322) return null;
+    const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
+    const words = [];
+    for (let i = 0; i < clean.length; i += 64) words.push(clean.slice(i, i + 64));
+    const answerRaw = BigInt('0x' + words[1]);
+    const updatedAt = parseInt(words[3], 16);
+    const signed = answerRaw > (1n << 255n) ? answerRaw - (1n << 256n) : answerRaw;
+    return { answer: signed, updatedAt };
+  }
+
   function filterAll() {
-    const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     tableRows.forEach(row => {
       const rowSearch = row.getAttribute('data-search') || '';
-      const rowCat = row.getAttribute('data-category') || '';
-      const matchesSearch = rowSearch.includes(term);
-      const matchesCategory = !activeCategory || rowCat === activeCategory;
+      const category = row.getAttribute('data-category');
+      const matchesSearch = rowSearch.includes(searchTerm.replace(/\s+/g, ''));
+      const matchesCategory = activeCategory === 'all' || category === activeCategory;
       row.style.setProperty('display', (matchesSearch && matchesCategory) ? '' : 'none', 'important');
     });
   }
 
   if (searchInput) searchInput.addEventListener('input', filterAll);
 
+  // DOWNLOAD LOGIC
+  function downloadSnapshot(format) {
+    const data = Array.from(tableRows)
+      .filter(row => row.style.display !== 'none')
+      .map(row => ({
+        pair: row.querySelector('.pair-link').innerText,
+        price: row.querySelector('.js-price').innerText,
+        updatedAt: row.querySelector('.js-update').innerText,
+        id: row.getAttribute('data-id'),
+        category: row.getAttribute('data-category')
+      }));
+
+    let content = '';
+    let mime = 'text/plain';
+
+    if (format === 'json') {
+      content = JSON.stringify(data, null, 2);
+      mime = 'application/json';
+    } else if (format === 'csv') {
+      content = 'Pair,Price,Update,Address,Category\n' + data.map(d => `"${d.pair}","${d.price}","${d.updatedAt}","${d.id}","${d.category}"`).join('\n');
+      mime = 'text/csv';
+    } else if (format === 'yaml') {
+      content = data.map(d => `- pair: ${d.pair}\n  price: ${d.price}\n  update: ${d.updatedAt}\n  id: ${d.id}\n  category: ${d.category}`).join('\n');
+    } else if (format === 'xml') {
+      content = '<?xml version="1.0" encoding="UTF-8"?><feeds>' + data.map(d => `<feed><pair>${d.pair}</pair><price>${d.price}</price></feed>`).join('') + '</feeds>';
+      mime = 'application/xml';
+    }
+
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chainlink_snapshot_${new Date().getTime()}.${format}`;
+    a.click();
+  }
+
+  // ROBUST DROPDOWN & CLICK LOGIC
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('.glass-btn');
+    const allDropdowns = document.querySelectorAll('.dropdown-content');
+
     if (btn) {
+      e.preventDefault();
+      e.stopPropagation();
       const dropdown = btn.nextElementSibling;
-      const isShown = dropdown?.classList.contains('show');
-      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
-      if (!isShown) dropdown?.classList.add('show');
+      const alreadyOpen = dropdown?.classList.contains('show');
+      allDropdowns.forEach(d => d.classList.remove('show'));
+      if (!alreadyOpen) dropdown?.classList.add('show');
       return;
     }
 
     const catItem = e.target.closest('.cat-item');
     if (catItem) {
-      activeCategory = catItem.getAttribute('data-cat') || null;
+      activeCategory = catItem.getAttribute('data-cat') || 'all';
       document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
       catItem.classList.add('active');
       filterAll();
+      allDropdowns.forEach(d => d.classList.remove('show'));
+      return;
     }
 
     const viewItem = e.target.closest('.view-item');
@@ -190,14 +243,21 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
       const view = viewItem.getAttribute('data-view');
       document.querySelectorAll('.view-item').forEach(i => i.classList.remove('active'));
       viewItem.classList.add('active');
-      if (view === 'grid') viewContainer.classList.add('view-grid');
-      else viewContainer.classList.remove('view-grid');
-      filterAll();
+      if (view === 'grid') mainViewContainer.classList.add('view-grid');
+      else mainViewContainer.classList.remove('view-grid');
+      allDropdowns.forEach(d => d.classList.remove('show'));
+      return;
     }
 
-    if (!e.target.closest('.dropdown')) {
-      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+    const snapshotBtn = e.target.closest('[data-format]');
+    if (snapshotBtn) {
+      downloadSnapshot(snapshotBtn.getAttribute('data-format'));
+      allDropdowns.forEach(d => d.classList.remove('show'));
+      return;
     }
+
+    // Klik kamkoliv jinam zavře dropdowny
+    allDropdowns.forEach(d => d.classList.remove('show'));
   });
 
   const observer = new IntersectionObserver((entries) => {
@@ -221,39 +281,30 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              jsonrpc: "2.0",
-              id: Date.now(),
+              jsonrpc: "2.0", id: Date.now(),
               method: "eth_call",
-              params: [{ to: id, data: "0xfeaf968c" }, "latest"] // latestRoundData()
+              params: [{ to: id, data: "0xfeaf968c" }, "latest"]
             })
           });
           const json = await res.json();
-          if (json.error) return { id, data: null };
-          return { id, data: json.result };
-        } catch (e) { return { id, data: null }; }
+          if (json.error) return null;
+          return { id, decoded: decodeLatestRoundData(json.result) };
+        } catch { return null; }
       }));
 
-      let successCount = 0;
       results.forEach(res => {
-        if (!res.data || res.data === '0x' || res.data.length < 130) return;
-        
-        successCount++;
-        const row = document.querySelector(`tr[data-id="${res.id}"]`);
+        if (!res || !res.decoded) return;
+        const row = rowMap.get(res.id);
         if (!row) return;
 
-        // Dekódování hex odpovědi
-        const hexAnswer = res.data.substring(66, 130);
-        const hexTime = res.data.substring(194, 258);
-        const rawValue = BigInt('0x' + hexAnswer);
-        const timeValue = parseInt(hexTime, 16);
         const decimals = parseInt(row.getAttribute('data-decimals') || "8");
-        const price = Number(rawValue) / Math.pow(10, decimals);
+        const heartbeat = parseInt(row.getAttribute('data-heartbeat') || "3600");
+        const price = Number(res.decoded.answer) / Math.pow(10, decimals);
         
         const priceCell = row.querySelector('.js-price');
         const updateCell = row.querySelector('.js-update');
         const statusDot = row.querySelector('.js-status');
 
-        // Formátování ceny
         const formatted = price.toLocaleString(undefined, { maximumFractionDigits: 10 });
         if (priceCell.innerText !== formatted) {
           priceCell.innerText = formatted;
@@ -261,46 +312,64 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
           setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
         }
 
-        // Vždy aktualizovat čas, pokud máme data
-        updateCell.innerText = new Date(timeValue * 1000).toLocaleTimeString(lang, timeOptions);
+        updateCell.innerText = new Date(res.decoded.updatedAt * 1000).toLocaleTimeString(lang, timeOptions);
         
-        // Logika barvy tečky (Chainlink Heartbeat bývá 1h - 24h)
-        const age = now - timeValue;
-        const color = age < 3600 ? '#10b981' : (age < 86400 ? '#f59e0b' : '#ef4444');
+        const age = now - res.decoded.updatedAt;
+        const color = age <= heartbeat ? '#10b981' : (age <= heartbeat * 2 ? '#f59e0b' : '#ef4444');
         statusDot.style.background = color;
-        statusDot.style.boxShadow = age < 3600 ? `0 0 10px ${color}` : 'none';
+        statusDot.style.boxShadow = age <= heartbeat ? `0 0 10px ${color}` : 'none';
       });
 
-      if (successCount > 0 && syncLabel) {
-        syncLabel.innerText = "Live / " + new Date().toLocaleTimeString(lang, timeOptions);
-      }
+      if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString(lang, timeOptions);
     } catch (err) {
-      // Rotace RPC při chybě
       currentRpcIndex = (currentRpcIndex + 1) % RPC_URLS.length;
     }
   }
 
-  // Refresh interval nastaven na 3 vteřiny
-  setInterval(fetchChainlinkData, 3000);
   fetchChainlinkData();
+  const interval = setInterval(fetchChainlinkData, 3000);
+  window.addEventListener('beforeunload', () => clearInterval(interval));
+});
 </script>
 
 <style is:global>
   .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; }
   
-  /* GRID VIEW */
-  .view-grid { background: transparent !important; border: none !important; backdrop-filter: none !important; box-shadow: none !important; }
-  .view-grid table, .view-grid thead, .view-grid tbody, .view-grid tr, .view-grid td { display: block !important; border: none !important; margin: 0 !important; }
+  /* KOMPAKTNÍ GRID VIEW */
+  .view-grid { background: transparent !important; border: none !important; box-shadow: none !important; }
+  .view-grid table { border: none !important; display: block !important; width: 100% !important; background: transparent !important; }
   .view-grid thead { display: none !important; }
-  .view-grid tbody { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important; gap: 1.25rem !important; align-items: stretch !important; }
-  .view-grid tr { display: flex !important; flex-direction: column !important; background: rgba(var(--sl-color-bg-nav-rgb), 0.6) !important; backdrop-filter: blur(20px) !important; border: 1px solid var(--sl-color-gray-5) !important; border-radius: 1rem !important; padding: 1.5rem !important; height: 100% !important; min-height: 200px !important; position: relative !important; }
-  .view-grid tr[style*="display: none"] { display: none !important; }
-  .view-grid td { width: 100% !important; padding: 0.3rem 0 !important; background: transparent !important; border: none !important; }
+  .view-grid tbody { 
+    display: grid !important; 
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important; 
+    gap: 0.75rem !important; 
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+  .view-grid tr { 
+    display: flex !important; 
+    flex-direction: column !important; 
+    background: rgba(var(--sl-color-bg-nav-rgb), 0.6) !important; 
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid var(--sl-color-gray-5) !important; 
+    border-radius: 0.6rem !important; 
+    padding: 1rem !important; 
+    position: relative !important; 
+    height: auto !important;
+    min-height: 150px !important;
+    margin: 0 !important;
+  }
+  .view-grid tr:first-child { height: auto !important; margin-top: 0 !important; }
+  
+  .view-grid td { width: 100% !important; border: none !important; padding: 0.15rem 0 !important; background: transparent !important; min-height: auto !important; }
+  .view-grid .td-status { position: absolute !important; top: 1rem; right: 1rem; width: auto !important; }
   .view-grid .td-pair { order: 1; }
-  .view-grid .pair-link { font-size: 1.3rem; color: #375bd2 !important; }
-  .view-grid .cell-price { order: 2; font-size: 1.6rem; border-top: 1px solid var(--sl-color-gray-6) !important; padding-top: 0.8rem !important; margin-top: auto; font-family: 'JetBrains Mono', monospace; }
-  .view-grid .td-status { position: absolute !important; top: 1.5rem; right: 1.5rem; width: auto !important; padding: 0 !important; }
-  .view-grid .js-update { font-size: 0.8rem; color: var(--sl-color-gray-3); margin-top: 0.5rem; }
+  .view-grid .pair-link { font-size: 1.1rem; color: #375bd2 !important; }
+  .view-grid .td-cat { order: 2; text-align: left !important; margin-bottom: 0.25rem; }
+  .view-grid .cell-price { order: 3; font-size: 1.35rem; border-top: 1px solid var(--sl-color-gray-6) !important; padding-top: 0.5rem !important; margin-top: auto; }
+  .view-grid .js-update { font-size: 0.75rem; color: var(--sl-color-gray-4); order: 4; }
+  .view-grid .td-params { display: block !important; order: 5; font-size: 0.7rem; border-top: 1px solid var(--sl-color-gray-6) !important; padding-top: 0.4rem !important; margin-top: 0.4rem; width: 100% !important; }
 
   @keyframes flash-price-cl { 0% { color: #375bd2; text-shadow: 0 0 10px #375bd2; } 100% { color: inherit; text-shadow: none; } }
   .price-flash { animation: flash-price-cl 2s ease-out; }
@@ -310,30 +379,48 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
   .explorer-content { 
     --filter-accent-color: #375bd2; 
     --filter-accent-bg: rgba(55, 91, 210, 0.15);
-    --filter-accent-border: rgba(55, 91, 210, 0.4);
   }
+  
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
-  .glass-panel { background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+  
+  .glass-panel { 
+    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; 
+    backdrop-filter: blur(30px) !important; 
+    border: 1px solid var(--sl-color-gray-5) !important; 
+  }
+
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
   .stat-card { padding: 1.5rem; border-radius: 0.75rem; min-height: 100px; display: flex; flex-direction: column; justify-content: center; margin-top: 0 !important; }
   .label { font-size: 0.75rem; color: var(--sl-color-gray-3); text-transform: uppercase; margin-bottom: 0.25rem; }
   .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
+  
   .table-container { border-radius: 0.75rem; overflow-x: auto; width: 100%; }
   table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
   th, td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); vertical-align: middle; }
-  th { background: rgba(55, 91, 210, 0.1); color: #375bd2; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; text-align: left; }
+  th { background: rgba(55, 91, 210, 0.1); color: #375bd2; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; }
   
-  .th-pair, .td-pair { width: 150px; }
-  .th-price, .cell-price { width: 140px; font-family: 'JetBrains Mono', monospace; font-weight: bold; }
-  .th-status, .td-status { width: 60px; text-align: center; }
-  .th-update, .cell-update { width: 120px; }
-  .th-params, .td-params { width: 130px; font-size: 0.75rem; color: var(--sl-color-gray-3); }
-  .th-cat, .td-cat { width: 120px; text-align: right; }
+  .th-pair, .td-pair { width: 25%; }
+  .th-price, .cell-price { width: 20%; font-family: 'JetBrains Mono', monospace; font-weight: bold; }
+  .th-status, .td-status { width: 8%; text-align: center; }
+  .th-update, .cell-update { width: 15%; }
+  .th-params, .td-params { width: 17%; font-size: 0.75rem; color: var(--sl-color-gray-3); }
+  .th-cat, .td-cat { width: 15%; text-align: right; }
 
   .pair-link { color: #375bd2 !important; font-weight: bold; text-decoration: none; }
   .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: all 0.3s ease; }
-  .badge-row { font-size: 0.65rem; background: rgba(55, 91, 210, 0.1); padding: 0.2rem 0.5rem; border-radius: 4px; color: #375bd2; font-weight: 600; }
+  
+  .badge-row { 
+    font-size: 0.65rem; 
+    background: rgba(55, 91, 210, 0.15) !important; 
+    padding: 0.2rem 0.5rem; 
+    border-radius: 4px; 
+    color: #375bd2 !important; 
+    font-weight: 600;
+    border: 1px solid rgba(55, 91, 210, 0.3);
+    white-space: nowrap;
+  }
+  
   .dev-val { color: #375bd2; font-weight: 600; }
 
   @media (max-width: 1000px) {
