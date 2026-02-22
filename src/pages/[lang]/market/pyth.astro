@@ -1,6 +1,5 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PATHS } from '../../../scripts/fetch/fetch.config.ts'; 
@@ -10,27 +9,15 @@ export async function getStaticPaths() {
   return getI18nPaths();
 }
 
-interface FeedItem {
-  id: string;
-  name: string;
-  description: string;
-  searchStr: string;
-  price: number;
-  conf: number;
-  expo: number;
-  updatedAt: number;
-  category: string;
-  isActive: boolean;
-  detailUrl: string;
-}
-
 const { lang } = Astro.params;
 const RAW_DIR = path.join(process.cwd(), PATHS.RAW, PATHS.PYTH_ALL);
 
-let rawData: any[] = [];
+let rawData = [];
+let humanTimestamp = "Initializing Live Data...";
+
 if (fs.existsSync(RAW_DIR)) {
   try {
-    const files = fs.readdirSync(RAW_DIR).filter((f: string) => f.startsWith('pyth_full_'));
+    const files = fs.readdirSync(RAW_DIR).filter(f => f.startsWith('pyth_full_'));
     const latestFile = files.sort().reverse()[0];
     if (latestFile) {
       rawData = JSON.parse(fs.readFileSync(path.join(RAW_DIR, latestFile), 'utf-8'));
@@ -38,142 +25,242 @@ if (fs.existsSync(RAW_DIR)) {
   } catch (e) { console.error("Build load error:", e); }
 }
 
-const NOW_TS = Math.floor(Date.now() / 1000);
-const allFeeds: FeedItem[] = rawData.map((f: any): FeedItem => {
-  const live = f.live_data?.price || { price: "0", conf: "0", expo: 0, publish_time: 0 };
+const feeds = rawData.map((f: any) => {
+  const live = f.live_data?.price || { price: "0", expo: 0, publish_time: 0 };
   const fullId = f.id.startsWith('0x') ? f.id : `0x${f.id}`;
-  const priceVal = parseFloat(live.price);
-  const upAt = live.publish_time;
   return {
     id: fullId,
     name: f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown',
-    description: f.attributes?.description || '',
-    searchStr: `${f.attributes?.symbol} ${f.attributes?.description}`.toLowerCase(),
-    price: priceVal,
-    conf: parseFloat(live.conf),
+    searchName: (f.attributes?.symbol || '').toLowerCase().replace(/\s+/g, ''),
+    price: parseFloat(live.price),
     expo: live.expo,
-    updatedAt: upAt,
-    category: f.attributes?.asset_type || 'Other',
-    isActive: priceVal > 0 && (NOW_TS - upAt < 3600),
+    updatedAt: live.publish_time ? new Date(live.publish_time * 1000) : null,
+    category: f.attributes?.asset_type || 'Asset',
     detailUrl: `/${lang}/market/pyth/${fullId}`
   };
-}).sort((a: FeedItem, b: FeedItem) => a.name.localeCompare(b.name));
+}).sort((a: any, b: any) => a.name.localeCompare(b.name));
 
-const catStats = allFeeds.reduce((acc: Record<string, number>, f: FeedItem) => {
-  acc[f.category] = (acc[f.category] || 0) + (f.isActive ? 1 : 0);
-  return acc;
-}, {});
-
-const activeTotal = allFeeds.filter((f: FeedItem) => f.isActive).length;
-
-const categoryOptions = [
-  { label: 'All Assets', value: 'All', count: activeTotal },
-  ...Object.keys(catStats).sort().map((cat: string) => ({
-    label: cat.replace('Crypto Redemption Rate', 'Crypto RR'),
-    value: cat,
-    count: catStats[cat]
-  }))
-];
+const RAY_COUNT = 65;
 ---
 
-<StarlightPage frontmatter={{ title: "Pyth Explorer", tableOfContents: false }}>
+<StarlightPage frontmatter={{ title: "Pyth Network Explorer", tableOfContents: false }}>
   <div class="explorer-visual-context">
     <div class="wormhole-background" aria-hidden="true">
       <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="ray-gradient-pyth" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="10%" stop-color="#9d7cfd" stop-opacity="0" />
-            <stop offset="50%" stop-color="#9d7cfd" stop-opacity="0.15" />
-            <stop offset="90%" stop-color="#9d7cfd" stop-opacity="0" />
+            <stop offset="10%" stop-color="#e6dafe" stop-opacity="0" />
+            <stop offset="40%" stop-color="#9d7cfd" stop-opacity="0.3" />
+            <stop offset="90%" stop-color="#6633ee" stop-opacity="0" />
           </linearGradient>
         </defs>
         <g transform="translate(850, 250)">
           <g>
             <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="240s" repeatCount="indefinite" />
-            {Array.from({ length: 65 }).map((_, i) => (
-              <rect x="-1" y="100" width="1" height="1000" fill="url(#ray-gradient-pyth)" transform={`rotate(${(360 / 65) * i})`} />
+            {Array.from({ length: RAY_COUNT }).map((_, i) => (
+              <rect x="-1" y="100" width="1" height="1000" fill="url(#ray-gradient-pyth)" transform={`rotate(${(360 / RAY_COUNT) * i})`} />
             ))}
           </g>
+          <circle r="180" fill="var(--sl-color-bg)" filter="blur(50px)" />
         </g>
       </svg>
     </div>
 
     <div class="explorer-content">
-      <SearchFilterBar 
-          searchPlaceholder="Search symbol or description..." 
-          filterLabel="Asset Classes"
-          filterOptions={categoryOptions}
-          viewLabel="View"
-          downloadLabel="Export"
-      />
+      <div class="stats-grid">
+        <div class="stat-card glass-panel">
+          <span class="label">Pyth Feeds</span>
+          <span class="value" id="stat-total">{feeds.length}</span>
+        </div>
+        <div class="stat-card glass-panel">
+          <span class="label">Network Status</span>
+          <span class="value" id="stat-sync">{humanTimestamp}</span>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <input type="text" id="oracleSearch" class="glass-panel" placeholder="Search symbol..." autocomplete="off" />
+        <div class="export-group">
+          <button onclick="exportData('json')" class="glass-btn">JSON</button>
+          <button onclick="exportData('csv')" class="glass-btn">CSV</button>
+          <button onclick="exportData('xml')" class="glass-btn">XML</button>
+          <button onclick="exportData('yaml')" class="glass-btn">YAML</button>
+        </div>
+      </div>
 
       <div class="table-container glass-panel">
         <table id="oracleTable">
           <thead>
             <tr>
-              <th style="padding-left: 1.5rem; width: 150px">Symbol</th>
-              <th>Description</th>
-              <th style="width: 140px">Price</th>
-              <th class="text-center" style="width: 80px">Live</th>
-              <th style="width: 140px">Confidence</th>
-              <th style="text-align: right; padding-right: 1.5rem; width: 120px">Time</th>
+              <th class="th-pair">Symbol</th>
+              <th class="th-price">Price</th>
+              <th class="th-status">Live</th>
+              <th class="th-update">Publish Time</th>
+              <th class="th-address">Feed ID</th>
+              <th class="th-cat">Type</th>
             </tr>
           </thead>
-          <tbody id="tableBody"></tbody>
+          <tbody>
+            {feeds.map((f: any) => (
+              <tr data-id={f.id} data-json={JSON.stringify(f)} data-name={f.searchName}>
+                <td class="td-pair">
+                  <a href={f.detailUrl} class="pair-link">{f.name}</a>
+                </td>
+                <td class="cell-price js-price">
+                  {f.price > 0 ? (f.price * Math.pow(10, f.expo)).toLocaleString(undefined, { maximumFractionDigits: 8 }) : "0.00"}
+                </td>
+                <td class="td-status">
+                  <div class="status-dot js-status" style="background: #ef4444;"></div>
+                </td>
+                <td class="js-update cell-update">{f.updatedAt ? f.updatedAt.toLocaleTimeString() : 'N/A'}</td>
+                <td class="cell-mono opacity-50 small">{f.id.slice(0, 14)}...</td>
+                <td class="td-cat"><span class="badge-cat">{f.category}</span></td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
     </div>
   </div>
 </StarlightPage>
 
-<script is:inline define:vars={{ allFeeds }}>
-  import { initExplorer } from '/src/scripts/pyth-explorer.js';
-  initExplorer(allFeeds);
+<script is:inline define:vars={{ lang }}>
+  const syncLabel = document.getElementById('stat-sync');
+  const visibleIds = new Set();
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const id = entry.target.getAttribute('data-id');
+      const dot = entry.target.querySelector('.js-status');
+      if (entry.isIntersecting) {
+        visibleIds.add(id);
+      } else {
+        visibleIds.delete(id);
+        if (dot) {
+          dot.style.background = '#ef4444';
+          dot.style.boxShadow = 'none';
+        }
+      }
+    });
+  }, { threshold: 0.01, rootMargin: '100px' });
+
+  document.querySelectorAll('#oracleTable tbody tr').forEach(row => observer.observe(row));
+
+  async function refreshData() {
+    if (visibleIds.size === 0) return;
+
+    const idsArray = Array.from(visibleIds);
+    const chunkSize = 25; 
+    const now = Math.floor(Date.now() / 1000);
+    
+    for (let i = 0; i < idsArray.length; i += chunkSize) {
+      const chunk = idsArray.slice(i, i + chunkSize);
+      const query = chunk.map(id => `ids[]=${id}`).join('&');
+      const url = `https://hermes.pyth.network/v2/updates/price/latest?${query}&parsed=true`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) continue;
+        
+        const data = await response.json();
+        if (data && data.parsed) {
+          data.parsed.forEach(item => {
+            const normId = item.id.startsWith('0x') ? item.id : '0x' + item.id;
+            const row = document.querySelector(`tr[data-id="${normId}"]`);
+            if (row) {
+              const priceCell = row.querySelector('.js-price');
+              const statusDot = row.querySelector('.js-status');
+              const updateCell = row.querySelector('.js-update');
+              
+              const val = parseFloat(item.price.price);
+              const expo = parseInt(item.price.expo);
+              const pubTime = parseInt(item.price.publish_time);
+              const age = now - pubTime;
+
+              if (val > 0) {
+                const newPrice = val * Math.pow(10, expo);
+                const formattedPrice = newPrice.toLocaleString(undefined, { maximumFractionDigits: 8 });
+
+                // Update ceny a času
+                if (priceCell.innerText !== formattedPrice) {
+                  priceCell.innerText = formattedPrice;
+                  priceCell.classList.add('price-flash');
+                  setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
+                }
+                updateCell.innerText = new Date(pubTime * 1000).toLocaleTimeString();
+
+                // BARVA SVĚTÉLKA PODLE STÁŘÍ DAT
+                if (age < 15) {
+                   // ZELENÁ - Čerstvá data
+                   statusDot.style.background = '#10b981';
+                   statusDot.style.boxShadow = '0 0 10px #10b981';
+                } else if (age < 60) {
+                   // ORANŽOVÁ - Data přišla, ale trh stojí (stale)
+                   statusDot.style.background = '#f59e0b';
+                   statusDot.style.boxShadow = '0 0 10px #f59e0b';
+                } else {
+                   // ČERVENÁ - Data jsou stará víc jak minutu
+                   statusDot.style.background = '#ef4444';
+                   statusDot.style.boxShadow = 'none';
+                }
+              }
+            }
+          });
+        }
+      } catch (err) { console.error('Pyth fetch fail:', err); }
+    }
+    if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString();
+  }
+
+  setInterval(refreshData, 3000);
 </script>
 
 <style is:global>
-  /* Reset Starlight */
-  .main-frame, .content-panel, .sl-container { 
-    max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; 
-  }
-  header.header, h1 { display: none !important; }
-  
-  /* Reset pro zarovnání */
-  *, *::before, *::after { box-sizing: border-box; }
-
-  @keyframes flash-price {
-    0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; }
-    100% { color: inherit; text-shadow: none; }
-  }
-  .price-flash { animation: flash-price 1s ease-out; }
+  .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; }
+  @keyframes flash-price { 0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; } 100% { color: var(--sl-color-white); text-shadow: none; } }
+  .price-flash { animation: flash-price 2s ease-out; }
 </style>
 
 <style>
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
-
-  .glass-panel {
-    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
-    backdrop-filter: blur(30px) !important;
-    border: 1px solid var(--sl-color-gray-5) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  }
-
-  .table-container { border-radius: 0.75rem; overflow: hidden; }
-  table { width: 100%; border-collapse: separate; border-spacing: 0; }
-  th { 
-    background: rgba(157, 124, 253, 0.1); 
-    padding: 1rem; 
-    text-align: left; 
-    color: #9d7cfd; 
-    border-bottom: 2px solid var(--sl-color-gray-5); 
-    font-size: 0.8rem; 
-    text-transform: uppercase; 
-  }
+  .glass-panel { background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; }
   
-  .text-center { text-align: center; }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+  .stat-card { padding: 1.5rem; border-radius: 0.75rem; min-height: 100px; display: flex; flex-direction: column; justify-content: center; margin-top: 0 !important; }
+  .label { font-size: 0.75rem; color: var(--sl-color-gray-3); text-transform: uppercase; margin-bottom: 0.25rem; }
+  .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
+  
+  .controls-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; height: 44px; align-items: stretch; }
+  #oracleSearch { flex: 1; padding: 0 1rem; border-radius: 0.5rem; color: var(--sl-color-white); height: 100%; outline: none; }
+  .export-group { display: flex; gap: 0.5rem; height: 100%; }
+  
+  .glass-btn { background: rgba(157, 124, 253, 0.2) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; color: var(--sl-color-white) !important; padding: 0 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.75rem; font-weight: bold; height: 100%; display: flex; align-items: center; margin: 0 !important; }
+
+  .table-container { border-radius: 0.75rem; overflow-x: auto; width: 100%; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+  
+  th, td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .th-pair, .td-pair { width: 20%; }
+  .th-price, .cell-price { width: 20%; }
+  .th-status, .td-status { width: 8%; text-align: center; }
+  .th-update, .cell-update { width: 15%; }
+  .th-address { width: 22%; }
+  .th-cat, .td-cat { width: 15%; text-align: right; }
+
+  th { background: rgba(157, 124, 253, 0.1); text-align: left; color: #9d7cfd; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; }
+  tbody tr { background: rgba(255, 255, 255, 0.01); }
+  tbody tr:hover { background: rgba(157, 124, 253, 0.08); }
+  
+  .pair-link { color: #9d7cfd !important; font-weight: bold; text-decoration: none; }
+  .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); }
+  
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: all 0.3s ease; }
+  
+  .badge-cat { font-size: 0.65rem; background: rgba(157, 124, 253, 0.15); border: 1px solid rgba(157, 124, 253, 0.2); padding: 0.2rem 0.5rem; border-radius: 4px; color: #9d7cfd; }
 
   @media (max-width: 1000px) {
-    th:nth-child(2), td:nth-child(2), th:nth-child(5), td:nth-child(5) { display: none; }
+    table { table-layout: auto; }
+    .th-address, .cell-mono { display: none; }
   }
 </style>
