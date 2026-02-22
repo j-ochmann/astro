@@ -18,7 +18,7 @@ interface Props {
 
 const { 
   searchPlaceholder = "Search...", 
-  filterLabel = "Filters",
+  filterLabel = "Asset Type",
   filterOptions = [],
   viewLabel = "View",
   downloadLabel = "Download"
@@ -41,9 +41,9 @@ const totalOptions = filterOptions.length;
     {totalOptions > 0 && (
       <div class="dropdown">
         <button class="glass-btn glass-panel" id="catBtn">
-          <Icon name="setting" size="1.1rem" />
+          <i class="fa-solid fa-layer-group fa-fw"></i>
           <span class="btn-text">{filterLabel}</span>
-          <span class="badge-count" id="activeFilterCount">{totalOptions}</span>
+          <span class="badge-count">{totalOptions}</span>
         </button>
         <div class="dropdown-content glass-panel" id="catMenu">
           {filterOptions.map(opt => (
@@ -58,16 +58,22 @@ const totalOptions = filterOptions.length;
 
     <div class="dropdown">
       <button class="glass-btn glass-panel" id="viewBtn">
-        <Icon name="list-format" size="1.1rem" />
+        <i class="fa-solid fa-table-cells-large fa-fw"></i>
         <span class="btn-text">{viewLabel}</span>
       </button>
       <div class="dropdown-content glass-panel" id="viewMenu">
         <button class="view-item menu-btn active" data-view="table">
-          <span>Table</span>
+          <span class="view-inner">
+            <i class="fa-solid fa-table fa-fw"></i>
+            <span>Table</span>
+          </span>
           <Icon name="right-arrow" size="0.8rem" class="active-indicator" />
         </button>
         <button class="view-item menu-btn" data-view="grid">
-          <span>Grid</span>
+          <span class="view-inner">
+            <i class="fa-solid fa-grip fa-fw"></i>
+            <span>Grid</span>
+          </span>
           <Icon name="right-arrow" size="0.8rem" class="active-indicator" />
         </button>
       </div>
@@ -75,15 +81,21 @@ const totalOptions = filterOptions.length;
 
     <div class="dropdown">
       <button class="glass-btn glass-panel icon-only" id="dlBtn" title={downloadLabel}>
-        <Icon name="download" size="1.1rem" />
+        <i class="fa-solid fa-download"></i>
       </button>
       <div class="dropdown-content glass-panel dl-menu" id="dlMenu">
         <button class="menu-btn" onclick="window.exportData('json')">
-          <span>JSON Export</span>
+          <span class="view-inner">
+            <i class="fa-solid fa-file-code fa-fw"></i>
+            <span>JSON Export</span>
+          </span>
           <span class="ext-tag">.json</span>
         </button>
         <button class="menu-btn" onclick="window.exportData('csv')">
-          <span>CSV Export</span>
+          <span class="view-inner">
+            <i class="fa-solid fa-file-csv fa-fw"></i>
+            <span>CSV Export</span>
+          </span>
           <span class="ext-tag">.csv</span>
         </button>
       </div>
@@ -92,7 +104,6 @@ const totalOptions = filterOptions.length;
 </div>
 
 <style>
-  /* Kontejner */
   .controls-row {
     display: flex;
     gap: 0.75rem;
@@ -103,7 +114,14 @@ const totalOptions = filterOptions.length;
     position: relative;
   }
 
-  /* UNIVERZÁLNÍ SKLENĚNÝ STYL - s extrémní prioritou */
+  /* Font Awesome Global Fix */
+  :global(.fa-solid), :global(.fas) {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+    display: inline-block !important;
+    font-style: normal !important;
+  }
+
   .glass-panel.glass-panel {
     background: rgba(20, 20, 25, 0.5) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
@@ -114,7 +132,6 @@ const totalOptions = filterOptions.length;
     color: #ffffff !important;
   }
 
-  /* Input fix */
   .main-input.main-input {
     flex: 1;
     height: 44px !important;
@@ -125,7 +142,6 @@ const totalOptions = filterOptions.length;
   
   .main-input:focus {
     border-color: rgba(157, 124, 253, 0.6) !important;
-    background: rgba(20, 20, 25, 0.8) !important;
   }
 
   .search-icon-inside {
@@ -135,8 +151,6 @@ const totalOptions = filterOptions.length;
     transform: translateY(-50%);
     z-index: 10;
     color: var(--sl-color-gray-3);
-    pointer-events: none;
-    line-height: 0;
   }
 
   .export-group {
@@ -147,30 +161,37 @@ const totalOptions = filterOptions.length;
 
   .dropdown { position: relative; height: 44px; }
 
-  /* Tlačítka s vynuceným stylem */
   .glass-btn.glass-btn {
     height: 44px !important;
     padding: 0 1.1rem !important;
     cursor: pointer !important;
     display: flex !important;
     align-items: center !important;
-    gap: 0.6rem !important;
+    gap: 0.7rem !important;
     font-size: 0.85rem !important;
     font-weight: 600 !important;
     margin: 0 !important;
     transition: all 0.3s ease !important;
-    text-transform: none !important; /* Proti Starlight defaultu */
+  }
+
+  /* Styl pro Font Awesome ikony */
+  .glass-btn i {
+    font-size: 0.95rem !important;
+    color: #9d7cfd !important; /* Barva Pyth fialové, aby ikony svítily */
+  }
+
+  .menu-btn i {
+    font-size: 0.9rem !important;
+    color: rgba(255, 255, 255, 0.5);
   }
 
   .glass-btn:hover {
     background: rgba(157, 124, 253, 0.2) !important;
     border-color: rgba(157, 124, 253, 0.5) !important;
-    transform: translateY(-1px);
   }
 
-  .icon-only.icon-only { padding: 0 0.9rem !important; }
+  .icon-only.icon-only { padding: 0 1rem !important; }
 
-  /* Badge v hlavním tlačítku */
   .badge-count.badge-count {
     background: rgba(157, 124, 253, 0.25) !important;
     color: #d8ccff !important;
@@ -185,10 +206,8 @@ const totalOptions = filterOptions.length;
     align-items: center;
     justify-content: center;
     margin-left: 0.2rem;
-    box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
   }
 
-  /* Dropdown Menu */
   .dropdown-content.glass-panel {
     display: none;
     position: absolute;
@@ -202,7 +221,6 @@ const totalOptions = filterOptions.length;
   }
   .dropdown-content.show { display: flex; }
 
-  /* Položky v menu */
   .menu-btn.menu-btn {
     width: 100%;
     padding: 0.8rem 1rem;
@@ -215,12 +233,21 @@ const totalOptions = filterOptions.length;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.2s ease;
+  }
+
+  .view-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
   }
 
   .menu-btn:hover {
     background: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
+  }
+
+  .menu-btn:hover i {
+    color: #9d7cfd !important;
   }
 
   .menu-btn.active {
@@ -229,7 +256,6 @@ const totalOptions = filterOptions.length;
     font-weight: 700;
   }
 
-  /* Badge u položek v dropdownu */
   .badge-cat.badge-cat {
     font-size: 0.7rem;
     background: rgba(157, 124, 253, 0.15) !important;
@@ -248,10 +274,5 @@ const totalOptions = filterOptions.length;
 
   @media (max-width: 900px) {
     .btn-text { display: none; }
-  }
-
-  /* Globální fix pro ikony v komponentě */
-  .glass-btn :global(svg) {
-    color: rgba(255, 255, 255, 0.8) !important;
   }
 </style>

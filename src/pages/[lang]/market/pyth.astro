@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { PATHS } from '../../../scripts/fetch/fetch.config.ts'; 
 import { getI18nPaths } from '@/content/config/i18n';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 export async function getStaticPaths() {
   return getI18nPaths();
