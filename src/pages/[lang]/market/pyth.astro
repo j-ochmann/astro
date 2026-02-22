@@ -31,9 +31,9 @@ if (fs.existsSync(RAW_DIR)) {
 const feeds = rawData.map((f: any) => {
   const live = f.live_data?.price || { price: "0", expo: 0, publish_time: 0 };
   const fullId = f.id.startsWith('0x') ? f.id : `0x${f.id}`;
-  const categoryName = f.attributes?.asset_type || 'Asset';
-  const description = f.attributes?.description || '';
-  const symbol = f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown';
+  const categoryName = String(f.attributes?.asset_type || 'Asset');
+  const description = String(f.attributes?.description || '');
+  const symbol = String(f.attributes?.display_symbol || f.attributes?.symbol || 'Unknown');
   
   return {
     id: fullId,
@@ -107,8 +107,6 @@ const timeOptions: Intl.DateTimeFormatOptions = {
 
       <div class="table-container explorer-glass">
         <table id="oracleTable">
-          <colgroup>
-            <col style="width: 120px;"> <col style="width: auto;">  <col style="width: 150px;"> <col style="width: 60px;">  <col style="width: 140px;"> <col style="width: 130px;"> </colgroup>
           <thead>
             <tr>
               <th class="th-pair">Symbol</th>
@@ -175,7 +173,11 @@ const timeOptions: Intl.DateTimeFormatOptions = {
       const matchesSearch = searchData.includes(term);
       const matchesCategory = !activeCategory || category === activeCategory;
       
-      row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+      if (matchesSearch && matchesCategory) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
     });
   }
 
@@ -197,6 +199,15 @@ const timeOptions: Intl.DateTimeFormatOptions = {
         item.classList.add('active');
       }
       filterTable();
+      item.parentElement.classList.remove('show');
+    });
+  });
+
+  document.querySelectorAll('.view-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.view-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
       item.parentElement.classList.remove('show');
     });
   });
@@ -316,29 +327,39 @@ const timeOptions: Intl.DateTimeFormatOptions = {
   .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
 
   .table-container { border-radius: 0.75rem; overflow-x: auto; width: 100%; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
   
-  /* Změna: Odstraněno table-layout: fixed pro plynulost */
-  table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  th, td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); vertical-align: middle; }
   
-  th, td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); vertical-align: middle; }
+  /* Upravené zalamování a šířky */
+  .th-pair, .td-pair { width: 100px; }
+  .th-desc, .td-desc { width: auto; min-width: 200px; }
+  .th-price, .cell-price { width: 130px; }
+  .th-status, .td-status { width: 60px; text-align: center; }
+  .th-update, .cell-update { width: 120px; }
+  .th-cat, .td-cat { width: 130px; text-align: right; }
 
-  th { background: rgba(157, 124, 253, 0.1); text-align: left; color: #9d7cfd; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; white-space: nowrap; }
+  th { background: rgba(157, 124, 253, 0.1); text-align: left; color: #9d7cfd; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; }
   tbody tr:hover { background: rgba(157, 124, 253, 0.08); }
   
-  .pair-link { color: #9d7cfd !important; font-weight: bold; text-decoration: none; font-size: 0.95rem; }
+  .pair-link { 
+    color: #9d7cfd !important; 
+    font-weight: bold; 
+    text-decoration: none; 
+    font-size: 0.95rem;
+    word-break: break-all;
+  }
 
   .asset-desc { 
     font-size: 0.85rem; 
     color: var(--sl-color-gray-3); 
     display: block;
     line-height: 1.4;
-    white-space: normal;
+    white-space: normal; /* Povolí zalomení */
     word-wrap: break-word;
-    max-width: 400px; /* Omezení šířky popisu aby nezvládl vytlačit vše ostatní */
   }
 
-  .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); white-space: nowrap; }
-  .cell-update { white-space: nowrap; }
+  .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); }
   .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: all 0.3s ease; }
   
   .badge-row { 
@@ -352,10 +373,9 @@ const timeOptions: Intl.DateTimeFormatOptions = {
     font-weight: 600;
   }
 
-  .td-status { text-align: center; }
-  .td-cat { text-align: right; }
-
+  /* Table layout fixed vyžaduje definici šířek, ale 'auto' u desc to uvolní */
   @media (max-width: 1000px) {
+    table { table-layout: auto; }
     .th-desc, .td-desc { display: none; }
   }
 </style>
