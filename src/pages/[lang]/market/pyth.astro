@@ -108,13 +108,7 @@ const timeOptions: Intl.DateTimeFormatOptions = {
       <div class="table-container explorer-glass">
         <table id="oracleTable">
           <colgroup>
-            <col style="width: 120px;">
-            <col style="width: auto;">
-            <col style="width: 150px;">
-            <col style="width: 60px;">
-            <col style="width: 140px;">
-            <col style="width: 130px;">
-          </colgroup>
+            <col style="width: 120px;"> <col style="width: auto;">  <col style="width: 150px;"> <col style="width: 60px;">  <col style="width: 140px;"> <col style="width: 130px;"> </colgroup>
           <thead>
             <tr>
               <th class="th-pair">Symbol</th>
@@ -304,14 +298,6 @@ const timeOptions: Intl.DateTimeFormatOptions = {
   .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; }
   @keyframes flash-price { 0% { color: #9d7cfd; text-shadow: 0 0 10px #9d7cfd; } 100% { color: var(--sl-color-white); text-shadow: none; } }
   .price-flash { animation: flash-price 2s ease-out; }
-
-  /* Striktní reset pro tabulky ve Starlightu */
-  #oracleTable tr { 
-    background-color: rgba(255, 255, 255, 0.02) !important; 
-  }
-  #oracleTable tr:nth-child(any) { 
-    background-color: rgba(255, 255, 255, 0.02) !important; 
-  }
 </style>
 
 <style>
@@ -330,15 +316,14 @@ const timeOptions: Intl.DateTimeFormatOptions = {
   .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
 
   .table-container { border-radius: 0.75rem; overflow-x: auto; width: 100%; }
+  
+  /* Změna: Odstraněno table-layout: fixed pro plynulost */
   table { width: 100%; border-collapse: separate; border-spacing: 0; }
   
   th, td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); vertical-align: middle; }
 
   th { background: rgba(157, 124, 253, 0.1); text-align: left; color: #9d7cfd; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; white-space: nowrap; }
-  
-  /* Pevné pozadí řádků */
-  tbody tr { background: rgba(255, 255, 255, 0.02) !important; }
-  tbody tr:hover { background: rgba(157, 124, 253, 0.15) !important; }
+  tbody tr:hover { background: rgba(157, 124, 253, 0.08); }
   
   .pair-link { color: #9d7cfd !important; font-weight: bold; text-decoration: none; font-size: 0.95rem; }
 
@@ -349,7 +334,7 @@ const timeOptions: Intl.DateTimeFormatOptions = {
     line-height: 1.4;
     white-space: normal;
     word-wrap: break-word;
-    max-width: 400px;
+    max-width: 400px; /* Omezení šířky popisu aby nezvládl vytlačit vše ostatní */
   }
 
   .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--sl-color-white); white-space: nowrap; }
