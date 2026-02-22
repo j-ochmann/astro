@@ -18,10 +18,10 @@ header.header {
   padding-top: 0 !important;
 }
 /* ---------- SCROLLBAR HIDING ---------- */
-* {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
-  &::-webkit-scrollbar {
-    display: none; /* Chrome/Safari/Brave */
-  }
-}
+// * {
+//   scrollbar-width: none; /* Firefox */
+//   -ms-overflow-style: none; /* IE/Edge */
+//   &::-webkit-scrollbar {
+//     display: none; /* Chrome/Safari/Brave */
+//   }
+// }

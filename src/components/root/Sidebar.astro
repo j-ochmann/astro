@@ -28,5 +28,10 @@ interface Props extends StarlightRouteData {}
 <style is:global>
   .sidebar-pane {
     border-right: 1px solid var(--sl-color-hairline);
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    &::-webkit-scrollbar {
+      display: none; /* Chrome/Safari/Brave */
+    }
   }
 </style>
