@@ -44,7 +44,8 @@ const feeds = rawData.map((f: any) => {
     expo: live.expo,
     updatedAt: live.publish_time ? new Date(live.publish_time * 1000) : null,
     category: categoryName,
-    detailUrl: `/${lang}/market/pyth/${fullId}`
+    // detailUrl: `/${lang}/market/pyth/${fullId}`
+    detailUrl: `/${lang}/market/pyth/asset/?id=${fullId}`
   };
 }).sort((a: any, b: any) => a.name.localeCompare(b.name));
 

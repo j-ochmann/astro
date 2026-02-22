@@ -125,7 +125,23 @@ if (!locales) throw new Error("Chybí export 'locales'.");
 if (!iso_3166_1) throw new Error("Chybí export 'iso_3166_1'.");
 
 export function getI18nPaths() {
-  return Object.keys(locales).map((lang) => ({
+  const allLangs = Object.keys(locales);
+  
+  // Detekce, zda běží 'npm run dev' nebo 'astro build'
+  const isDev = process.env.NODE_ENV === 'development';
+  // Natvrdo true, abych šetřil GitHub při buildech
+  const restrictBuild = true; 
+
+  if (isDev || restrictBuild) {
+    // Vrátí pouze češtinu a angličtinu
+    return ['cs', 'en']
+      .filter(lang => allLangs.includes(lang))
+      .map((lang) => ({
+        params: { lang },
+      }));
+  }
+  // V produkci změnit restrictBuild na false a vygeneruje vše
+  return allLangs.map((lang) => ({
     params: { lang },
   }));
 }
