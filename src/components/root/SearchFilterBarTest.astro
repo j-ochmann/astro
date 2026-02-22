@@ -1,0 +1,157 @@
+---
+// src/components/root/SearchFilterBar.astro
+
+interface FilterOption {
+  label: string;
+  value: string;
+  count?: number;
+}
+
+interface Props {
+  searchPlaceholder?: string;
+  filterLabel?: string;
+  filterOptions?: FilterOption[];
+  viewLabel?: string;
+  downloadLabel?: string;
+}
+
+const { 
+  searchPlaceholder = "Search...", 
+  filterLabel = "Asset Type",
+  filterOptions = [],
+  viewLabel = "View",
+  downloadLabel = "Download"
+} = Astro.props;
+
+const totalTypesCount = filterOptions.length;
+---
+
+<div class="controls-row">
+  <input
+    type="text"
+    id="searchTab"
+    class="glass-panel main-input"
+    placeholder={searchPlaceholder}
+    autocomplete="off"
+  />
+
+  <div class="export-group">
+    {/* Obalení podmínky do divu se stejným display stylem jako mají ostatní */}
+    <div class="dropdown-wrapper">
+      {totalTypesCount > 0 && (
+        <div class="dropdown">
+          <button class="glass-btn glass-panel" id="catBtn">
+            <span class="btn-text">{filterLabel}</span>
+          </button>
+          <div class="dropdown-content glass-panel" id="catMenu">
+             <button class="cat-item menu-btn active">All Assets</button>
+          </div>
+        </div>
+      )}
+    </div>
+
+    <div class="dropdown">
+      <button class="glass-btn glass-panel" id="viewBtn">
+        <span class="btn-text">{viewLabel}</span>
+      </button>
+      <div class="dropdown-content glass-panel" id="viewMenu">
+        <button class="menu-btn active">Table</button>
+      </div>
+    </div>
+
+    <div class="dropdown">
+      <button class="glass-btn glass-panel icon-only" id="dlBtn">
+        <span class="btn-text">DL</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* FIX: Vynucené sjednocení všech kontejnerů na flex-center */
+  .controls-row, 
+  .export-group, 
+  .dropdown-wrapper,
+  .dropdown {
+    display: flex !important;
+    align-items: center !important;
+    height: 44px !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+
+  .controls-row {
+    width: 100%;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .export-group {
+    gap: 0.5rem;
+  }
+
+  .main-input {
+    flex: 1;
+    height: 44px !important;
+    padding: 0 1rem !important;
+    border-radius: 0.75rem !important;
+    box-sizing: border-box !important;
+    font-size: 0.9rem;
+  }
+
+  .glass-btn {
+    /* Změna na flex místo inline-flex eliminuje baseline shifting */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 44px !important;
+    padding: 0 1.1rem !important;
+    margin: 0 !important;
+    border-radius: 0.75rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+    white-space: nowrap;
+  }
+
+  .icon-only {
+    width: 44px !important;
+    padding: 0 !important;
+  }
+
+  /* Styl panelu */
+  .glass-panel {
+    background: rgba(20, 20, 25, 0.5) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+  }
+
+  .dropdown {
+    position: relative;
+  }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    top: 54px;
+    right: 0;
+    min-width: 200px;
+    padding: 0.5rem !important;
+    z-index: 100;
+  }
+  .dropdown-content.show { display: flex; flex-direction: column; }
+
+  .menu-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  @media (max-width: 900px) { .btn-text { display: none; } }
+</style>

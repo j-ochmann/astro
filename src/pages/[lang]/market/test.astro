@@ -1,0 +1,41 @@
+---
+// src/pages/[lang]/market/test.astro
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import SearchFilterBarTest from '@/components/root/SearchFilterBarTest.astro';
+import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
+import { getI18nPaths } from '@/content/config/i18n';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
+export async function getStaticPaths() {
+  return getI18nPaths();
+}
+
+const categories = [
+  { label: 'Crypto', value: 'crypto', count: 145 },
+  { label: 'FX', value: 'fx', count: 42 },
+  { label: 'Equities', value: 'equities', count: 89 },
+  { label: 'Commodities', value: 'commodities', count: 12 },
+  { label: 'Rates', value: 'rates', count: 5 }
+];
+---
+
+<StarlightPage frontmatter={{ title: "Pyth Network Explorer", tableOfContents: false }}>
+  <div class="explorer-visual-context">
+    <div class="explorer-content">
+      <SearchFilterBarTest
+        searchPlaceholder="Search symbol or description..." 
+        filterLabel="Druh"
+        filterOptions={categories}
+        viewLabel="Pohled"
+        downloadLabel="Stažení"
+      />
+      <SearchFilterBar 
+        searchPlaceholder="Search symbol or description..." 
+        filterLabel="Druh"
+        filterOptions={categories}
+        viewLabel="Pohled"
+        downloadLabel="Stažení"
+      />
+    </div>
+  </div>
+</StarlightPage>
