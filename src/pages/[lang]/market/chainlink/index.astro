@@ -48,8 +48,12 @@ const feeds = rawData
       price: f.liveData?.realPrice || 0,
       decimals: f.liveData?.decimals || 8,
       updatedAt: f.liveData?.updatedAt ? new Date(f.liveData.updatedAt) : null,
-      roundId: f.liveData?.roundId || 'N/A',
       category: categoryName,
+      // Nově mapovaná data z JSONu
+      threshold: f.threshold || 0,
+      heartbeat: f.heartbeat || 0,
+      assetClass: f.docs?.assetClass || f.feedType || 'N/A',
+      auditor: f.docs?.porAuditor || null,
       detailUrl: `/${lang}/market/chainlink/asset/?id=${address}&symbol=${encodeURIComponent(f.name)}&decimals=${f.liveData?.decimals || 8}`
     };
   }).sort((a: any, b: any) => a.name.localeCompare(b.name));
@@ -113,7 +117,8 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
               <th class="th-price">Latest Price</th>
               <th class="th-status">Live</th>
               <th class="th-update">Last Update</th>
-              <th class="th-address">Proxy Address</th>
+              <th class="th-params">Dev / Heartbeat</th>
+              <th class="th-class">Asset Class</th>
               <th class="th-cat">Type</th>
             </tr>
           </thead>
@@ -132,7 +137,15 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
                 <td class="js-update cell-update">
                   {f.updatedAt ? f.updatedAt.toLocaleTimeString(lang, timeOptions) : 'N/A'}
                 </td>
-                <td class="cell-mono opacity-50 td-address">{f.id}</td>
+                <td class="cell-mono td-params">
+                  <span class="dev-val">{f.threshold}%</span> / <span class="hb-val">{f.heartbeat}s</span>
+                </td>
+                <td class="td-class">
+                    <div class="class-wrapper">
+                        <span class="class-label">{f.assetClass}</span>
+                        {f.auditor && <span class="auditor-badge"><i class="fas fa-shield-check"></i> {f.auditor}</span>}
+                    </div>
+                </td>
                 <td class="td-cat"><span class="badge-row">{f.category}</span></td>
               </tr>
             ))}
@@ -202,9 +215,7 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
     const dropdownBtn = e.target.closest('.glass-btn');
     const catItem = e.target.closest('.cat-item');
     const viewItem = e.target.closest('.view-item');
-    const exportItem = e.target.closest('.export-item');
 
-    // 1. Otevírání dropdownu
     if (dropdownBtn) {
       const menu = dropdownBtn.nextElementSibling;
       if (menu) {
@@ -215,33 +226,24 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
       return;
     }
 
-    // 2. Kliknutí na kategorii
     if (catItem) {
       document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
       catItem.classList.add('active');
       activeCategory = catItem.getAttribute('data-cat') || null;
       filterAll();
-      closeAllDropdowns(); // Oprava: zavře menu po výběru
+      closeAllDropdowns();
       return;
     }
 
-    // 3. Kliknutí na zobrazení (Table/Grid)
     if (viewItem) {
       document.querySelectorAll('.view-item').forEach(i => i.classList.remove('active'));
       viewItem.classList.add('active');
       if (viewItem.getAttribute('data-view') === 'grid') viewContainer.classList.add('view-grid');
       else viewContainer.classList.remove('view-grid');
-      closeAllDropdowns(); // Oprava: zavře menu po výběru
+      closeAllDropdowns();
       return;
     }
 
-    // 4. Export (prozatím jen zavře)
-    if (exportItem) {
-        closeAllDropdowns();
-        return;
-    }
-
-    // 5. Kliknutí mimo - zavřít vše
     if (!e.target.closest('.dropdown')) {
       closeAllDropdowns();
     }
@@ -253,16 +255,30 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
 <style is:global>
   .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; }
   
+  /* GRID VIEW REPAIR */
   .view-grid { background: transparent !important; border: none !important; backdrop-filter: none !important; box-shadow: none !important; }
   .view-grid table, .view-grid thead, .view-grid tbody, .view-grid tr, .view-grid td { display: block !important; border: none !important; margin: 0 !important; }
   .view-grid thead { display: none !important; }
   .view-grid tbody { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important; gap: 1.25rem !important; }
-  .view-grid tr { display: flex !important; flex-direction: column !important; background: rgba(var(--sl-color-bg-nav-rgb), 0.6) !important; backdrop-filter: blur(20px) !important; border: 1px solid var(--sl-color-gray-5) !important; border-radius: 1rem !important; padding: 1.5rem !important; height: 100% !important; position: relative !important; }
+  
+  .view-grid tr { 
+    display: flex !important; 
+    flex-direction: column !important; 
+    background: rgba(var(--sl-color-bg-nav-rgb), 0.6) !important; 
+    backdrop-filter: blur(20px) !important; 
+    border: 1px solid var(--sl-color-gray-5) !important; 
+    border-radius: 1rem !important; 
+    padding: 1.5rem !important; 
+    height: 100% !important; 
+    position: relative !important; 
+  }
+  
   .view-grid td { width: 100% !important; padding: 0.3rem 0 !important; background: transparent !important; border: none !important; }
+  .view-grid .td-status { position: absolute !important; top: 1.2rem !important; right: 1.2rem !important; width: auto !important; padding: 0 !important; }
   .view-grid .pair-link { font-size: 1.3rem; color: #375bd2 !important; }
   .view-grid .cell-price { font-size: 1.6rem; border-top: 1px solid var(--sl-color-gray-6) !important; padding-top: 0.8rem !important; margin-top: auto; }
-  .view-grid .td-status { position: absolute !important; top: 1.5rem; right: 1.5rem; }
-  .view-grid .td-address { display: none !important; }
+  .view-grid .td-class { order: -1; margin-bottom: 0.5rem; }
+  .view-grid .td-params { font-size: 0.8rem; opacity: 0.7; }
 
   @keyframes flash-price-cl {
     0% { color: #375bd2; text-shadow: 0 0 10px rgba(55, 91, 210, 0.5); }
@@ -288,17 +304,7 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
   }
 
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-  
-  .stat-card { 
-    padding: 1.5rem; 
-    border-radius: 0.75rem; 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; 
-    min-height: 100px; 
-    margin-top: 0 !important; 
-  }
-  
+  .stat-card { padding: 1.5rem; border-radius: 0.75rem; display: flex; flex-direction: column; justify-content: center; min-height: 100px; margin-top: 0 !important; }
   .label { font-size: 0.75rem; color: var(--sl-color-gray-3); text-transform: uppercase; margin-bottom: 0.25rem; }
   .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
   
@@ -306,28 +312,36 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
   table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
   th, td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); vertical-align: middle; }
   
+  /* Šířky sloupců */
   .th-pair, .td-pair { width: 180px; }
   .th-price, .cell-price { width: 160px; }
   .th-status, .td-status { width: 60px; text-align: center; }
   .th-update, .cell-update { width: 120px; }
-  .th-address, .td-address { width: auto; }
+  .th-params, .td-params { width: 140px; }
+  .th-class, .td-class { width: auto; }
   .th-cat, .td-cat { width: 120px; text-align: right; }
 
   th { background: rgba(55, 91, 210, 0.1); color: #375bd2; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; text-align: left; }
   
   .pair-link { color: #375bd2 !important; font-weight: bold; text-decoration: none; }
   .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; }
-  .cell-mono { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+  .cell-mono { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--sl-color-gray-3); }
   
+  .dev-val { color: #375bd2; font-weight: 600; }
+  .hb-val { opacity: 0.8; }
+
+  .class-wrapper { display: flex; flex-direction: column; gap: 0.2rem; }
+  .class-label { font-size: 0.85rem; color: var(--sl-color-white); }
+  .auditor-badge { font-size: 0.65rem; color: #10b981; display: flex; align-items: center; gap: 0.3rem; }
+
   .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .status-dot.active { background: #10b981; box-shadow: 0 0 10px #10b981; }
   .status-dot.inactive { background: #ef4444; }
   
   .badge-row { font-size: 0.65rem; background: rgba(55, 91, 210, 0.1); padding: 0.2rem 0.5rem; border-radius: 4px; color: #375bd2; font-weight: 600; }
-  .opacity-50 { opacity: 0.5; }
 
-  @media (max-width: 1000px) {
-    .th-address, .td-address { display: none; }
+  @media (max-width: 1200px) {
+    .th-params, .td-params, .th-class, .td-class { display: none; }
     .stats-grid { grid-template-columns: 1fr; }
   }
 </style>
