@@ -13,24 +13,17 @@ export async function getStaticPaths() {
 }
 
 const { lang } = Astro.params;
-const PUBLIC_DATA_PATH = `/raw/chainlink/chainlink_all/`; 
 const RAW_DIR = path.join(process.cwd(), PATHS.RAW, PATHS.CHAINLINK_ALL);
 
 let rawData: any[] = [];
-let latestFile = "";
-let humanTimestamp = "Initializing...";
+let humanTimestamp = "Connecting to Oracle...";
 
 if (fs.existsSync(RAW_DIR)) {
   try {
     const files = fs.readdirSync(RAW_DIR).filter(f => f.startsWith('chainlink_full_'));
-    latestFile = files.sort().reverse()[0];
+    const latestFile = files.sort().reverse()[0];
     if (latestFile) {
       rawData = JSON.parse(fs.readFileSync(path.join(RAW_DIR, latestFile), 'utf-8'));
-      const parts = latestFile.replace('chainlink_full_', '').replace('.json', '').split('T');
-      if (parts.length === 2) {
-        const dateObj = new Date(`${parts[0]}T${parts[1].replace(/-/g, ':')}`);
-        humanTimestamp = !isNaN(dateObj.getTime()) ? dateObj.toLocaleString(lang === 'cs' ? 'cs-CZ' : 'en-US') : "N/A";
-      }
     }
   } catch (e) { console.error("Build load error:", e); }
 }
@@ -39,8 +32,6 @@ const feeds = rawData
   .filter((f: any) => f.name && f.name !== 'Unknown')
   .map((f: any) => {
     const address = f.proxyAddress || f.contractAddress || 'N/A';
-    const categoryName = f.feedCategory && f.feedCategory !== 'medium' ? f.feedCategory : 'Asset';
-    
     return {
       id: address,
       name: f.name.trim(),
@@ -48,12 +39,9 @@ const feeds = rawData
       price: f.liveData?.realPrice || 0,
       decimals: f.liveData?.decimals || 8,
       updatedAt: f.liveData?.updatedAt ? new Date(f.liveData.updatedAt) : null,
-      category: categoryName,
-      // Nově mapovaná data z JSONu
+      category: f.feedCategory && f.feedCategory !== 'medium' ? f.feedCategory : 'Asset',
       threshold: f.threshold || 0,
       heartbeat: f.heartbeat || 0,
-      assetClass: f.docs?.assetClass || f.feedType || 'N/A',
-      auditor: f.docs?.porAuditor || null,
       detailUrl: `/${lang}/market/chainlink/asset/?id=${address}&symbol=${encodeURIComponent(f.name)}&decimals=${f.liveData?.decimals || 8}`
     };
   }).sort((a: any, b: any) => a.name.localeCompare(b.name));
@@ -94,11 +82,11 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
     <div class="explorer-content">
       <div class="stats-grid">
         <div class="stat-card glass-panel">
-          <span class="label">Total Feeds</span>
+          <span class="label">Chainlink Feeds</span>
           <span class="value" id="stat-total">{feeds.length}</span>
         </div>
         <div class="stat-card glass-panel">
-          <span class="label">Last Sync</span>
+          <span class="label">Network Status</span>
           <span class="value" id="stat-sync">{humanTimestamp}</span>
         </div>
       </div>
@@ -118,33 +106,26 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
               <th class="th-status">Live</th>
               <th class="th-update">Last Update</th>
               <th class="th-params">Dev / Heartbeat</th>
-              <th class="th-class">Asset Class</th>
               <th class="th-cat">Type</th>
             </tr>
           </thead>
           <tbody>
             {feeds.map((f: any) => (
-              <tr data-id={f.id} data-category={f.category.toLowerCase()} data-search={f.searchName} data-raw={JSON.stringify(f)}>
+              <tr data-id={f.id} data-decimals={f.decimals} data-category={f.category.toLowerCase()} data-search={f.searchName}>
                 <td class="td-pair">
                   <a href={f.detailUrl} class="pair-link">{f.name}</a>
                 </td>
-                <td class="cell-price js-price">
+                <td class="cell-price js-price" data-raw-price={f.price}>
                   {f.price.toLocaleString(undefined, { maximumFractionDigits: 10 })}
                 </td>
                 <td class="td-status">
-                  <div class={`status-dot js-status ${f.price > 0 ? 'active' : 'inactive'}`}></div>
+                  <div class="status-dot js-status" style="background: #ef4444;"></div>
                 </td>
                 <td class="js-update cell-update">
-                  {f.updatedAt ? f.updatedAt.toLocaleTimeString(lang, timeOptions) : 'N/A'}
+                    {f.updatedAt ? f.updatedAt.toLocaleTimeString(lang, timeOptions) : 'N/A'}
                 </td>
                 <td class="cell-mono td-params">
-                  <span class="dev-val">{f.threshold}%</span> / <span class="hb-val">{f.heartbeat}s</span>
-                </td>
-                <td class="td-class">
-                    <div class="class-wrapper">
-                        <span class="class-label">{f.assetClass}</span>
-                        {f.auditor && <span class="auditor-badge"><i class="fas fa-shield-check"></i> {f.auditor}</span>}
-                    </div>
+                    <span class="dev-val">{f.threshold}%</span> / <span class="hb-val">{f.heartbeat}s</span>
                 </td>
                 <td class="td-cat"><span class="badge-row">{f.category}</span></td>
               </tr>
@@ -156,192 +137,207 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
   </div>
 </StarlightPage>
 
-<script is:inline define:vars={{ lang, latestFile, PUBLIC_DATA_PATH }}>
+<script is:inline define:vars={{ lang }}>
   const syncLabel = document.getElementById('stat-sync');
   const searchInput = document.getElementById('searchTab');
   const tableRows = document.querySelectorAll('#oracleTable tbody tr');
   const viewContainer = document.getElementById('mainViewContainer');
+  const visibleIds = new Set();
   
   let activeCategory = null;
   const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
 
-  function closeAllDropdowns() {
-    document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
-  }
-
-  async function refreshData() {
-    try {
-      const response = await fetch(`${PUBLIC_DATA_PATH}${latestFile}?t=${Date.now()}`);
-      if (!response.ok) return;
-      const data = await response.json();
-
-      data.forEach(item => {
-        const address = item.proxyAddress || item.contractAddress;
-        const row = document.querySelector(`tr[data-id="${address}"]`);
-        if (row) {
-          const priceCell = row.querySelector('.js-price');
-          const statusDot = row.querySelector('.js-status');
-          const updateCell = row.querySelector('.js-update');
-          
-          const newPrice = item.liveData?.realPrice || 0;
-          const formatted = newPrice.toLocaleString(undefined, { maximumFractionDigits: 10 });
-          
-          if (priceCell.innerText !== formatted) {
-            priceCell.innerText = formatted;
-            priceCell.classList.add('price-flash');
-            setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
-          }
-          if (item.liveData?.updatedAt) {
-            updateCell.innerText = new Date(item.liveData.updatedAt).toLocaleTimeString(lang, timeOptions);
-          }
-          statusDot.className = `status-dot js-status ${newPrice > 0 ? 'active' : 'inactive'}`;
-        }
-      });
-      if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString(lang, timeOptions);
-    } catch (err) {}
-  }
-  setInterval(refreshData, 5000);
+  const RPC_URLS = [
+    'https://eth.llamarpc.com',
+    'https://rpc.ankr.com/eth',
+    'https://ethereum.publicnode.com'
+  ];
+  let currentRpcIndex = 0;
 
   function filterAll() {
     const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
     tableRows.forEach(row => {
-      const matchesSearch = row.getAttribute('data-search').includes(term);
-      const matchesCategory = !activeCategory || row.getAttribute('data-category') === activeCategory;
+      const rowSearch = row.getAttribute('data-search') || '';
+      const rowCat = row.getAttribute('data-category') || '';
+      const matchesSearch = rowSearch.includes(term);
+      const matchesCategory = !activeCategory || rowCat === activeCategory;
       row.style.setProperty('display', (matchesSearch && matchesCategory) ? '' : 'none', 'important');
     });
   }
 
-  document.addEventListener('click', (e) => {
-    const dropdownBtn = e.target.closest('.glass-btn');
-    const catItem = e.target.closest('.cat-item');
-    const viewItem = e.target.closest('.view-item');
+  if (searchInput) searchInput.addEventListener('input', filterAll);
 
-    if (dropdownBtn) {
-      const menu = dropdownBtn.nextElementSibling;
-      if (menu) {
-        const isVisible = menu.classList.contains('show');
-        closeAllDropdowns();
-        if (!isVisible) menu.classList.add('show');
-      }
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.glass-btn');
+    if (btn) {
+      const dropdown = btn.nextElementSibling;
+      const isShown = dropdown?.classList.contains('show');
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+      if (!isShown) dropdown?.classList.add('show');
       return;
     }
 
+    const catItem = e.target.closest('.cat-item');
     if (catItem) {
+      activeCategory = catItem.getAttribute('data-cat') || null;
       document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
       catItem.classList.add('active');
-      activeCategory = catItem.getAttribute('data-cat') || null;
       filterAll();
-      closeAllDropdowns();
-      return;
     }
 
+    const viewItem = e.target.closest('.view-item');
     if (viewItem) {
+      const view = viewItem.getAttribute('data-view');
       document.querySelectorAll('.view-item').forEach(i => i.classList.remove('active'));
       viewItem.classList.add('active');
-      if (viewItem.getAttribute('data-view') === 'grid') viewContainer.classList.add('view-grid');
+      if (view === 'grid') viewContainer.classList.add('view-grid');
       else viewContainer.classList.remove('view-grid');
-      closeAllDropdowns();
-      return;
+      filterAll();
     }
 
     if (!e.target.closest('.dropdown')) {
-      closeAllDropdowns();
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
     }
   });
 
-  if (searchInput) searchInput.addEventListener('input', filterAll);
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const id = entry.target.getAttribute('data-id');
+      if (entry.isIntersecting) visibleIds.add(id); else visibleIds.delete(id);
+    });
+  }, { threshold: 0.01 });
+
+  tableRows.forEach(row => observer.observe(row));
+
+  async function fetchChainlinkData() {
+    if (visibleIds.size === 0) return;
+    const ids = Array.from(visibleIds);
+    const now = Math.floor(Date.now() / 1000);
+
+    try {
+      const results = await Promise.all(ids.map(async (id) => {
+        try {
+          const res = await fetch(RPC_URLS[currentRpcIndex], {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: Date.now(),
+              method: "eth_call",
+              params: [{ to: id, data: "0xfeaf968c" }, "latest"] // latestRoundData()
+            })
+          });
+          const json = await res.json();
+          if (json.error) return { id, data: null };
+          return { id, data: json.result };
+        } catch (e) { return { id, data: null }; }
+      }));
+
+      let successCount = 0;
+      results.forEach(res => {
+        if (!res.data || res.data === '0x' || res.data.length < 130) return;
+        
+        successCount++;
+        const row = document.querySelector(`tr[data-id="${res.id}"]`);
+        if (!row) return;
+
+        // Dekódování hex odpovědi
+        const hexAnswer = res.data.substring(66, 130);
+        const hexTime = res.data.substring(194, 258);
+        const rawValue = BigInt('0x' + hexAnswer);
+        const timeValue = parseInt(hexTime, 16);
+        const decimals = parseInt(row.getAttribute('data-decimals') || "8");
+        const price = Number(rawValue) / Math.pow(10, decimals);
+        
+        const priceCell = row.querySelector('.js-price');
+        const updateCell = row.querySelector('.js-update');
+        const statusDot = row.querySelector('.js-status');
+
+        // Formátování ceny
+        const formatted = price.toLocaleString(undefined, { maximumFractionDigits: 10 });
+        if (priceCell.innerText !== formatted) {
+          priceCell.innerText = formatted;
+          priceCell.classList.add('price-flash');
+          setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
+        }
+
+        // Vždy aktualizovat čas, pokud máme data
+        updateCell.innerText = new Date(timeValue * 1000).toLocaleTimeString(lang, timeOptions);
+        
+        // Logika barvy tečky (Chainlink Heartbeat bývá 1h - 24h)
+        const age = now - timeValue;
+        const color = age < 3600 ? '#10b981' : (age < 86400 ? '#f59e0b' : '#ef4444');
+        statusDot.style.background = color;
+        statusDot.style.boxShadow = age < 3600 ? `0 0 10px ${color}` : 'none';
+      });
+
+      if (successCount > 0 && syncLabel) {
+        syncLabel.innerText = "Live / " + new Date().toLocaleTimeString(lang, timeOptions);
+      }
+    } catch (err) {
+      // Rotace RPC při chybě
+      currentRpcIndex = (currentRpcIndex + 1) % RPC_URLS.length;
+    }
+  }
+
+  // Refresh interval nastaven na 3 vteřiny
+  setInterval(fetchChainlinkData, 3000);
+  fetchChainlinkData();
 </script>
 
 <style is:global>
   .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; }
   
-  /* GRID VIEW REPAIR */
+  /* GRID VIEW */
   .view-grid { background: transparent !important; border: none !important; backdrop-filter: none !important; box-shadow: none !important; }
   .view-grid table, .view-grid thead, .view-grid tbody, .view-grid tr, .view-grid td { display: block !important; border: none !important; margin: 0 !important; }
   .view-grid thead { display: none !important; }
-  .view-grid tbody { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important; gap: 1.25rem !important; }
-  
-  .view-grid tr { 
-    display: flex !important; 
-    flex-direction: column !important; 
-    background: rgba(var(--sl-color-bg-nav-rgb), 0.6) !important; 
-    backdrop-filter: blur(20px) !important; 
-    border: 1px solid var(--sl-color-gray-5) !important; 
-    border-radius: 1rem !important; 
-    padding: 1.5rem !important; 
-    height: 100% !important; 
-    position: relative !important; 
-  }
-  
+  .view-grid tbody { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important; gap: 1.25rem !important; align-items: stretch !important; }
+  .view-grid tr { display: flex !important; flex-direction: column !important; background: rgba(var(--sl-color-bg-nav-rgb), 0.6) !important; backdrop-filter: blur(20px) !important; border: 1px solid var(--sl-color-gray-5) !important; border-radius: 1rem !important; padding: 1.5rem !important; height: 100% !important; min-height: 200px !important; position: relative !important; }
+  .view-grid tr[style*="display: none"] { display: none !important; }
   .view-grid td { width: 100% !important; padding: 0.3rem 0 !important; background: transparent !important; border: none !important; }
-  .view-grid .td-status { position: absolute !important; top: 1.2rem !important; right: 1.2rem !important; width: auto !important; padding: 0 !important; }
+  .view-grid .td-pair { order: 1; }
   .view-grid .pair-link { font-size: 1.3rem; color: #375bd2 !important; }
-  .view-grid .cell-price { font-size: 1.6rem; border-top: 1px solid var(--sl-color-gray-6) !important; padding-top: 0.8rem !important; margin-top: auto; }
-  .view-grid .td-class { order: -1; margin-bottom: 0.5rem; }
-  .view-grid .td-params { font-size: 0.8rem; opacity: 0.7; }
+  .view-grid .cell-price { order: 2; font-size: 1.6rem; border-top: 1px solid var(--sl-color-gray-6) !important; padding-top: 0.8rem !important; margin-top: auto; font-family: 'JetBrains Mono', monospace; }
+  .view-grid .td-status { position: absolute !important; top: 1.5rem; right: 1.5rem; width: auto !important; padding: 0 !important; }
+  .view-grid .js-update { font-size: 0.8rem; color: var(--sl-color-gray-3); margin-top: 0.5rem; }
 
-  @keyframes flash-price-cl {
-    0% { color: #375bd2; text-shadow: 0 0 10px rgba(55, 91, 210, 0.5); }
-    100% { color: inherit; text-shadow: none; }
-  }
+  @keyframes flash-price-cl { 0% { color: #375bd2; text-shadow: 0 0 10px #375bd2; } 100% { color: inherit; text-shadow: none; } }
   .price-flash { animation: flash-price-cl 2s ease-out; }
 </style>
 
 <style>
-  .explorer-content {
-    --filter-accent-color: #375bd2;
+  .explorer-content { 
+    --filter-accent-color: #375bd2; 
     --filter-accent-bg: rgba(55, 91, 210, 0.15);
     --filter-accent-border: rgba(55, 91, 210, 0.4);
   }
   .explorer-visual-context { position: relative; margin: -2rem -3rem; padding: 2rem 3rem; }
   .wormhole-background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--sl-color-bg); }
-  
-  .glass-panel {
-    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
-    backdrop-filter: blur(30px) !important;
-    border: 1px solid var(--sl-color-gray-5) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  }
-
+  .glass-panel { background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important; backdrop-filter: blur(30px) !important; border: 1px solid var(--sl-color-gray-5) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-  .stat-card { padding: 1.5rem; border-radius: 0.75rem; display: flex; flex-direction: column; justify-content: center; min-height: 100px; margin-top: 0 !important; }
+  .stat-card { padding: 1.5rem; border-radius: 0.75rem; min-height: 100px; display: flex; flex-direction: column; justify-content: center; margin-top: 0 !important; }
   .label { font-size: 0.75rem; color: var(--sl-color-gray-3); text-transform: uppercase; margin-bottom: 0.25rem; }
   .value { font-size: 1.2rem; font-weight: bold; color: var(--sl-color-white); }
-  
   .table-container { border-radius: 0.75rem; overflow-x: auto; width: 100%; }
   table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
   th, td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); vertical-align: middle; }
-  
-  /* Šířky sloupců */
-  .th-pair, .td-pair { width: 180px; }
-  .th-price, .cell-price { width: 160px; }
-  .th-status, .td-status { width: 60px; text-align: center; }
-  .th-update, .cell-update { width: 120px; }
-  .th-params, .td-params { width: 140px; }
-  .th-class, .td-class { width: auto; }
-  .th-cat, .td-cat { width: 120px; text-align: right; }
-
   th { background: rgba(55, 91, 210, 0.1); color: #375bd2; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; text-align: left; }
   
+  .th-pair, .td-pair { width: 150px; }
+  .th-price, .cell-price { width: 140px; font-family: 'JetBrains Mono', monospace; font-weight: bold; }
+  .th-status, .td-status { width: 60px; text-align: center; }
+  .th-update, .cell-update { width: 120px; }
+  .th-params, .td-params { width: 130px; font-size: 0.75rem; color: var(--sl-color-gray-3); }
+  .th-cat, .td-cat { width: 120px; text-align: right; }
+
   .pair-link { color: #375bd2 !important; font-weight: bold; text-decoration: none; }
-  .cell-price { font-family: 'JetBrains Mono', monospace; font-weight: bold; }
-  .cell-mono { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--sl-color-gray-3); }
-  
-  .dev-val { color: #375bd2; font-weight: 600; }
-  .hb-val { opacity: 0.8; }
-
-  .class-wrapper { display: flex; flex-direction: column; gap: 0.2rem; }
-  .class-label { font-size: 0.85rem; color: var(--sl-color-white); }
-  .auditor-badge { font-size: 0.65rem; color: #10b981; display: flex; align-items: center; gap: 0.3rem; }
-
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-  .status-dot.active { background: #10b981; box-shadow: 0 0 10px #10b981; }
-  .status-dot.inactive { background: #ef4444; }
-  
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: all 0.3s ease; }
   .badge-row { font-size: 0.65rem; background: rgba(55, 91, 210, 0.1); padding: 0.2rem 0.5rem; border-radius: 4px; color: #375bd2; font-weight: 600; }
+  .dev-val { color: #375bd2; font-weight: 600; }
 
-  @media (max-width: 1200px) {
-    .th-params, .td-params, .th-class, .td-class { display: none; }
+  @media (max-width: 1000px) {
     .stats-grid { grid-template-columns: 1fr; }
+    .th-params, .td-params { display: none; }
   }
 </style>
