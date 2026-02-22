@@ -134,10 +134,10 @@ export default defineConfig({
               //translations: { cs: 'Pyth' },
               link: '/market/pyth' 
             },
-            { 
-              label: 'Test', 
-              link: '/market/test' 
-            },
+            // { 
+            //   label: 'Test', 
+            //   link: '/market/test' 
+            // },
           ]
         },
         { 
