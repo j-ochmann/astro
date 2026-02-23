@@ -73,7 +73,7 @@ const filterOptions = continentList.map(cont => ({
           </thead>
           <tbody id="tableBody">
             {allCountriesRaw.map(c => (
-              <tr class="item-row table-row" data-country={JSON.stringify(c)} data-category={c.continent.toLowerCase()}>
+              <tr class="item-row table-row" data-id={c.code} data-country={JSON.stringify(c)} data-category={c.continent.toLowerCase()}>
                 <td class="mono">{c.code}</td>
                 <td>
                   <a href={`/${lang}/countries/${c.code.toLowerCase()}/`} class="country-link">
@@ -93,17 +93,17 @@ const filterOptions = continentList.map(cont => ({
     <div id="view-grid" class="view-section">
       <div class="grid-wrapper" id="gridContainer">
         {allCountriesRaw.map(c => (
-          <div class="country-card glass-panel item-row grid-card" data-country={JSON.stringify(c)} data-category={c.continent.toLowerCase()}>
+          <div class="country-card glass-panel item-row grid-card" data-id={c.code} data-country={JSON.stringify(c)} data-category={c.continent.toLowerCase()}>
             <div class="card-header">
-              <span class:list={['fi', `fi-${c.code.toLowerCase()}`, 'flag-large']}></span>
+              <span class:list={['fi', `fi-${c.code.toLowerCase()}`, 'flag-small']}></span>
               <span class="card-code">{c.code}</span>
             </div>
             <h3>{c.name}</h3>
             <div class="card-meta">
-              <div class="meta-item"><span>Capital:</span> <strong>{c.capital}</strong></div>
+              <div class="meta-item"><span>Cap:</span> <strong>{c.capital}</strong></div>
               <div class="meta-item"><span>Pop:</span> <strong>{c.population.toLocaleString(lang)}</strong></div>
             </div>
-            <a href={`/${lang}/countries/${c.code.toLowerCase()}/`} class="card-link">View Detail</a>
+            <a href={`/${lang}/countries/${c.code.toLowerCase()}/`} class="card-link">Detail</a>
           </div>
         ))}
       </div>
@@ -112,7 +112,11 @@ const filterOptions = continentList.map(cont => ({
 </StarlightPage>
 
 <style is:global>
-  /* Skrytí původního H1 a postranního ToC (vpravo), ale zachování levého sidebaru */
+  /* Maximální roztažení obsahu */
+  .main-frame { width: 100% !important; max-width: 100% !important; }
+  .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 2rem !important; }
+  .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
+
   [data-has-sidebar] header h1 { display: none !important; }
   .right-sidebar { display: none !important; }
   
@@ -125,11 +129,7 @@ const filterOptions = continentList.map(cont => ({
 
 <style>
   .atlas-container { width: 100%; margin-top: -1.5rem; }
-  .atlas-header { margin-bottom: 2rem; border-bottom: 1px solid var(--sl-color-gray-5); padding-bottom: 1.5rem; }
-  .atlas-header h1 { display: block !important; font-size: 2.5rem !important; color: var(--sl-color-white) !important; margin: 0 !important; }
-  .atlas-subtitle { color: var(--sl-color-gray-3); margin-top: 0.5rem; }
 
-  /* Glass Panel & Theme Fixes */
   .glass-panel {
     background: rgba(20, 20, 25, 0.5);
     border: 1px solid var(--sl-color-gray-5);
@@ -146,27 +146,26 @@ const filterOptions = continentList.map(cont => ({
   .view-section { display: none; }
   .view-section.active { display: block; }
   .table-wrapper { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 0; }
-  th { background: var(--sl-color-gray-6); padding: 1rem; text-align: left; cursor: pointer; border-bottom: 2px solid var(--sl-color-gray-5); transition: background 0.2s; }
-  th:hover { background: var(--sl-color-gray-5); }
-  td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); }
-  .country-link { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--sl-color-text-accent) !important; text-decoration: none !important; font-weight: 500; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0; }
+  th { background: var(--sl-color-gray-6); padding: 0.75rem 1rem; text-align: left; cursor: pointer; border-bottom: 2px solid var(--sl-color-gray-5); transition: background 0.2s; }
+  td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); }
+  .country-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--sl-color-text-accent) !important; text-decoration: none !important; }
 
-  /* Grid View */
+  /* Grid View - Menší karty */
   .grid-wrapper {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
   }
-  .country-card { padding: 1.5rem; transition: all 0.2s; position: relative; }
-  .country-card:hover { transform: translateY(-4px); border-color: #3b82f6; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-  .flag-large { font-size: 1.8rem; }
-  .card-code { font-family: var(--sl-font-mono); font-size: 0.75rem; background: var(--sl-color-gray-5); padding: 0.2rem 0.5rem; border-radius: 4px; }
-  .country-card h3 { margin: 1rem 0 !important; font-size: 1.2rem !important; color: var(--sl-color-white) !important; }
+  .country-card { padding: 1rem; transition: all 0.2s; }
+  .country-card:hover { transform: translateY(-2px); border-color: #3b82f6; }
+  .flag-small { font-size: 1.2rem; }
+  .card-code { font-family: var(--sl-font-mono); font-size: 0.65rem; background: var(--sl-color-gray-5); padding: 0.1rem 0.4rem; border-radius: 3px; }
+  .country-card h3 { margin: 0.5rem 0 !important; font-size: 1rem !important; color: var(--sl-color-white) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   :global([data-theme="light"]) .country-card h3 { color: var(--sl-color-black) !important; }
-  .card-meta { font-size: 0.8rem; margin-bottom: 1.5rem; }
-  .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid var(--sl-color-gray-6); padding: 0.4rem 0; }
-  .card-link { display: block; text-align: center; background: #3b82f6; color: white !important; text-decoration: none !important; padding: 0.6rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: bold; }
+  .card-meta { font-size: 0.75rem; margin-bottom: 1rem; }
+  .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid var(--sl-color-gray-6); padding: 0.2rem 0; }
+  .card-link { display: block; text-align: center; background: #3b82f6; color: white !important; text-decoration: none !important; padding: 0.4rem; border-radius: 0.4rem; font-size: 0.75rem; font-weight: bold; }
 
   .mono { font-family: var(--sl-font-mono); color: #3b82f6; font-weight: 600; }
 </style>
@@ -175,45 +174,36 @@ const filterOptions = continentList.map(cont => ({
   function initAtlas() {
     const searchInput = document.getElementById('searchTab') as HTMLInputElement;
     const tableBody = document.getElementById('tableBody');
-    const itemRows = Array.from(document.querySelectorAll('.item-row'));
+    const gridContainer = document.getElementById('gridContainer');
+    const tableRows = Array.from(document.querySelectorAll('.table-row'));
+    const gridCards = Array.from(document.querySelectorAll('.grid-card'));
     let activeCategory = "";
 
-    const filterRows = () => {
+    const filterAll = () => {
       const term = searchInput?.value.toLowerCase() || "";
-      itemRows.forEach(row => {
-        const text = (row as HTMLElement).innerText.toLowerCase();
-        const cat = row.getAttribute('data-category') || "";
+      [...tableRows, ...gridCards].forEach(el => {
+        const text = (el as HTMLElement).innerText.toLowerCase();
+        const cat = el.getAttribute('data-category') || "";
         const matchesSearch = text.includes(term);
         const matchesCat = activeCategory === "" || cat === activeCategory;
-        (row as HTMLElement).style.display = (matchesSearch && matchesCat) ? '' : 'none';
+        (el as HTMLElement).style.display = (matchesSearch && matchesCat) ? '' : 'none';
       });
     };
 
-    searchInput?.addEventListener('input', filterRows);
+    searchInput?.addEventListener('input', filterAll);
 
-    // Dropdown Toggles
-    document.querySelectorAll('.dropdown').forEach(dropdown => {
-      dropdown.querySelector('button')?.addEventListener('click', (e) => {
+    // Dropdown a Kategorie
+    document.querySelectorAll('.dropdown button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const menu = dropdown.querySelector('.dropdown-content');
-        document.querySelectorAll('.dropdown-content').forEach(m => m !== menu && m.classList.remove('show'));
-        menu?.classList.toggle('show');
+        btn.nextElementSibling?.classList.toggle('show');
       });
     });
 
-    window.addEventListener('click', () => {
-      document.querySelectorAll('.dropdown-content').forEach(m => m.classList.remove('show'));
-    });
-
-    // Continent Filter
     document.querySelectorAll('.cat-item').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.cat-item').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
         activeCategory = btn.getAttribute('data-cat') || "";
-        const btnText = document.querySelector('#catBtn .btn-text');
-        if (btnText) btnText.textContent = (btn as HTMLElement).querySelector('.item-label')?.textContent || "Continent";
-        filterRows();
+        filterAll();
       });
     });
 
@@ -221,51 +211,39 @@ const filterOptions = continentList.map(cont => ({
     document.querySelectorAll('.view-item').forEach(btn => {
       btn.addEventListener('click', () => {
         const view = btn.getAttribute('data-view');
-        document.querySelectorAll('.view-item').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.querySelectorAll('.view-section').forEach(sec => {
-          sec.classList.toggle('active', sec.id === `view-${view}`);
-        });
+        document.querySelectorAll('.view-section').forEach(s => s.classList.toggle('active', s.id === `view-${view}`));
       });
     });
 
-    // TABLE SORTING (Fixed Logic)
+    // FIXED SORTING: Synchronizace Table + Grid
     const tableHeaders = document.querySelectorAll('#countriesTable th[data-sort]');
     tableHeaders.forEach(th => {
       th.addEventListener('click', () => {
         const col = th.getAttribute('data-sort');
         const isAsc = th.classList.contains('asc');
-        const rows = Array.from(tableBody?.querySelectorAll('.table-row') || []);
-
-        const sortedRows = rows.sort((a, b) => {
+        
+        // 1. Seřadíme pole objektů
+        const sortedData = tableRows.sort((a, b) => {
           const dataA = JSON.parse(a.getAttribute('data-country') || '{}');
           const dataB = JSON.parse(b.getAttribute('data-country') || '{}');
           const valA = dataA[col || ''];
           const valB = dataB[col || ''];
-          
           if (typeof valA === 'number') return isAsc ? valB - valA : valA - valB;
           return isAsc ? String(valB).localeCompare(String(valA)) : String(valA).localeCompare(String(valB));
         });
 
+        // 2. Přerovnáme tabulku
         tableHeaders.forEach(h => h.classList.remove('asc', 'desc'));
         th.classList.toggle('asc', !isAsc);
         th.classList.toggle('desc', isAsc);
-        tableBody?.append(...sortedRows);
-      });
-    });
+        tableBody?.append(...sortedData);
 
-    // Simple Export
-    document.querySelectorAll('.export-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const visibleData = itemRows
-          .filter(r => (r as HTMLElement).style.display !== 'none' && r.classList.contains('table-row'))
-          .map(r => JSON.parse(r.getAttribute('data-country') || '{}'));
-        
-        const blob = new Blob([JSON.stringify(visibleData, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `export.json`;
-        a.click();
+        // 3. Přerovnáme grid podle ID (kódu země) seřazeného v tabulce
+        sortedData.forEach(row => {
+          const id = row.getAttribute('data-id');
+          const card = gridCards.find(c => c.getAttribute('data-id') === id);
+          if (card && gridContainer) gridContainer.appendChild(card);
+        });
       });
     });
   }
