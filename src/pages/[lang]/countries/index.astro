@@ -66,6 +66,7 @@ const filterOptions = continentList.map(cont => ({
             <tr>
               <th data-sort="code">Code <Icon name="lucide:arrow-up-down" /></th>
               <th data-sort="name">Country <Icon name="lucide:arrow-up-down" /></th>
+              <th data-sort="native">Native <Icon name="lucide:arrow-up-down" /></th>
               <th data-sort="capital">Capital <Icon name="lucide:arrow-up-down" /></th>
               <th data-sort="continent">Continent <Icon name="lucide:arrow-up-down" /></th>
               <th data-sort="population">Population <Icon name="lucide:arrow-up-down" /></th>
@@ -80,6 +81,7 @@ const filterOptions = continentList.map(cont => ({
                     <span class:list={['fi', `fi-${c.code.toLowerCase()}`]}></span> {c.name}
                   </a>
                 </td>
+                <td class="native-col">{c.native}</td>
                 <td>{c.capital}</td>
                 <td>{c.continent}</td>
                 <td class="mono">{c.population.toLocaleString(lang)}</td>
@@ -99,6 +101,7 @@ const filterOptions = continentList.map(cont => ({
               <span class="card-code">{c.code}</span>
             </div>
             <h3>{c.name}</h3>
+            <p class="card-native">{c.native}</p>
             <div class="card-meta">
               <div class="meta-item"><span>Cap:</span> <strong>{c.capital}</strong></div>
               <div class="meta-item"><span>Pop:</span> <strong>{c.population.toLocaleString(lang)}</strong></div>
@@ -108,15 +111,27 @@ const filterOptions = continentList.map(cont => ({
         ))}
       </div>
     </div>
+
+    <div id="view-flags" class="view-section">
+        <div class="flags-only-grid">
+            {allCountriesRaw.map(c => (
+                <a href={`/${lang}/countries/${c.code.toLowerCase()}/`} class="flag-icon-wrap item-row" title={c.name} data-id={c.code} data-category={c.continent.toLowerCase()}>
+                    <span class:list={['fi', `fi-${c.code.toLowerCase()}`]}></span>
+                </a>
+            ))}
+        </div>
+    </div>
+
+    <div id="view-net" class="view-section">
+        <div class="glass-panel empty-state">Network View Visualization coming soon...</div>
+    </div>
   </div>
 </StarlightPage>
 
 <style is:global>
-  /* Maximální roztažení obsahu */
   .main-frame { width: 100% !important; max-width: 100% !important; }
   .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 2rem !important; }
   .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
-
   [data-has-sidebar] header h1 { display: none !important; }
   .right-sidebar { display: none !important; }
   
@@ -128,8 +143,7 @@ const filterOptions = continentList.map(cont => ({
 </style>
 
 <style>
-  .atlas-container { width: 100%; margin-top: -1.5rem; }
-
+  .atlas-container { width: 100%; margin-top: -1rem; }
   .glass-panel {
     background: rgba(20, 20, 25, 0.5);
     border: 1px solid var(--sl-color-gray-5);
@@ -142,31 +156,35 @@ const filterOptions = continentList.map(cont => ({
     color: var(--sl-color-gray-1);
   }
 
-  /* Table View */
+  /* Table */
   .view-section { display: none; }
   .view-section.active { display: block; }
   .table-wrapper { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0; }
   th { background: var(--sl-color-gray-6); padding: 0.75rem 1rem; text-align: left; cursor: pointer; border-bottom: 2px solid var(--sl-color-gray-5); transition: background 0.2s; }
   td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); }
+  .native-col { color: var(--sl-color-gray-3); font-style: italic; }
   .country-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--sl-color-text-accent) !important; text-decoration: none !important; }
 
-  /* Grid View - Menší karty */
-  .grid-wrapper {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 1rem;
-  }
+  /* Grid */
+  .grid-wrapper { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
   .country-card { padding: 1rem; transition: all 0.2s; }
   .country-card:hover { transform: translateY(-2px); border-color: #3b82f6; }
   .flag-small { font-size: 1.2rem; }
   .card-code { font-family: var(--sl-font-mono); font-size: 0.65rem; background: var(--sl-color-gray-5); padding: 0.1rem 0.4rem; border-radius: 3px; }
-  .country-card h3 { margin: 0.5rem 0 !important; font-size: 1rem !important; color: var(--sl-color-white) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .country-card h3 { margin: 0.5rem 0 0.2rem 0 !important; font-size: 1rem !important; color: var(--sl-color-white) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   :global([data-theme="light"]) .country-card h3 { color: var(--sl-color-black) !important; }
+  .card-native { font-size: 0.7rem; color: var(--sl-color-gray-3); margin-bottom: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card-meta { font-size: 0.75rem; margin-bottom: 1rem; }
   .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid var(--sl-color-gray-6); padding: 0.2rem 0; }
   .card-link { display: block; text-align: center; background: #3b82f6; color: white !important; text-decoration: none !important; padding: 0.4rem; border-radius: 0.4rem; font-size: 0.75rem; font-weight: bold; }
 
+  /* Flags View */
+  .flags-only-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 1rem; padding: 1rem; }
+  .flag-icon-wrap { font-size: 2.5rem; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+  .flag-icon-wrap:hover { transform: scale(1.2); }
+
+  .empty-state { padding: 4rem; text-align: center; color: var(--sl-color-gray-3); }
   .mono { font-family: var(--sl-font-mono); color: #3b82f6; font-weight: 600; }
 </style>
 
@@ -174,14 +192,14 @@ const filterOptions = continentList.map(cont => ({
   function initAtlas() {
     const searchInput = document.getElementById('searchTab') as HTMLInputElement;
     const tableBody = document.getElementById('tableBody');
-    const gridContainer = document.getElementById('gridContainer');
-    const tableRows = Array.from(document.querySelectorAll('.table-row'));
-    const gridCards = Array.from(document.querySelectorAll('.grid-card'));
+    const allContainers = [tableBody, document.getElementById('gridContainer'), document.querySelector('.flags-only-grid')];
+    const itemRows = Array.from(document.querySelectorAll('.item-row'));
+    
     let activeCategory = "";
 
     const filterAll = () => {
       const term = searchInput?.value.toLowerCase() || "";
-      [...tableRows, ...gridCards].forEach(el => {
+      itemRows.forEach(el => {
         const text = (el as HTMLElement).innerText.toLowerCase();
         const cat = el.getAttribute('data-category') || "";
         const matchesSearch = text.includes(term);
@@ -192,57 +210,86 @@ const filterOptions = continentList.map(cont => ({
 
     searchInput?.addEventListener('input', filterAll);
 
-    // Dropdown a Kategorie
+    // Dropdown a zavírání menu
+    const closeAllMenus = () => document.querySelectorAll('.dropdown-content').forEach(m => m.classList.remove('show'));
+
     document.querySelectorAll('.dropdown button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        btn.nextElementSibling?.classList.toggle('show');
+        const next = btn.nextElementSibling;
+        const isVisible = next?.classList.contains('show');
+        closeAllMenus();
+        if (!isVisible) next?.classList.add('show');
       });
     });
 
+    window.addEventListener('click', closeAllMenus);
+
+    // Continent Filter
     document.querySelectorAll('.cat-item').forEach(btn => {
       btn.addEventListener('click', () => {
         activeCategory = btn.getAttribute('data-cat') || "";
+        const btnText = document.querySelector('#catBtn .btn-text');
+        if (btnText) btnText.textContent = (btn as HTMLElement).querySelector('.item-label')?.textContent || "Continent";
         filterAll();
+        closeAllMenus();
       });
     });
 
-    // View Switcher
-    document.querySelectorAll('.view-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const view = btn.getAttribute('data-view');
-        document.querySelectorAll('.view-section').forEach(s => s.classList.toggle('active', s.id === `view-${view}`));
-      });
+    // View Switcher + Injecting new options
+    const viewMenu = document.getElementById('viewMenu');
+    if (viewMenu && !viewMenu.querySelector('[data-view="flags"]')) {
+        viewMenu.innerHTML += `
+            <button class="view-item menu-btn" data-view="flags">
+                <span class="view-inner"><i class="fa-solid fa-flag fa-fw"></i><span>Flags</span></span>
+            </button>
+            <button class="view-item menu-btn" data-view="net">
+                <span class="view-inner"><i class="fa-solid fa-network-wired fa-fw"></i><span>Net</span></span>
+            </button>
+        `;
+    }
+
+    document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const viewBtn = target.closest('.view-item');
+        if (viewBtn) {
+            const view = viewBtn.getAttribute('data-view');
+            document.querySelectorAll('.view-item').forEach(b => b.classList.remove('active'));
+            viewBtn.classList.add('active');
+            document.querySelectorAll('.view-section').forEach(s => s.classList.toggle('active', s.id === `view-${view}`));
+            closeAllMenus();
+        }
     });
 
-    // FIXED SORTING: Synchronizace Table + Grid
+    // Sorting
     const tableHeaders = document.querySelectorAll('#countriesTable th[data-sort]');
     tableHeaders.forEach(th => {
       th.addEventListener('click', () => {
         const col = th.getAttribute('data-sort');
         const isAsc = th.classList.contains('asc');
-        
-        // 1. Seřadíme pole objektů
-        const sortedData = tableRows.sort((a, b) => {
+        const rows = Array.from(document.querySelectorAll('.table-row'));
+
+        const sorted = rows.sort((a, b) => {
           const dataA = JSON.parse(a.getAttribute('data-country') || '{}');
           const dataB = JSON.parse(b.getAttribute('data-country') || '{}');
           const valA = dataA[col || ''];
           const valB = dataB[col || ''];
-          if (typeof valA === 'number') return isAsc ? valB - valA : valA - valB;
-          return isAsc ? String(valB).localeCompare(String(valA)) : String(valA).localeCompare(String(valB));
+          return isAsc 
+            ? (typeof valA === 'number' ? valB - valA : String(valB).localeCompare(String(valA)))
+            : (typeof valA === 'number' ? valA - valB : String(valA).localeCompare(String(valB)));
         });
 
-        // 2. Přerovnáme tabulku
         tableHeaders.forEach(h => h.classList.remove('asc', 'desc'));
         th.classList.toggle('asc', !isAsc);
         th.classList.toggle('desc', isAsc);
-        tableBody?.append(...sortedData);
-
-        // 3. Přerovnáme grid podle ID (kódu země) seřazeného v tabulce
-        sortedData.forEach(row => {
-          const id = row.getAttribute('data-id');
-          const card = gridCards.find(c => c.getAttribute('data-id') === id);
-          if (card && gridContainer) gridContainer.appendChild(card);
+        
+        sorted.forEach(row => {
+            const id = row.getAttribute('data-id');
+            tableBody?.appendChild(row);
+            const card = document.querySelector(`.grid-card[data-id="${id}"]`);
+            if (card) document.getElementById('gridContainer')?.appendChild(card);
+            const flag = document.querySelector(`.flag-icon-wrap[data-id="${id}"]`);
+            if (flag) document.querySelector('.flags-only-grid')?.appendChild(flag);
         });
       });
     });

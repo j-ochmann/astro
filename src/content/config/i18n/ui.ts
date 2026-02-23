@@ -20,12 +20,11 @@ export const uiStrings = {
    "world.detail.basicInfo": "Basic Information",
    "world.detail.local": "Local",
    "world.detail.back": "Back to atlas",
-   "atlas.title": "World Atlas",
-   "atlas.description": "Detailed statistics and information about world countries.",
+   "world.countries.title": "World Atlas",
+   "world.countries.description": "Detailed statistics and information about world countries.",
    // Geo Section - Navigation
    "world.nav.languages": "Languages",
    "world.nav.currencies": "Currencies",
-   "world.nav.atlas": "World Atlas",
    "world.nav.notes": "Notes & Articles",
    // Tables and Overviews
    "world.table.code": "Code",
@@ -57,20 +56,17 @@ export const uiStrings = {
    "world.detail.back": "Zpět na atlas",
    "world.detail.basicInfo": "Přehled",
    "world.detail.local": "Místní",
-   "atlas.title": "Atlas zemí",
-   "atlas.description": "Podrobné statistiky a informace o zemích světa.",
+   "countries.title": "Státy",
+   "world.countries.description": "Podrobné statistiky a informace o zemích světa.",
    // Sekce Geo - Rozcestníky
    "world.nav.languages": "Jazyky",
    "world.nav.currencies": "Měny",
-   "world.nav.atlas": "Atlas světa",
+   "countries.search": "Hledat zemi, hlavní město, kód...",
    "world.nav.notes": "Poznámky a články",
    // Tabulky a přehledy
    "world.table.code": "Kód",
    "world.table.countries": "Země",
    "world.table.count": "Počet zemí",
-
-   "atlas.table.title": "Tabulkový přehled zemí",
-   "atlas.table.search": "Hledat zemi, hlavní město, kód...",
    "world.stats.code": "ISO Kód",
    "world.stats.name": "Název",
    "world.stats.phone": "Předvolba",
@@ -92,12 +88,12 @@ export const uiStrings = {
    "world.stats.native": "Národný názov",
    // Navigácia a názvy
    "world.detail.back": "Späť na atlas",
-   "atlas.title": "Svetový atlas",
-   "atlas.description": "Podrobné štatistiky a informácie o krajinách sveta.",
+   "world.countries.title": "Svetový atlas",
+   "world.countries.description": "Podrobné štatistiky a informácie o krajinách sveta.",
    // Geografická sekcia - Navigácia
    "world.nav.languages": "Jazyky",
    "world.nav.currencies": "Meny",
-   "world.nav.atlas": "Svetový atlas",
+   "countries.search": "Svetový atlas",
    "world.nav.notes": "Poznámky a články",
    // Tabuľky a prehľady
    "world.table.code": "Kód",
@@ -121,12 +117,12 @@ export const uiStrings = {
 "world.stats.native": "Język ojczysty Nazwa",
 // Nawigacja i tytuły
 "world.detail.back": "Powrót do atlasu",
-"atlas.title": "Atlas świata",
-"atlas.description": "Szczegółowe statystyki i informacje o krajach świata.",
+"world.countries.title": "Atlas świata",
+"world.countries.description": "Szczegółowe statystyki i informacje o krajach świata.",
 // Sekcja Geo - Nawigacja
 "world.nav.languages": "Języki",
 "world.nav.currencies": "Waluty",
-"world.nav.atlas": "Atlas świata",
+"countries.search": "Atlas świata",
 "world.nav.notes": "Notatki i artykuły",
 // Tabele i przeglądy
 "world.table.code": "Kod",
@@ -150,12 +146,12 @@ export const uiStrings = {
 "world.stats.native": "Місна назва",
 // Навігація та заголовки
 "world.detail.back": "Назад до атласу",
-"atlas.title": "Світовий атлас",
-"atlas.description": "Детальна статистика та інформація про країни світу.",
+"world.countries.title": "Світовий атлас",
+"world.countries.description": "Детальна статистика та інформація про країни світу.",
 // Розділ Гео - Навігація
 "world.nav.languages": "Мови",
 "world.nav.currencies": "Валюти",
-"world.nav.atlas": "Світовий атлас",
+"countries.search": "Світовий атлас",
 "world.nav.notes": "Нотатки та статті",
 // Таблиці та огляди
 "world.table.code": "Код",
@@ -179,12 +175,12 @@ export const uiStrings = {
 "world.stats.native": "Название на родном языке",
 // Навигация и заголовки
 "world.detail.back": "Назад к атласу",
-"atlas.title": "Мировой атлас",
-"atlas.description": "Подробная статистика и информация о странах мира.",
+"world.countries.title": "Мировой атлас",
+"world.countries.description": "Подробная статистика и информация о странах мира.",
 // Раздел «География» - Навигация
 "world.nav.languages": "Языки",
 "world.nav.currencies": "Валюты",
-"world.nav.atlas": "Мировой атлас",
+"countries.search": "Мировой атлас",
 "world.nav.notes": "Примечания и статьи",
 // Таблицы и обзоры
 "world.table.code": "Код",
@@ -208,12 +204,12 @@ export const uiStrings = {
 "world.stats.native": "Heimatname",
 // Navigation und Titel
 "world.detail.back": "Zurück zum Atlas",
-"atlas.title": "Weltatlas",
-"atlas.description": "Detaillierte Statistiken und Informationen zu den Ländern der Welt.",
+"world.countries.title": "Weltatlas",
+"world.countries.description": "Detaillierte Statistiken und Informationen zu den Ländern der Welt.",
 // Geo-Bereich – Navigation
 "world.nav.languages": "Sprachen",
 "world.nav.currencies": "Währungen",
-"world.nav.atlas": "Weltatlas",
+"countries.search": "Weltatlas",
 "world.nav.notes": "Anmerkungen & Artikel",
 // Tabellen und Übersichten
 "world.table.code": "Code",
@@ -237,12 +233,12 @@ export const uiStrings = {
 "world.stats.native": "Nom autochtone",
 // Navigation et titres
 "world.detail.back": "Retour à l'atlas",
-"atlas.title": "Atlas mondial",
-"atlas.description": "Statistiques et informations détaillées sur les pays du monde.",
+"world.countries.title": "Atlas mondial",
+"world.countries.description": "Statistiques et informations détaillées sur les pays du monde.",
 // Section Géo - Navigation
 "world.nav.languages": "Langues",
 "world.nav.currencies": "Devises",
-"world.nav.atlas": "Atlas mondial",
+"countries.search": "Atlas mondial",
 "world.nav.notes": "Notes et articles",
 // Tableaux et aperçus
 "world.table.code": "Code",
@@ -266,12 +262,12 @@ export const uiStrings = {
 "world.stats.native": "Nome nativo",
 // Navigazione e titoli
 "world.detail.back": "Torna all'atlante",
-"atlas.title": "Atlante mondiale",
-"atlas.description": "Statistiche e informazioni dettagliate sul mondo Paesi.",
+"world.countries.title": "Atlante mondiale",
+"world.countries.description": "Statistiche e informazioni dettagliate sul mondo Paesi.",
 // Sezione Geo - Navigazione
 "world.nav.languages": "Lingue",
 "world.nav.currencies": "Valute",
-"world.nav.atlas": "Atlante mondiale",
+"countries.search": "Atlante mondiale",
 "world.nav.notes": "Note e articoli",
 // Tabelle e panoramiche
 "world.table.code": "Codice",
@@ -299,12 +295,12 @@ export const uiStrings = {
 "world.stats.native": "Nombre nativo",
 // Navegación y títulos
 "world.detail.back": "Volver al atlas",
-"atlas.title": "Atlas mundial",
-"atlas.description": "Estadísticas detalladas e información sobre los países del mundo.",
+"world.countries.title": "Atlas mundial",
+"world.countries.description": "Estadísticas detalladas e información sobre los países del mundo.",
 // Sección Geo - Navegación
 "world.nav.languages": "Idiomas",
 "world.nav.currencies": "Monedas",
-"world.nav.atlas": "Atlas mundial",
+"countries.search": "Atlas mundial",
 "world.nav.notes": "Notas y artículos",
 // Tablas y resúmenes
 "world.table.code": "Código",
@@ -328,12 +324,12 @@ export const uiStrings = {
 "world.stats.native": "Nome Nativo",
 // Navegação e Títulos
 "world.detail.back": "Voltar ao atlas",
-"atlas.title": "Atlas Mundial",
-"atlas.description": "Estatísticas e informações detalhadas sobre os países do mundo.",
+"world.countries.title": "Atlas Mundial",
+"world.countries.description": "Estatísticas e informações detalhadas sobre os países do mundo.",
 // Secção Geográfica - Navegação
 "world.nav.languages": "Línguas",
 "world.nav.currencies": "Moedas",
-"world.nav.atlas": "Atlas Mundial",
+"countries.search": "Atlas Mundial",
 "world.nav.notes": "Notas e Artigos",
 // Tabelas e Visão Geral
 "world.table.code": "Código",
@@ -357,12 +353,12 @@ export const uiStrings = {
 "world.stats.native": "Yerel Ad",
 // Gezinme ve Başlıklar
 "world.detail.back": "Atlasa Geri Dön",
-"atlas.title": "Dünya Atlası",
-"atlas.description": "Dünya ülkeleri hakkında detaylı istatistikler ve bilgiler.",
+"world.countries.title": "Dünya Atlası",
+"world.countries.description": "Dünya ülkeleri hakkında detaylı istatistikler ve bilgiler.",
 // Coğrafi Bölüm - Gezinme
 "world.nav.languages": "Diller",
 "world.nav.currencies": "Para Birimleri",
-"world.nav.atlas": "Dünya Atlası",
+"countries.search": "Dünya Atlası",
 "world.nav.notes": "Notlar ve Makaleler",
 // Tablolar ve Genel Bakışlar
 "world.table.code": "Kod",
