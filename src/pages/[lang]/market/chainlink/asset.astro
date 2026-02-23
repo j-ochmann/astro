@@ -112,12 +112,9 @@ const { lang } = Astro.params;
     const words = [];
     for (let i = 0; i < clean.length; i += 64) words.push(clean.slice(i, i + 64));
     
-    // roundId (word 0), answer (word 1), startedAt (word 2), updatedAt (word 3), answeredInRound (word 4)
     const roundId = BigInt('0x' + words[0]).toString();
     const answerRaw = BigInt('0x' + words[1]);
     const updatedAt = parseInt(words[3], 16);
-    
-    // Handle signed integers (price can be negative in theory, though rare for assets)
     const signedAnswer = answerRaw > (1n << 255n) ? answerRaw - (1n << 256n) : answerRaw;
     
     return { roundId, answer: signedAnswer, updatedAt };
@@ -132,10 +129,7 @@ const { lang } = Astro.params;
           jsonrpc: "2.0",
           id: Date.now(),
           method: "eth_call",
-          params: [{
-            to: address,
-            data: "0xfeaf968c" // latestRoundData()
-          }, "latest"]
+          params: [{ to: address, data: "0xfeaf968c" }, "latest"]
         })
       });
 
@@ -148,13 +142,15 @@ const { lang } = Astro.params;
       const price = Number(data.answer) / Math.pow(10, decimals);
       const priceEl = document.getElementById('live-price');
       
-      // Formátování podle počtu desetinných míst
-      const formattedPrice = price.toLocaleString(undefined, { 
-        maximumFractionDigits: decimals > 8 ? 4 : 8,
-        minimumFractionDigits: 2
-      });
+      // DYNAMICKÉ FORMÁTOVÁNÍ:
+      // Pokud je cena velmi malá (typicky ETH páry), použijeme více desetinných míst
+      const formatOptions = {
+        minimumFractionDigits: price < 0.01 ? 8 : 2,
+        maximumFractionDigits: price < 0.0001 ? 12 : (price < 1 ? 8 : 4)
+      };
 
-      // Efekt probliknutí při změně ceny
+      const formattedPrice = price.toLocaleString(undefined, formatOptions);
+
       if (priceEl.innerText !== formattedPrice && priceEl.innerText !== "---") {
         priceEl.style.transition = 'none';
         priceEl.style.color = '#375bd2';
@@ -172,7 +168,7 @@ const { lang } = Astro.params;
       document.getElementById('status-dot').style.background = '#10b981';
 
     } catch (e) {
-      console.warn("RPC Error, switching provider...", e);
+      console.warn("RPC Error, switching provider...");
       currentRpcIndex = (currentRpcIndex + 1) % RPC_URLS.length;
     }
   }
@@ -183,7 +179,6 @@ const { lang } = Astro.params;
     if (!container) return;
     
     container.innerHTML = '';
-    // Vyčištění symbolu pro TradingView (např. "BTC / USD" -> "BTCUSD")
     const cleanSymbol = symbol.replace(/[^a-zA-Z0-9]/g, '');
 
     new TradingView.widget({
@@ -219,8 +214,6 @@ const { lang } = Astro.params;
     document.getElementById('content').style.display = 'grid';
 
     renderChart(symbol);
-    
-    // Okamžitý update a poté interval
     updateChainlinkData(id, decimals);
     setInterval(() => updateChainlinkData(id, decimals), 10000);
   }
@@ -277,7 +270,7 @@ const { lang } = Astro.params;
   
   .price-stack { padding-top: 2rem; border-top: 1px solid var(--sl-color-gray-6); display: flex; flex-direction: column; gap: 1.5rem; }
   .price-item label { display: block; font-size: 0.75rem; color: var(--sl-color-gray-4); text-transform: uppercase; margin-bottom: 0.5rem; }
-  .val-large { font-size: 3.5rem; font-weight: 800; line-height: 1; color: var(--sl-color-white); }
+  .val-large { font-size: 3.5rem; font-weight: 800; line-height: 1; color: var(--sl-color-white); overflow-wrap: break-word; }
   .val-medium { font-size: 1.4rem; color: #375bd2; font-weight: bold; }
   
   .chart-box { padding: 0; overflow: hidden; }
