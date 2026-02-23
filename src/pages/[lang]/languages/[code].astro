@@ -80,7 +80,7 @@ const displayName = languageInfo?.nameEn || currentCodeUpper;
   <div class="nav-grid">
     {prevLang ? (
       <a href={`/${lang}/languages/${prevLang.code.toLowerCase()}/`} class="nav-item prev">
-        <span class="nav-label">← {t('geo.nav.prev') || 'Předchozí'}</span>
+        <span class="nav-label">← {t('world.nav.prev') || 'Předchozí'}</span>
         <span class="nav-title">{prevLang.nameEn}</span>
       </a>
     ) : <div class="nav-empty" />}
@@ -97,7 +97,7 @@ const displayName = languageInfo?.nameEn || currentCodeUpper;
 
     {nextLang ? (
       <a href={`/${lang}/languages/${nextLang.code.toLowerCase()}/`} class="nav-item next">
-        <span class="nav-label">{t('geo.nav.next') || 'Další'} →</span>
+        <span class="nav-label">{t('world.nav.next') || 'Další'} →</span>
         <span class="nav-title">{nextLang.nameEn}</span>
       </a>
     ) : <div class="nav-empty" />}

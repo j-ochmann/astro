@@ -141,23 +141,23 @@ export default defineConfig({
           ]
         },
         { 
-          label: 'Geo',
-          translations: { cs: 'Geo' },
+          label: 'World',
+          translations: { cs: 'Svět' },
           collapsed: true,
           items: [
             { 
-              label: 'World Atlas', 
-              translations: { cs: 'Atlas světa' },
+              label: 'Countries', 
+              translations: { cs: 'Státy' },
               link: '/countries/' 
             },
+            // { 
+            //   label: 'Countries Table', 
+            //   translations: { cs: 'Tabulka států' },
+            //   link: '/countries/table/'
+            // },
             { 
-              label: 'Countries Table', 
-              translations: { cs: 'Tabulka států' },
-              link: '/countries/table/'
-            },
-            { 
-              label: 'Countries Graph', 
-              translations: { cs: 'Síťový graf států' },
+              label: 'Countries Network', 
+              translations: { cs: 'Síť států' },
               link: '/countries/graph/'
             },
             { 

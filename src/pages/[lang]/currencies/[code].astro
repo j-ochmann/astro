@@ -74,7 +74,7 @@ const wikiUrl = `https://${wikiLang}.wikipedia.org/wiki/ISO_4217`;
   <div class="nav-grid">
     {prevCode ? (
       <a href={`/${lang}/currencies/${prevCode.toLowerCase()}/`} class="nav-item prev">
-        <span class="nav-label">← {t('geo.nav.prev') || 'Předchozí'}</span>
+        <span class="nav-label">← {t('world.nav.prev') || 'Předchozí'}</span>
         <span class="nav-title">{prevCode}</span>
       </a>
     ) : <div class="nav-empty" />}
@@ -91,7 +91,7 @@ const wikiUrl = `https://${wikiLang}.wikipedia.org/wiki/ISO_4217`;
 
     {nextCode ? (
       <a href={`/${lang}/currencies/${nextCode.toLowerCase()}/`} class="nav-item next">
-        <span class="nav-label">{t('geo.nav.next') || 'Další'} →</span>
+        <span class="nav-label">{t('world.nav.next') || 'Další'} →</span>
         <span class="nav-title">{nextCode}</span>
       </a>
     ) : <div class="nav-empty" />}

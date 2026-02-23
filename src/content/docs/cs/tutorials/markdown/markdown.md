@@ -1,4 +1,6 @@
-# Nadpis 1 (největší)
+---
+title: '\# Nadpis 1 (největší)'
+---
 
 ## Nadpis 2
 

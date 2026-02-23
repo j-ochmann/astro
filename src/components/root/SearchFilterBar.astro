@@ -18,7 +18,7 @@ interface Props {
 
 const { 
   searchPlaceholder = "Search...", 
-  filterLabel = "Asset Type",
+  filterLabel = "Type",
   filterOptions = [],
   viewLabel = "View",
   downloadLabel = "Download"
@@ -51,7 +51,7 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
           </button>
           <div class="dropdown-content glass-panel" id="catMenu">
             <button class="cat-item menu-btn active" data-cat="">
-              <span class="item-label">All Assets</span>
+              <span class="item-label">All</span>
               <span class="badge-cat">{totalItemsSum}</span>
             </button>
             <div class="menu-divider"></div>

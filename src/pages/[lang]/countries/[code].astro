@@ -59,7 +59,7 @@ const latlng = mledoze?.latlng ? `${mledoze.latlng[0]}°, ${mledoze.latlng[1]}°
   <div class="country-hero">
     <div class="names-stack">
       <p class="native-name">
-        <strong>{t('geo.stats.native') || 'Native'}:</strong> 
+        <strong>{t('world.stats.native') || 'Native'}:</strong> 
         <span class="native-value">{country.native}</span>
       </p>
       <div class="code-badges">
@@ -79,13 +79,13 @@ const latlng = mledoze?.latlng ? `${mledoze.latlng[0]}°, ${mledoze.latlng[1]}°
 
   <div class="stats-grid">
     <div class="stats-card">
-      <h3>{t('geo.detail.basicInfo') || 'Základní informace'}</h3>
+      <h3>{t('world.detail.basicInfo') || 'Základní informace'}</h3>
       <ul>
-        <li><strong>{t('geo.stats.capital') || 'Capital'}:</strong> <span>{country.capital ?? '—'}</span></li>
-        <li><strong>{t('geo.stats.population') || 'Population'}:</strong> <span>{country.population.toLocaleString(lang)}</span></li>
-        <li><strong>{t('geo.stats.area') || 'Area'}:</strong> <span>{mledoze?.area ? `${mledoze.area.toLocaleString(lang)} km²` : '—'}</span></li>
+        <li><strong>{t('world.stats.capital') || 'Capital'}:</strong> <span>{country.capital ?? '—'}</span></li>
+        <li><strong>{t('world.stats.population') || 'Population'}:</strong> <span>{country.population.toLocaleString(lang)}</span></li>
+        <li><strong>{t('world.stats.area') || 'Area'}:</strong> <span>{mledoze?.area ? `${mledoze.area.toLocaleString(lang)} km²` : '—'}</span></li>
         <li><strong>GPS:</strong> <span class="mono">{latlng}</span></li>
-        <li><strong>{t('geo.stats.continent') || 'Continent'}:</strong> <span>{t(continentKey) || country.continent}</span></li>
+        <li><strong>{t('world.stats.continent') || 'Continent'}:</strong> <span>{t(continentKey) || country.continent}</span></li>
       </ul>
     </div>
 
@@ -111,10 +111,10 @@ const latlng = mledoze?.latlng ? `${mledoze.latlng[0]}°, ${mledoze.latlng[1]}°
     </div>
 
     <div class="stats-card">
-      <h3>{t('geo.detail.local') || 'Měna a jazyky'}</h3>
+      <h3>{t('world.detail.local') || 'Měna a jazyky'}</h3>
       <ul>
         <li>
-          <strong>{t('geo.stats.currency') || 'Currency'}:</strong> 
+          <strong>{t('world.stats.currency') || 'Currency'}:</strong> 
           <div class="list-tags">
             {country.currency?.map(c => (
               <a href={`/${lang}/currencies/${c.toLowerCase()}/`} class="tag">{getCurrencyLabel(c, lang)}</a>
@@ -122,7 +122,7 @@ const latlng = mledoze?.latlng ? `${mledoze.latlng[0]}°, ${mledoze.latlng[1]}°
           </div>
         </li>
         <li>
-          <strong>{t('geo.stats.languages') || 'Languages'}:</strong> 
+          <strong>{t('world.stats.languages') || 'Languages'}:</strong> 
           <div class="list-tags">
             {country.language?.map(l => (
               <a href={`/${lang}/languages/${l.toLowerCase()}/`} class="tag">{getLanguageLabel(l, lang)}</a>
@@ -150,7 +150,7 @@ const latlng = mledoze?.latlng ? `${mledoze.latlng[0]}°, ${mledoze.latlng[1]}°
   <div class="nav-grid">
     {prevCode ? (
       <a href={`/${lang}/countries/${prevCode.toLowerCase()}/`} class="nav-item prev">
-        <span class="nav-label">← {t('geo.nav.prev') || 'Předchozí'}</span>
+        <span class="nav-label">← {t('world.nav.prev') || 'Předchozí'}</span>
         <span class="nav-title">{getCountryName(prevCode, lang)}</span>
       </a>
     ) : <div class="nav-empty" />}
@@ -162,7 +162,7 @@ const latlng = mledoze?.latlng ? `${mledoze.latlng[0]}°, ${mledoze.latlng[1]}°
 
     {nextCode ? (
       <a href={`/${lang}/countries/${nextCode.toLowerCase()}/`} class="nav-item next">
-        <span class="nav-label">{t('geo.nav.next') || 'Další'} →</span>
+        <span class="nav-label">{t('world.nav.next') || 'Další'} →</span>
         <span class="nav-title">{getCountryName(nextCode, lang)}</span>
       </a>
     ) : <div class="nav-empty" />}
