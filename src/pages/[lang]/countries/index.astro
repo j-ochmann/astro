@@ -106,7 +106,9 @@ const filterOptions = continentList.map(cont => ({
               <div class="meta-item"><span>Cap:</span> <strong>{c.capital}</strong></div>
               <div class="meta-item"><span>Pop:</span> <strong>{c.population.toLocaleString(lang)}</strong></div>
             </div>
-            <a href={`/${lang}/countries/${c.code.toLowerCase()}/`} class="card-link">Detail</a>
+            <div class="card-action">
+              <a href={`/${lang}/countries/${c.code.toLowerCase()}/`} class="card-link">Detail</a>
+            </div>
           </div>
         ))}
       </div>
@@ -122,9 +124,10 @@ const filterOptions = continentList.map(cont => ({
         </div>
     </div>
 
-    <div id="view-net" class="view-section">
-        <div class="glass-panel empty-state">Network View Visualization coming soon...</div>
-    </div>
+    <div id="view-map" class="view-section"><div class="glass-panel empty-state">Interactive Map coming soon...</div></div>
+    <div id="view-globe" class="view-section"><div class="glass-panel empty-state">3D Globe Visualization coming soon...</div></div>
+    <div id="view-orbicon" class="view-section"><div class="glass-panel empty-state">Orbicon System Interface coming soon...</div></div>
+    <div id="view-net" class="view-section"><div class="glass-panel empty-state">Network Topology coming soon...</div></div>
   </div>
 </StarlightPage>
 
@@ -134,6 +137,9 @@ const filterOptions = continentList.map(cont => ({
   .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
   [data-has-sidebar] header h1 { display: none !important; }
   .right-sidebar { display: none !important; }
+
+  /* FIX: Odstranění margin-top u prvního elementu v obsahu Starlightu, který rozbíjel výšku první karty */
+  .sl-markdown-content > :first-child { margin-top: 0 !important; }
   
   .dynamic-accent {
     --accent-color: #3b82f6 !important;
@@ -168,16 +174,27 @@ const filterOptions = continentList.map(cont => ({
 
   /* Grid */
   .grid-wrapper { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
-  .country-card { padding: 1rem; transition: all 0.2s; }
+  .country-card { padding: 1rem; transition: all 0.2s; position: relative; overflow: hidden; height: 100%; display: flex; flex-direction: column; }
   .country-card:hover { transform: translateY(-2px); border-color: #3b82f6; }
   .flag-small { font-size: 1.2rem; }
   .card-code { font-family: var(--sl-font-mono); font-size: 0.65rem; background: var(--sl-color-gray-5); padding: 0.1rem 0.4rem; border-radius: 3px; }
   .country-card h3 { margin: 0.5rem 0 0.2rem 0 !important; font-size: 1rem !important; color: var(--sl-color-white) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   :global([data-theme="light"]) .country-card h3 { color: var(--sl-color-black) !important; }
   .card-native { font-size: 0.7rem; color: var(--sl-color-gray-3); margin-bottom: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-meta { font-size: 0.75rem; margin-bottom: 1rem; }
+  .card-meta { font-size: 0.75rem; margin-bottom: 0.5rem; flex-grow: 1; }
   .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid var(--sl-color-gray-6); padding: 0.2rem 0; }
-  .card-link { display: block; text-align: center; background: #3b82f6; color: white !important; text-decoration: none !important; padding: 0.4rem; border-radius: 0.4rem; font-size: 0.75rem; font-weight: bold; }
+  
+  /* Hover Detail Button */
+  .card-action { 
+    position: absolute; bottom: 0; left: 0; right: 0; padding: 0.8rem; 
+    background: linear-gradient(to top, var(--sl-color-gray-6), transparent);
+    transform: translateY(100%); transition: transform 0.2s ease-in-out; 
+  }
+  .country-card:hover .card-action { transform: translateY(0); }
+  .card-link { 
+    display: block; text-align: center; background: #3b82f6; color: white !important; 
+    text-decoration: none !important; padding: 0.4rem; border-radius: 0.4rem; font-size: 0.75rem; font-weight: bold; 
+  }
 
   /* Flags View */
   .flags-only-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 1rem; padding: 1rem; }
@@ -192,9 +209,7 @@ const filterOptions = continentList.map(cont => ({
   function initAtlas() {
     const searchInput = document.getElementById('searchTab') as HTMLInputElement;
     const tableBody = document.getElementById('tableBody');
-    const allContainers = [tableBody, document.getElementById('gridContainer'), document.querySelector('.flags-only-grid')];
     const itemRows = Array.from(document.querySelectorAll('.item-row'));
-    
     let activeCategory = "";
 
     const filterAll = () => {
@@ -210,7 +225,6 @@ const filterOptions = continentList.map(cont => ({
 
     searchInput?.addEventListener('input', filterAll);
 
-    // Dropdown a zavírání menu
     const closeAllMenus = () => document.querySelectorAll('.dropdown-content').forEach(m => m.classList.remove('show'));
 
     document.querySelectorAll('.dropdown button').forEach(btn => {
@@ -225,7 +239,6 @@ const filterOptions = continentList.map(cont => ({
 
     window.addEventListener('click', closeAllMenus);
 
-    // Continent Filter
     document.querySelectorAll('.cat-item').forEach(btn => {
       btn.addEventListener('click', () => {
         activeCategory = btn.getAttribute('data-cat') || "";
@@ -236,17 +249,23 @@ const filterOptions = continentList.map(cont => ({
       });
     });
 
-    // View Switcher + Injecting new options
+    // View Switcher Injection for additional views
     const viewMenu = document.getElementById('viewMenu');
     if (viewMenu && !viewMenu.querySelector('[data-view="flags"]')) {
-        viewMenu.innerHTML += `
-            <button class="view-item menu-btn" data-view="flags">
-                <span class="view-inner"><i class="fa-solid fa-flag fa-fw"></i><span>Flags</span></span>
-            </button>
-            <button class="view-item menu-btn" data-view="net">
-                <span class="view-inner"><i class="fa-solid fa-network-wired fa-fw"></i><span>Net</span></span>
-            </button>
-        `;
+        const views = [
+            { id: 'flags', icon: 'fa-flag', label: 'Flags' },
+            { id: 'map', icon: 'fa-map-location-dot', label: 'Map' },
+            { id: 'globe', icon: 'fa-earth-americas', label: 'Globe' },
+            { id: 'orbicon', icon: 'fa-circle-nodes', label: 'Orbicon' },
+            { id: 'net', icon: 'fa-network-wired', label: 'Net' }
+        ];
+        views.forEach(v => {
+            viewMenu.innerHTML += `
+                <button class="view-item menu-btn" data-view="${v.id}">
+                    <span class="view-inner"><i class="fa-solid ${v.icon} fa-fw"></i><span>${v.label}</span></span>
+                </button>
+            `;
+        });
     }
 
     document.addEventListener('click', (e) => {
