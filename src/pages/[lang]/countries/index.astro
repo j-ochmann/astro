@@ -40,7 +40,7 @@ const filterOptions = continentList.map(cont => ({
 
 <StarlightPage 
   frontmatter={{ 
-    title: String(t('atlas.table.title')),
+    title: String(t('countries.title')),
     tableOfContents: false 
   }}
 >
@@ -48,15 +48,14 @@ const filterOptions = continentList.map(cont => ({
 
   <div class="atlas-container">
     <header class="atlas-header">
-       <h1>{t('atlas.table.title')}</h1>
-       <p class="atlas-subtitle">Global geographic database and country statistics</p>
+       <h1>{t('countries.title')}</h1>
     </header>
 
     <SearchFilterBar 
-      searchPlaceholder={String(t('atlas.table.search'))}
-      filterLabel="Continent"
+      searchPlaceholder={String(t('countries.search'))}
+      filterLabel="Continents"
       filterOptions={filterOptions}
-      viewLabel="View Mode"
+      viewLabel="View"
       downloadLabel="Export Data"
     />
 
