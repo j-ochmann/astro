@@ -53,6 +53,7 @@ const categories = Array.from(new Set(feeds.map(f => f.category))).map(cat => ({
 }));
 
 const RAY_COUNT = 65;
+// Definice pro SSR
 const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
 ---
 
@@ -122,7 +123,7 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
                   <div class="status-dot js-status" style="background: #ef4444;"></div>
                 </td>
                 <td class="js-update cell-update">
-                    {f.updatedAt ? f.updatedAt.toLocaleTimeString(lang, timeOptions) : 'N/A'}
+                    {f.updatedAt ? f.updatedAt.toLocaleTimeString(lang, timeOptions) : 'Waiting...'}
                 </td>
                 <td class="cell-mono td-params">
                     <span class="dev-val">{f.threshold}%</span> / <span class="hb-val">{f.heartbeat}s</span>
@@ -139,7 +140,8 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
 
 <script is:inline define:vars={{ lang }}>
 document.addEventListener('DOMContentLoaded', () => {
-  const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+  // Lokální definice options pro klientský JS
+  const timeOpts = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
   const syncLabel = document.getElementById('stat-sync');
   const searchInput = document.getElementById('searchTab');
   const tableRows = document.querySelectorAll('#chainlink-body tr');
@@ -177,8 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (searchInput) searchInput.addEventListener('input', filterAll);
 
-  // DOWNLOAD LOGIC
-  function downloadSnapshot(format) {
+  const downloadSnapshot = (format) => {
     const data = Array.from(tableRows)
       .filter(row => row.style.display !== 'none')
       .map(row => ({
@@ -189,75 +190,63 @@ document.addEventListener('DOMContentLoaded', () => {
         category: row.getAttribute('data-category')
       }));
 
+    if (data.length === 0) return;
     let content = '';
     let mime = 'text/plain';
 
-    if (format === 'json') {
-      content = JSON.stringify(data, null, 2);
-      mime = 'application/json';
-    } else if (format === 'csv') {
-      content = 'Pair,Price,Update,Address,Category\n' + data.map(d => `"${d.pair}","${d.price}","${d.updatedAt}","${d.id}","${d.category}"`).join('\n');
-      mime = 'text/csv';
-    } else if (format === 'yaml') {
-      content = data.map(d => `- pair: ${d.pair}\n  price: ${d.price}\n  update: ${d.updatedAt}\n  id: ${d.id}\n  category: ${d.category}`).join('\n');
-    } else if (format === 'xml') {
-      content = '<?xml version="1.0" encoding="UTF-8"?><feeds>' + data.map(d => `<feed><pair>${d.pair}</pair><price>${d.price}</price></feed>`).join('') + '</feeds>';
-      mime = 'application/xml';
-    }
+    if (format === 'json') { content = JSON.stringify(data, null, 2); mime = 'application/json'; } 
+    else if (format === 'csv') { content = 'Pair,Price,Update,Address,Category\n' + data.map(d => `"${d.pair}","${d.price}","${d.updatedAt}","${d.id}","${d.category}"`).join('\n'); mime = 'text/csv'; } 
+    else if (format === 'yaml') { content = data.map(d => `- pair: ${d.pair}\n  price: "${d.price}"\n  update: ${d.updatedAt}\n  id: ${d.id}\n  category: ${d.category}`).join('\n'); mime = 'text/yaml'; } 
+    else if (format === 'xml') { content = '<?xml version="1.0" encoding="UTF-8"?><feeds>' + data.map(d => `<feed><pair>${d.pair}</pair><price>${d.price}</price></feed>`).join('') + '</feeds>'; mime = 'application/xml'; }
 
     const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `chainlink_snapshot_${new Date().getTime()}.${format}`;
+    a.download = `chainlink_snapshot_${Date.now()}.${format}`;
+    document.body.appendChild(a);
     a.click();
-  }
+    document.body.removeChild(a);
+  };
 
-  // ROBUST DROPDOWN & CLICK LOGIC
   document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.glass-btn');
-    const allDropdowns = document.querySelectorAll('.dropdown-content');
-
+    const target = e.target;
+    const btn = target.closest('.glass-btn');
     if (btn) {
-      e.preventDefault();
       e.stopPropagation();
       const dropdown = btn.nextElementSibling;
-      const alreadyOpen = dropdown?.classList.contains('show');
-      allDropdowns.forEach(d => d.classList.remove('show'));
-      if (!alreadyOpen) dropdown?.classList.add('show');
+      const isVisible = dropdown.classList.contains('show');
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+      if (!isVisible) dropdown.classList.add('show');
       return;
     }
-
-    const catItem = e.target.closest('.cat-item');
+    const dlItem = target.closest('[data-export]');
+    if (dlItem) {
+      downloadSnapshot(dlItem.getAttribute('data-export'));
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+      return;
+    }
+    const catItem = target.closest('.cat-item');
     if (catItem) {
       activeCategory = catItem.getAttribute('data-cat') || 'all';
       document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
       catItem.classList.add('active');
       filterAll();
-      allDropdowns.forEach(d => d.classList.remove('show'));
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
       return;
     }
-
-    const viewItem = e.target.closest('.view-item');
+    const viewItem = target.closest('.view-item');
     if (viewItem) {
       const view = viewItem.getAttribute('data-view');
       document.querySelectorAll('.view-item').forEach(i => i.classList.remove('active'));
       viewItem.classList.add('active');
-      if (view === 'grid') mainViewContainer.classList.add('view-grid');
-      else mainViewContainer.classList.remove('view-grid');
-      allDropdowns.forEach(d => d.classList.remove('show'));
+      if (view === 'grid') mainViewContainer.classList.add('view-grid'); else mainViewContainer.classList.remove('view-grid');
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
       return;
     }
-
-    const snapshotBtn = e.target.closest('[data-format]');
-    if (snapshotBtn) {
-      downloadSnapshot(snapshotBtn.getAttribute('data-format'));
-      allDropdowns.forEach(d => d.classList.remove('show'));
-      return;
+    if (!target.closest('.dropdown')) {
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
     }
-
-    // Klik kamkoliv jinam zavře dropdowny
-    allDropdowns.forEach(d => d.classList.remove('show'));
   });
 
   const observer = new IntersectionObserver((entries) => {
@@ -272,8 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchChainlinkData() {
     if (visibleIds.size === 0) return;
     const ids = Array.from(visibleIds);
-    const now = Math.floor(Date.now() / 1000);
-
+    const nowTs = Math.floor(Date.now() / 1000);
     try {
       const results = await Promise.all(ids.map(async (id) => {
         try {
@@ -296,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res || !res.decoded) return;
         const row = rowMap.get(res.id);
         if (!row) return;
-
+        
         const decimals = parseInt(row.getAttribute('data-decimals') || "8");
         const heartbeat = parseInt(row.getAttribute('data-heartbeat') || "3600");
         const price = Number(res.decoded.answer) / Math.pow(10, decimals);
@@ -304,30 +292,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const priceCell = row.querySelector('.js-price');
         const updateCell = row.querySelector('.js-update');
         const statusDot = row.querySelector('.js-status');
+        
+        // Dynamické formátování podle velikosti ceny (stejné jako v detailu)
+        const formatted = price.toLocaleString(undefined, { 
+          minimumFractionDigits: price < 0.01 ? 8 : 2,
+          maximumFractionDigits: price < 0.0001 ? 12 : 8 
+        });
 
-        const formatted = price.toLocaleString(undefined, { maximumFractionDigits: 10 });
         if (priceCell.innerText !== formatted) {
           priceCell.innerText = formatted;
           priceCell.classList.add('price-flash');
           setTimeout(() => priceCell.classList.remove('price-flash'), 2000);
         }
 
-        updateCell.innerText = new Date(res.decoded.updatedAt * 1000).toLocaleTimeString(lang, timeOptions);
+        // OPRAVA: Použití lokálně definované proměnné timeOpts
+        updateCell.innerText = new Date(res.decoded.updatedAt * 1000).toLocaleTimeString(lang, timeOpts);
         
-        const age = now - res.decoded.updatedAt;
+        const age = nowTs - res.decoded.updatedAt;
         const color = age <= heartbeat ? '#10b981' : (age <= heartbeat * 2 ? '#f59e0b' : '#ef4444');
         statusDot.style.background = color;
         statusDot.style.boxShadow = age <= heartbeat ? `0 0 10px ${color}` : 'none';
       });
-
-      if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString(lang, timeOptions);
+      if (syncLabel) syncLabel.innerText = "Live / " + new Date().toLocaleTimeString(lang, timeOpts);
     } catch (err) {
       currentRpcIndex = (currentRpcIndex + 1) % RPC_URLS.length;
     }
   }
 
   fetchChainlinkData();
-  const interval = setInterval(fetchChainlinkData, 3000);
+  const interval = setInterval(fetchChainlinkData, 5000); // Mírně zvýšený interval pro šetření RPC
   window.addEventListener('beforeunload', () => clearInterval(interval));
 });
 </script>
@@ -335,16 +328,14 @@ document.addEventListener('DOMContentLoaded', () => {
 <style is:global>
   .main-frame, .content-panel, .sl-container { max-width: 100% !important; width: 100% !important; margin: 0 !important; background: transparent !important; }
   
-  /* KOMPAKTNÍ GRID VIEW */
   .view-grid { background: transparent !important; border: none !important; box-shadow: none !important; }
-  .view-grid table { border: none !important; display: block !important; width: 100% !important; background: transparent !important; }
+  .view-grid table { border: none !important; display: block !important; width: 100% !important; }
   .view-grid thead { display: none !important; }
   .view-grid tbody { 
     display: grid !important; 
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important; 
-    gap: 0.75rem !important; 
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important; 
+    gap: 0.5rem !important; 
     border: none !important;
-    background: transparent !important;
     padding: 0 !important;
   }
   .view-grid tr { 
@@ -353,23 +344,21 @@ document.addEventListener('DOMContentLoaded', () => {
     background: rgba(var(--sl-color-bg-nav-rgb), 0.6) !important; 
     backdrop-filter: blur(20px) !important;
     border: 1px solid var(--sl-color-gray-5) !important; 
-    border-radius: 0.6rem !important; 
-    padding: 1rem !important; 
+    border-radius: 0.5rem !important; 
+    padding: 0.75rem !important; 
     position: relative !important; 
-    height: auto !important;
-    min-height: 150px !important;
+    min-height: 120px !important;
     margin: 0 !important;
   }
-  .view-grid tr:first-child { height: auto !important; margin-top: 0 !important; }
-  
-  .view-grid td { width: 100% !important; border: none !important; padding: 0.15rem 0 !important; background: transparent !important; min-height: auto !important; }
-  .view-grid .td-status { position: absolute !important; top: 1rem; right: 1rem; width: auto !important; }
-  .view-grid .td-pair { order: 1; }
-  .view-grid .pair-link { font-size: 1.1rem; color: #375bd2 !important; }
-  .view-grid .td-cat { order: 2; text-align: left !important; margin-bottom: 0.25rem; }
-  .view-grid .cell-price { order: 3; font-size: 1.35rem; border-top: 1px solid var(--sl-color-gray-6) !important; padding-top: 0.5rem !important; margin-top: auto; }
-  .view-grid .js-update { font-size: 0.75rem; color: var(--sl-color-gray-4); order: 4; }
-  .view-grid .td-params { display: block !important; order: 5; font-size: 0.7rem; border-top: 1px solid var(--sl-color-gray-6) !important; padding-top: 0.4rem !important; margin-top: 0.4rem; width: 100% !important; }
+  .view-grid td { width: 100% !important; border: none !important; padding: 0.1rem 0 !important; background: transparent !important; }
+  .view-grid .td-status { position: absolute !important; top: 0.75rem; right: 0.75rem; width: auto !important; }
+  .view-grid .pair-link { font-size: 0.9rem; color: #375bd2 !important; font-weight: 800; }
+  .view-grid .badge-row { font-size: 0.6rem; padding: 0.1rem 0.3rem; }
+  .view-grid .cell-price { order: 3; font-size: 1.1rem; border-top: 1px solid var(--sl-color-gray-6) !important; padding-top: 0.4rem !important; margin-top: auto; }
+  .view-grid .js-update { font-size: 0.65rem; color: var(--sl-color-gray-4); }
+  .view-grid .td-params { display: block !important; font-size: 0.6rem; border-top: 1px solid var(--sl-color-gray-6) !important; margin-top: 0.3rem; padding-top: 0.3rem; }
+
+  .glass-btn i, .glass-btn span, .menu-btn i, .menu-btn span { pointer-events: none; }
 
   @keyframes flash-price-cl { 0% { color: #375bd2; text-shadow: 0 0 10px #375bd2; } 100% { color: inherit; text-shadow: none; } }
   .price-flash { animation: flash-price-cl 2s ease-out; }
@@ -397,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   .table-container { border-radius: 0.75rem; overflow-x: auto; width: 100%; }
   table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
-  th, td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); vertical-align: middle; }
+  th, td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); vertical-align: middle; }
   th { background: rgba(55, 91, 210, 0.1); color: #375bd2; border-bottom: 2px solid var(--sl-color-gray-5); font-size: 0.8rem; }
   
   .th-pair, .td-pair { width: 25%; }
@@ -407,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
   .th-params, .td-params { width: 17%; font-size: 0.75rem; color: var(--sl-color-gray-3); }
   .th-cat, .td-cat { width: 15%; text-align: right; }
 
-  .pair-link { color: #375bd2 !important; font-weight: bold; text-decoration: none; }
+  .pair-link { color: #375bd2 !important; font-weight: 800; text-decoration: none; }
   .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transition: all 0.3s ease; }
   
   .badge-row { 
@@ -418,7 +407,6 @@ document.addEventListener('DOMContentLoaded', () => {
     color: #375bd2 !important; 
     font-weight: 600;
     border: 1px solid rgba(55, 91, 210, 0.3);
-    white-space: nowrap;
   }
   
   .dev-val { color: #375bd2; font-weight: 600; }
