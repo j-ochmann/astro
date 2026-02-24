@@ -126,14 +126,14 @@ export default defineConfig({
           collapsed: true,
           items: [
             { 
-              label: 'Chainlink', 
-              //translations: { cs: 'Chainlink' },
-              link: '/market/chainlink' 
-            },
-            { 
               label: 'Pyth', 
               //translations: { cs: 'Pyth' },
               link: '/market/pyth' 
+            },
+            { 
+              label: 'Chainlink', 
+              //translations: { cs: 'Chainlink' },
+              link: '/market/chainlink' 
             },
             // { 
             //   label: 'Test', 
