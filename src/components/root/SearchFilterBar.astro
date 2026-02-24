@@ -1,6 +1,5 @@
 ---
 // src/components/root/SearchFilterBar.astro
-
 interface FilterOption {
   label: string;
   value: string;
@@ -42,7 +41,9 @@ const {
   ],
   exportOptions = [
     { id: 'json', label: 'JSON', extension: '.json', icon: 'fa-solid fa-file-code' },
-    { id: 'csv', label: 'CSV', extension: '.csv', icon: 'fa-solid fa-file-csv' }
+    { id: 'csv', label: 'CSV', extension: '.csv', icon: 'fa-solid fa-file-csv' },
+    { id: 'xml', label: 'XML', extension: '.xml', icon: 'fa-solid fa-file-export' },
+    { id: 'yaml', label: 'YAML', extension: '.yaml', icon: 'fa-solid fa-file-lines' }
   ]
 } = Astro.props;
 
@@ -140,6 +141,7 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
 </div>
 
 <style>
+  /* Zachování tvého původního CSS pro pozicování */
   .dynamic-accent {
     --accent-color: var(--filter-accent-color, #9d7cfd);
     --accent-bg: var(--filter-accent-bg, rgba(157, 124, 253, 0.15));
@@ -164,6 +166,7 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
   .search-container { flex: 1; position: relative; }
   .export-group { gap: 0.5rem; }
 
+  /* Základní vzhled glass panelu (klidový stav) */
   .glass-panel.glass-panel {
     background: rgba(20, 20, 25, 0.5) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
@@ -171,12 +174,26 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
     color: #ffffff !important;
     border-radius: 0.75rem !important;
+    transition: all 0.2s ease;
   }
 
   :global([data-theme="light"]) .glass-panel.glass-panel {
     background: rgba(255, 255, 255, 0.4) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
     color: var(--sl-color-gray-1) !important;
+  }
+
+  /* --- Aktivní stavy (změna barvy rámečku) --- */
+  
+  /* Focus v search inputu */
+  .main-input:focus {
+    border-color: var(--accent-color) !important;
+  }
+
+  /* Hover na tlačítka a focus inputu mění barvu i ve světlém módu */
+  :global([data-theme="light"]) .main-input:focus,
+  :global([data-theme="light"]) .glass-btn:hover {
+    border-color: var(--accent-color) !important;
   }
 
   .main-input.main-input {
@@ -187,10 +204,6 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
     outline: none !important;
   }
 
-  .main-input:focus {
-    border-color: var(--accent-color) !important;
-  }
-
   .search-icon-inside {
     position: absolute;
     left: 1.2rem;
@@ -198,6 +211,11 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
     color: var(--sl-color-gray-3);
     display: flex;
     align-items: center;
+  }
+
+  /* Rozsvícení lupy při focusu */
+  .search-container:focus-within .search-icon-inside {
+    color: var(--accent-color);
   }
 
   .glass-btn.glass-btn {
@@ -276,6 +294,10 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
     border: 1px solid var(--accent-border) !important;
   }
 
+  .view-inner { display: flex; align-items: center; gap: 0.75rem; }
+  .active-indicator { opacity: 0; color: var(--accent-color); }
+  .active .active-indicator { opacity: 1; }
+
   .ext-tag {
     font-size: 0.6rem;
     opacity: 0.6;
@@ -284,10 +306,6 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
     border-radius: 3px;
     text-transform: uppercase;
   }
-
-  .view-inner { display: flex; align-items: center; gap: 0.75rem; }
-  .active-indicator { opacity: 0; color: var(--accent-color); }
-  .active .active-indicator { opacity: 1; }
 
   .menu-divider { height: 1px; background: var(--sl-color-gray-6); margin: 0.3rem 0; opacity: 0.5; }
 
