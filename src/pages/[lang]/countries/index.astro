@@ -1,319 +1,57 @@
 ---
-// src/pages/[lang]/countries/index.astro
-import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
-import { Icon } from 'astro-icon/components';
-import { 
-  getI18nPaths, 
-  countriesData, 
-  useTranslations, 
-  getCurrencyLabel, 
-  getLanguageLabel 
-} from '@/content/config/i18n';
+import TabGridLayout from '@/components/root/TabGridLayout.astro';
+import { getI18nPaths, countriesData, useTranslations } from '@/content/config/i18n';
 
-export async function getStaticPaths() {
-  return getI18nPaths();
-}
-
+export async function getStaticPaths() { return getI18nPaths(); }
 const { lang } = Astro.params;
 const t = useTranslations(lang);
 
-const allCountriesRaw = Object.values(countriesData).map(c => ({
+// Transformace dat
+const data = Object.values(countriesData).map(c => ({
   code: c.code,
   name: lang === 'cs' ? (t(c.code as any) !== c.code ? t(c.code as any) : c.name) : c.name,
+  native: c.native,
   capital: c.capital || '—',
   continent: c.continent,
   population: c.population,
-  phone: c.phone.map(p => `+${p}`).join(', '),
-  native: c.native,
-  currency: c.currency?.map(curr => getCurrencyLabel(curr, lang)).join(', ') || '—',
-  languages: c.language?.map(l => getLanguageLabel(l, lang)).join(', ') || '—'
 }));
 
-const continentList = Array.from(new Set(allCountriesRaw.map(c => c.continent))).sort();
-const filterOptions = continentList.map(cont => ({
-  label: cont,
-  value: cont.toLowerCase(),
-  count: allCountriesRaw.filter(c => c.continent === cont).length
+// Definice sloupců
+const columns = [
+  { key: 'code', label: 'Code', isMono: true },
+  { key: 'name', label: 'Country' },
+  { key: 'native', label: 'Native', isNative: true },
+  { key: 'capital', label: 'Capital' },
+  { key: 'continent', label: 'Continent' },
+  { key: 'population', label: 'Population', isNumeric: true }
+];
+
+// Možnosti filtru
+const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map(f => ({
+  label: f,
+  value: f.toLowerCase(),
+  count: data.filter(d => d.continent === f).length
 }));
 ---
 
-<StarlightPage 
-  frontmatter={{ 
-    title: String(t('countries.title')),
-    tableOfContents: false 
-  }}
->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-
-  <div class="atlas-container">
-    <header class="atlas-header">
-       <h1>{t('countries.title')}</h1>
-    </header>
-
-    <SearchFilterBar 
-      searchPlaceholder={String(t('countries.search'))}
-      filterLabel="Continents"
-      filterOptions={filterOptions}
-      viewLabel="View"
-      downloadLabel="Export Data"
-    />
-
-    <div id="view-table" class="view-section active">
-      <div class="table-wrapper glass-panel">
-        <table id="countriesTable">
-          <thead>
-            <tr>
-              <th data-sort="code">Code <Icon name="lucide:arrow-up-down" /></th>
-              <th data-sort="name">Country <Icon name="lucide:arrow-up-down" /></th>
-              <th data-sort="native">Native <Icon name="lucide:arrow-up-down" /></th>
-              <th data-sort="capital">Capital <Icon name="lucide:arrow-up-down" /></th>
-              <th data-sort="continent">Continent <Icon name="lucide:arrow-up-down" /></th>
-              <th data-sort="population">Population <Icon name="lucide:arrow-up-down" /></th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            {allCountriesRaw.map(c => (
-              <tr class="item-row table-row" data-id={c.code} data-country={JSON.stringify(c)} data-category={c.continent.toLowerCase()}>
-                <td class="mono">{c.code}</td>
-                <td>
-                  <a href={`/${lang}/countries/${c.code.toLowerCase()}/`} class="country-link">
-                    <span class:list={['fi', `fi-${c.code.toLowerCase()}`]}></span> {c.name}
-                  </a>
-                </td>
-                <td class="native-col">{c.native}</td>
-                <td>{c.capital}</td>
-                <td>{c.continent}</td>
-                <td class="mono">{c.population.toLocaleString(lang)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div id="view-grid" class="view-section">
-      <div class="grid-wrapper" id="gridContainer">
-        {allCountriesRaw.map(c => (
-          <div class="country-card glass-panel item-row grid-card" data-id={c.code} data-country={JSON.stringify(c)} data-category={c.continent.toLowerCase()}>
-            <div class="card-header">
-              <span class:list={['fi', `fi-${c.code.toLowerCase()}`, 'flag-small']}></span>
-              <span class="card-code">{c.code}</span>
-            </div>
-            <h3>{c.name}</h3>
-            <p class="card-native">{c.native}</p>
-            <div class="card-meta">
-              <div class="meta-item"><span>Cap:</span> <strong>{c.capital}</strong></div>
-              <div class="meta-item"><span>Pop:</span> <strong>{c.population.toLocaleString(lang)}</strong></div>
-            </div>
-            <div class="card-action">
-              <a href={`/${lang}/countries/${c.code.toLowerCase()}/`} class="card-link">Detail</a>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-
-    <div id="view-flags" class="view-section">
-        <div class="flags-only-grid">
-            {allCountriesRaw.map(c => (
-                <a href={`/${lang}/countries/${c.code.toLowerCase()}/`} class="flag-icon-wrap item-row" title={c.name} data-id={c.code} data-category={c.continent.toLowerCase()}>
-                    <span class:list={['fi', `fi-${c.code.toLowerCase()}`]}></span>
-                </a>
-            ))}
-        </div>
-    </div>
-
-    <div id="view-map" class="view-section"><div class="glass-panel empty-state">Interactive Map coming soon...</div></div>
-    <div id="view-globe" class="view-section"><div class="glass-panel empty-state">3D Globe Visualization coming soon...</div></div>
-    <div id="view-orbicon" class="view-section"><div class="glass-panel empty-state">Orbicon System Interface coming soon...</div></div>
-    <div id="view-net" class="view-section"><div class="glass-panel empty-state">Network Topology coming soon...</div></div>
-  </div>
-</StarlightPage>
-
-<style is:global>
-  .main-frame { width: 100% !important; max-width: 100% !important; }
-  .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 2rem !important; }
-  .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
-  [data-has-sidebar] header h1 { display: none !important; }
-  .right-sidebar { display: none !important; }
-
-  /* FIX: Odstranění margin-top u prvního elementu v obsahu Starlightu, který rozbíjel výšku první karty */
-  .sl-markdown-content > :first-child { margin-top: 0 !important; }
-  
-  .dynamic-accent {
-    --accent-color: #3b82f6 !important;
-    --accent-bg: rgba(59, 130, 246, 0.15) !important;
-    --accent-border: rgba(59, 130, 246, 0.4) !important;
-  }
-</style>
-
-<style>
-  .atlas-container { width: 100%; margin-top: -1rem; }
-  .glass-panel {
-    background: rgba(20, 20, 25, 0.5);
-    border: 1px solid var(--sl-color-gray-5);
-    border-radius: 0.75rem;
-  }
-
-  :global([data-theme="light"]) .glass-panel {
-    background: rgba(255, 255, 255, 0.7);
-    border-color: var(--sl-color-gray-4);
-    color: var(--sl-color-gray-1);
-  }
-
-  /* Table */
-  .view-section { display: none; }
-  .view-section.active { display: block; }
-  .table-wrapper { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0; }
-  th { background: var(--sl-color-gray-6); padding: 0.75rem 1rem; text-align: left; cursor: pointer; border-bottom: 2px solid var(--sl-color-gray-5); transition: background 0.2s; }
-  td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); }
-  .native-col { color: var(--sl-color-gray-3); font-style: italic; }
-  .country-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--sl-color-text-accent) !important; text-decoration: none !important; }
-
-  /* Grid */
-  .grid-wrapper { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
-  .country-card { padding: 1rem; transition: all 0.2s; position: relative; overflow: hidden; height: 100%; display: flex; flex-direction: column; }
-  .country-card:hover { transform: translateY(-2px); border-color: #3b82f6; }
-  .flag-small { font-size: 1.2rem; }
-  .card-code { font-family: var(--sl-font-mono); font-size: 0.65rem; background: var(--sl-color-gray-5); padding: 0.1rem 0.4rem; border-radius: 3px; }
-  .country-card h3 { margin: 0.5rem 0 0.2rem 0 !important; font-size: 1rem !important; color: var(--sl-color-white) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  :global([data-theme="light"]) .country-card h3 { color: var(--sl-color-black) !important; }
-  .card-native { font-size: 0.7rem; color: var(--sl-color-gray-3); margin-bottom: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-meta { font-size: 0.75rem; margin-bottom: 0.5rem; flex-grow: 1; }
-  .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid var(--sl-color-gray-6); padding: 0.2rem 0; }
-  
-  /* Hover Detail Button */
-  .card-action { 
-    position: absolute; bottom: 0; left: 0; right: 0; padding: 0.8rem; 
-    background: linear-gradient(to top, var(--sl-color-gray-6), transparent);
-    transform: translateY(100%); transition: transform 0.2s ease-in-out; 
-  }
-  .country-card:hover .card-action { transform: translateY(0); }
-  .card-link { 
-    display: block; text-align: center; background: #3b82f6; color: white !important; 
-    text-decoration: none !important; padding: 0.4rem; border-radius: 0.4rem; font-size: 0.75rem; font-weight: bold; 
-  }
-
-  /* Flags View */
-  .flags-only-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 1rem; padding: 1rem; }
-  .flag-icon-wrap { font-size: 2.5rem; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
-  .flag-icon-wrap:hover { transform: scale(1.2); }
-
-  .empty-state { padding: 4rem; text-align: center; color: var(--sl-color-gray-3); }
-  .mono { font-family: var(--sl-font-mono); color: #3b82f6; font-weight: 600; }
-</style>
-
-<script>
-  function initAtlas() {
-    const searchInput = document.getElementById('searchTab') as HTMLInputElement;
-    const tableBody = document.getElementById('tableBody');
-    const itemRows = Array.from(document.querySelectorAll('.item-row'));
-    let activeCategory = "";
-
-    const filterAll = () => {
-      const term = searchInput?.value.toLowerCase() || "";
-      itemRows.forEach(el => {
-        const text = (el as HTMLElement).innerText.toLowerCase();
-        const cat = el.getAttribute('data-category') || "";
-        const matchesSearch = text.includes(term);
-        const matchesCat = activeCategory === "" || cat === activeCategory;
-        (el as HTMLElement).style.display = (matchesSearch && matchesCat) ? '' : 'none';
-      });
-    };
-
-    searchInput?.addEventListener('input', filterAll);
-
-    const closeAllMenus = () => document.querySelectorAll('.dropdown-content').forEach(m => m.classList.remove('show'));
-
-    document.querySelectorAll('.dropdown button').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const next = btn.nextElementSibling;
-        const isVisible = next?.classList.contains('show');
-        closeAllMenus();
-        if (!isVisible) next?.classList.add('show');
-      });
-    });
-
-    window.addEventListener('click', closeAllMenus);
-
-    document.querySelectorAll('.cat-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        activeCategory = btn.getAttribute('data-cat') || "";
-        const btnText = document.querySelector('#catBtn .btn-text');
-        if (btnText) btnText.textContent = (btn as HTMLElement).querySelector('.item-label')?.textContent || "Continent";
-        filterAll();
-        closeAllMenus();
-      });
-    });
-
-    // View Switcher Injection for additional views
-    const viewMenu = document.getElementById('viewMenu');
-    if (viewMenu && !viewMenu.querySelector('[data-view="flags"]')) {
-        const views = [
-            { id: 'flags', icon: 'fa-flag', label: 'Flags' },
-            { id: 'map', icon: 'fa-map-location-dot', label: 'Map' },
-            { id: 'globe', icon: 'fa-earth-americas', label: 'Globe' },
-            { id: 'orbicon', icon: 'fa-circle-nodes', label: 'Orbicon' },
-            { id: 'net', icon: 'fa-network-wired', label: 'Net' }
-        ];
-        views.forEach(v => {
-            viewMenu.innerHTML += `
-                <button class="view-item menu-btn" data-view="${v.id}">
-                    <span class="view-inner"><i class="fa-solid ${v.icon} fa-fw"></i><span>${v.label}</span></span>
-                </button>
-            `;
-        });
-    }
-
-    document.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        const viewBtn = target.closest('.view-item');
-        if (viewBtn) {
-            const view = viewBtn.getAttribute('data-view');
-            document.querySelectorAll('.view-item').forEach(b => b.classList.remove('active'));
-            viewBtn.classList.add('active');
-            document.querySelectorAll('.view-section').forEach(s => s.classList.toggle('active', s.id === `view-${view}`));
-            closeAllMenus();
-        }
-    });
-
-    // Sorting
-    const tableHeaders = document.querySelectorAll('#countriesTable th[data-sort]');
-    tableHeaders.forEach(th => {
-      th.addEventListener('click', () => {
-        const col = th.getAttribute('data-sort');
-        const isAsc = th.classList.contains('asc');
-        const rows = Array.from(document.querySelectorAll('.table-row'));
-
-        const sorted = rows.sort((a, b) => {
-          const dataA = JSON.parse(a.getAttribute('data-country') || '{}');
-          const dataB = JSON.parse(b.getAttribute('data-country') || '{}');
-          const valA = dataA[col || ''];
-          const valB = dataB[col || ''];
-          return isAsc 
-            ? (typeof valA === 'number' ? valB - valA : String(valB).localeCompare(String(valA)))
-            : (typeof valA === 'number' ? valA - valB : String(valA).localeCompare(String(valB)));
-        });
-
-        tableHeaders.forEach(h => h.classList.remove('asc', 'desc'));
-        th.classList.toggle('asc', !isAsc);
-        th.classList.toggle('desc', isAsc);
-        
-        sorted.forEach(row => {
-            const id = row.getAttribute('data-id');
-            tableBody?.appendChild(row);
-            const card = document.querySelector(`.grid-card[data-id="${id}"]`);
-            if (card) document.getElementById('gridContainer')?.appendChild(card);
-            const flag = document.querySelector(`.flag-icon-wrap[data-id="${id}"]`);
-            if (flag) document.querySelector('.flags-only-grid')?.appendChild(flag);
-        });
-      });
-    });
-  }
-
-  window.addEventListener('load', initAtlas);
-  document.addEventListener('astro:after-swap', initAtlas);
-</script>
+<TabGridLayout 
+  title="Global Atlas"
+  data={data}
+  columns={columns}
+  lang={lang}
+  basePath={`/${lang}/countries`}
+  accentColor="#10b981"
+  filterLabel="Continents"
+  filterOptions={filterOptions}
+  searchPlaceholder="Find anything..."
+  viewOptions={[
+    { id: 'table', label: 'Classic Table', icon: 'fa-table' },
+    { id: 'grid', label: 'Photo Grid', icon: 'fa-grip' },
+    { id: 'map', label: 'Interactive Map', icon: 'fa-map-location-dot' }
+  ]}
+  exportOptions={[
+    { id: 'json', label: 'JSON Data', extension: '.json', icon: 'fa-code' },
+    { id: 'xml', label: 'XML Feed', extension: '.xml', icon: 'fa-file-export' },
+    { id: 'yaml', label: 'YAML Config', extension: '.yaml', icon: 'fa-lines-leaning' }
+  ]}
+/>

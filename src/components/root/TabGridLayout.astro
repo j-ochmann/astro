@@ -1,0 +1,313 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
+import { Icon } from 'astro-icon/components';
+
+interface Column {
+  key: string;
+  label: string;
+  isMono?: boolean;
+  isNative?: boolean;
+  isNumeric?: boolean;
+}
+
+interface ViewOption {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+interface ExportOption {
+  id: string;
+  label: string;
+  extension: string;
+  icon: string;
+}
+
+interface Props {
+  title: string;
+  data: any[];
+  columns: Column[];
+  lang: string;
+  searchPlaceholder: string;
+  filterLabel: string;
+  filterOptions: { label: string; value: string; count: number }[];
+  basePath: string;
+  accentColor?: string;
+  viewOptions?: ViewOption[];
+  exportOptions?: ExportOption[];
+}
+
+const { 
+  title, data, columns, lang, 
+  searchPlaceholder, filterLabel, filterOptions, basePath,
+  accentColor = "#3b82f6",
+  viewOptions = [
+    { id: 'table', label: 'Table', icon: 'fa-table' },
+    { id: 'grid', label: 'Grid', icon: 'fa-table-cells-large' }
+  ],
+  exportOptions = [
+    { id: 'json', label: 'JSON', extension: '.json', icon: 'fa-file-code' },
+    { id: 'csv', label: 'CSV', extension: '.csv', icon: 'fa-file-csv' }
+  ]
+} = Astro.props;
+---
+
+<StarlightPage frontmatter={{ title: title, tableOfContents: false }}>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+  <div class="atlas-container" style={`--accent: ${accentColor};`}>
+    <header class="atlas-header">
+       <h1>{title}</h1>
+    </header>
+
+    <div class="controls-row dynamic-accent">
+      <SearchFilterBar 
+        searchPlaceholder={searchPlaceholder}
+        filterLabel={filterLabel}
+        filterOptions={filterOptions}
+        viewLabel="View"
+        downloadLabel="Export"
+      />
+    </div>
+
+    <div id="view-table" class="view-section active">
+      <div class="table-wrapper glass-panel">
+        <table id="atlasTable">
+          <thead>
+            <tr>
+              {columns.map(col => (
+                <th data-sort={col.key}>{col.label} <Icon name="lucide:arrow-up-down" /></th>
+              ))}
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            {data.map(item => (
+              <tr class="item-row table-row" data-id={item.code} data-json={JSON.stringify(item)} data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}>
+                {columns.map(col => (
+                  <td class:list={[{ 'mono': col.isMono, 'native-col': col.isNative }]}>
+                    {col.key === 'name' ? (
+                      <a href={`${basePath}/${item.code?.toLowerCase()}/`} class="item-link">
+                        {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`]}></span>}
+                        {item[col.key]}
+                      </a>
+                    ) : (
+                      col.isNumeric && typeof item[col.key] === 'number' ? item[col.key].toLocaleString(lang) : item[col.key]
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-grid" class="view-section">
+      <div class="grid-wrapper" id="gridContainer">
+        {data.map(item => (
+          <div class="atlas-card glass-panel item-row grid-card" data-id={item.code} data-json={JSON.stringify(item)} data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}>
+            <div class="card-header">
+              {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'flag-small']}></span>}
+              <span class="card-code">{item.code}</span>
+            </div>
+            <h3>{item.name}</h3>
+            <div class="card-meta">
+               {columns.slice(2, 6).map(col => (
+                 <div class="meta-item">
+                    <span>{col.label}:</span> 
+                    <strong class="meta-value">{col.isNumeric && typeof item[col.key] === 'number' ? item[col.key].toLocaleString(lang) : item[col.key]}</strong>
+                 </div>
+               ))}
+            </div>
+            <div class="card-action">
+              <a href={`${basePath}/${item.code?.toLowerCase()}/`} class="glass-button">Detail</a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+    
+    {viewOptions.filter(v => v.id !== 'table' && v.id !== 'grid').map(v => (
+      <div id={`view-${v.id}`} class="view-section">
+        <div class="glass-panel empty-state">
+           <i class={`fa-solid ${v.icon} fa-3x`}></i>
+           <p>{v.label} View coming soon...</p>
+        </div>
+      </div>
+    ))}
+  </div>
+</StarlightPage>
+
+<style is:global>
+  /* FULL WIDTH */
+  .main-frame { width: 100% !important; max-width: 100% !important; }
+  .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 0 !important; }
+  .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
+  .sl-markdown-content { max-width: 100% !important; }
+  .sl-markdown-content > div:first-child { margin-top: 0 !important; }
+  .grid-wrapper > * { margin: 0 !important; }
+
+  /* SEARCH BAR THEME */
+  .dynamic-accent {
+    --accent-color: var(--accent, #3b82f6) !important;
+    --accent-bg: rgba(59, 130, 246, 0.1) !important;
+    --accent-border: rgba(59, 130, 246, 0.3) !important;
+  }
+</style>
+
+<style>
+  /* BASE COLORS & THEME ADAPTATION */
+  .atlas-container { 
+    width: 100%; 
+    margin-top: -1rem; 
+    padding: 0 1.5rem;
+    --panel-bg: rgba(20, 20, 25, 0.5);
+    --panel-border: var(--sl-color-gray-5);
+    --text-main: var(--sl-color-white);
+    --text-muted: var(--sl-color-gray-3);
+  }
+
+  :global([data-theme="light"]) .atlas-container {
+    --panel-bg: rgba(245, 245, 250, 0.7);
+    --panel-border: var(--sl-color-gray-4);
+    --text-main: var(--sl-color-black);
+    --text-muted: var(--sl-color-gray-5);
+  }
+
+  .atlas-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--panel-border); padding-bottom: 1rem; }
+  .atlas-header h1 { font-size: 2.5rem !important; margin: 0 !important; color: var(--text-main) !important; }
+
+  .glass-panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 0.75rem;
+    backdrop-filter: blur(12px);
+  }
+
+  .view-section { display: none !important; width: 100%; }
+  .view-section.active { display: block !important; }
+
+  /* TABLE */
+  .table-wrapper { overflow-x: auto; margin-top: 1rem; width: 100%; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; color: var(--text-main); }
+  th { background: var(--sl-color-gray-6); padding: 0.75rem 1rem; text-align: left; cursor: pointer; color: var(--text-main); }
+  :global([data-theme="light"]) th { background: var(--sl-color-gray-2); }
+  td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--panel-border); }
+  .item-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent) !important; text-decoration: none !important; font-weight: 500; }
+
+  /* GRID */
+  .grid-wrapper { 
+    display: grid !important; 
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important; 
+    gap: 1.5rem !important; 
+    margin-top: 1rem; 
+  }
+  
+  .atlas-card { padding: 1.5rem; display: flex; flex-direction: column; transition: all 0.25s ease; position: relative; overflow: hidden; min-height: 220px; }
+  .atlas-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+  .atlas-card h3 { margin: 0.5rem 0 1rem 0 !important; font-size: 1.25rem !important; color: var(--text-main) !important; }
+  
+  .card-code { font-family: var(--sl-font-mono); font-size: 0.75rem; color: var(--text-muted); padding: 2px 8px; border: 1px solid var(--panel-border); border-radius: 4px; }
+  
+  .card-action { position: absolute; bottom: 0; left: 0; right: 0; padding: 0.8rem; transform: translateY(100%); transition: 0.3s ease; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); }
+  .atlas-card:hover .card-action { transform: translateY(0); }
+  .glass-button { display: block; text-align: center; background: var(--accent); color: white !important; border-radius: 0.5rem; padding: 0.6rem; font-weight: bold; text-decoration: none !important; }
+
+  .card-meta { flex-grow: 1; }
+  .meta-item { display: flex; justify-content: space-between; font-size: 0.85rem; border-bottom: 1px solid var(--panel-border); padding: 6px 0; color: var(--text-muted); }
+  .meta-value { color: var(--text-main); }
+  .mono { font-family: var(--sl-font-mono); color: var(--accent); font-weight: 600; }
+  .empty-state { padding: 6rem; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+</style>
+
+<script>
+  function initAtlas() {
+    const viewButtons = document.querySelectorAll('.view-item');
+    const viewSections = document.querySelectorAll('.view-section');
+
+    viewButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const viewId = btn.getAttribute('data-view');
+        viewButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        viewSections.forEach(section => {
+          section.classList.toggle('active', section.id === `view-${viewId}`);
+        });
+      });
+    });
+
+    const searchInput = document.getElementById('searchTab') as HTMLInputElement;
+    const itemRows = Array.from(document.querySelectorAll('.item-row'));
+    let activeCategory = "";
+
+    const filterAll = () => {
+      const term = searchInput?.value.toLowerCase() || "";
+      itemRows.forEach(el => {
+        const text = (el as HTMLElement).innerText.toLowerCase();
+        const cat = el.getAttribute('data-category') || "";
+        const matchesSearch = text.includes(term);
+        const matchesCat = activeCategory === "" || cat === activeCategory;
+        (el as HTMLElement).style.display = (matchesSearch && matchesCat) ? '' : 'none';
+      });
+    };
+
+    searchInput?.addEventListener('input', filterAll);
+
+    const closeMenus = () => document.querySelectorAll('.dropdown-content').forEach(m => m.classList.remove('show'));
+    document.querySelectorAll('.dropdown button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const next = btn.nextElementSibling;
+        const isShown = next?.classList.contains('show');
+        closeMenus();
+        if (!isShown) next?.classList.add('show');
+      });
+    });
+
+    window.addEventListener('click', closeMenus);
+
+    document.querySelectorAll('.cat-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeCategory = btn.getAttribute('data-cat') || "";
+        const labelText = (btn as HTMLElement).querySelector('.item-label')?.textContent || "";
+        const btnTextElem = document.querySelector('#catBtn .btn-text');
+        if (btnTextElem) btnTextElem.textContent = labelText;
+        filterAll();
+        closeMenus();
+      });
+    });
+
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.getAttribute('data-sort');
+        if (!col) return;
+        const isAsc = th.classList.contains('asc');
+        const rows = Array.from(document.querySelectorAll('.table-row'));
+        
+        const sorted = rows.sort((a, b) => {
+          const dataA = JSON.parse(a.getAttribute('data-json') || '{}')[col];
+          const dataB = JSON.parse(b.getAttribute('data-json') || '{}')[col];
+          return isAsc ? (dataA > dataB ? -1 : 1) : (dataA > dataB ? 1 : -1);
+        });
+
+        document.querySelectorAll('th[data-sort]').forEach(header => header.classList.remove('asc', 'desc'));
+        th.classList.toggle('asc', !isAsc);
+        th.classList.toggle('desc', isAsc);
+
+        const tableBody = document.getElementById('tableBody');
+        const gridContainer = document.getElementById('gridContainer');
+        
+        sorted.forEach(row => {
+          tableBody?.appendChild(row);
+          const card = document.querySelector(`.grid-card[data-id="${row.getAttribute('data-id')}"]`);
+          if (card) gridContainer?.appendChild(card);
+        });
+      });
+    });
+  }
+
+  window.addEventListener('load', initAtlas);
+  document.addEventListener('astro:after-swap', initAtlas);
+</script>
