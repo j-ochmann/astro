@@ -45,13 +45,19 @@ const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map
   filterOptions={filterOptions}
   searchPlaceholder="Search..."
   viewOptions={[
-    { id: 'table', label: 'Classic Table', icon: 'fa-table' },
-    { id: 'grid', label: 'Photo Grid', icon: 'fa-grip' },
-    { id: 'map', label: 'Interactive Map', icon: 'fa-map-location-dot' }
+    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
+    { id: 'grid', label: 'Grid', icon: 'fa-solid fa-grip' },
+    { id: 'net', label: 'Net', icon: 'lucide:network' },
+    { id: 'map', label: 'Map', icon: 'fa-solid fa-map' },
+    { id: 'globe', label: 'Globe', icon: 'fa-solid fa-globe' },
+    { id: 'flags', label: 'Flags', icon: 'fa-solid fa-flag' },
+    { id: 'orbicon', label: 'Orbicon', icon: 'fa-solid fa-bomb' }
   ]}
+
   exportOptions={[
-    { id: 'json', label: 'JSON Data', extension: '.json', icon: 'fa-code' },
+    { id: 'json', label: 'JSON Data', extension: '.json', icon: 'fa-file-code' },
     { id: 'xml', label: 'XML Feed', extension: '.xml', icon: 'fa-file-export' },
-    { id: 'yaml', label: 'YAML Config', extension: '.yaml', icon: 'fa-lines-leaning' }
+    { id: 'yaml', label: 'YAML Config', extension: '.yaml', icon: 'fa-file-lines' },
+    { id: 'csv', label: 'CSV Config', extension: '.yaml', icon: 'fa-file-csv' }
   ]}
 />
