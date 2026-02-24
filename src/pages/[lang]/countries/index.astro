@@ -1,8 +1,12 @@
 ---
-// pages/[lang]/countries/index.astro
 import WideLayout from '@/components/root/layout/Wide.astro';
-import ViewTable from '@/components/root/view/Table.astro';
+import ViewFlags from '@/components/root/view/Flags.astro';
+import ViewGlobe from '@/components/root/view/Globe.astro';
 import ViewGrid from '@/components/root/view/Grid.astro';
+import ViewMap from '@/components/root/view/Map.astro';
+import ViewNet from '@/components/root/view/Net.astro';
+import ViewOrbs from '@/components/root/view/Orbs.astro';
+import ViewTable from '@/components/root/view/Table.astro';
 import { 
   getI18nPaths, 
   countriesData, 
@@ -14,44 +18,33 @@ import {
 export async function getStaticPaths() { return getI18nPaths(); }
 const { lang = 'en' } = Astro.params;
 const t = useTranslations(lang);
+const basePath = `/${lang}/countries`;
 
-// 1. Transformace dat pro tabulku a grid
-const data = Object.values(countriesData).map(c => ({
-  code: c.code,
-  name: getCountryName(c.code, lang),
-  native: c.native,
-  capital: c.capital || '—',
-  continent: c.continent,
-  population: c.population,
-}));
+const countries = Object.values(countriesData);
 
-// 2. Příprava dat pro 3D Graf (Nodes & Links)
-const nodes = Object.values(countriesData).map(c => {
+// 1. Transformace dat pro Nodes (uzly) a základní seznam
+const data = countries.map(c => {
   const mledoze = getMledozeData(c.code);
   return {
+    code: c.code,
+    name: getCountryName(c.code, lang),
+    native: c.native,
+    capital: c.capital || '—',
+    continent: c.continent,
+    population: c.population,
+    // Data specifická pro graf
     id: c.code.toLowerCase(),
     displayName: getCountryName(c.code, lang),
-    // Přidáváme neighbor_count pro dynamickou velikost kuliček
     neighbor_count: mledoze?.borders?.length || 0,
-    // Přidáváme continents jako pole pro barvící logiku v komponentě
     continents: [c.continent],
-    // Explicitní barva jako záloha
-    color: {
-      'EU': '#8FBC8F',
-      'AS': '#DCDCDC',
-      'AF': '#FF6347',
-      'NA': '#BA55D3',
-      'SA': '#FFA500',
-      'OC': '#1E90FF',
-      'AN': '#FFFFFF'
-    }[c.continent] || '#10b981'
   };
 });
 
-const links: { source: string; target: string }[] = [];
+// 2. Transformace dat pro Links (propojení v grafu)
+const links: any[] = [];
 const processedPairs = new Set();
 
-Object.values(countriesData).forEach(c => {
+countries.forEach(c => {
   const mledoze = getMledozeData(c.code);
   if (mledoze?.borders) {
     mledoze.borders.forEach(neighborCca3 => {
@@ -61,6 +54,7 @@ Object.values(countriesData).forEach(c => {
         const target = neighborMledoze.cca2.toLowerCase();
         const pairId = [source, target].sort().join('-');
         
+        // Přidáme link pouze pokud cílová země existuje v našem seznamu a pár ještě nebyl zpracován
         if (!processedPairs.has(pairId) && countriesData[neighborMledoze.cca2.toUpperCase()]) {
           links.push({ source, target });
           processedPairs.add(pairId);
@@ -70,9 +64,9 @@ Object.values(countriesData).forEach(c => {
   }
 });
 
-const graphData = { nodes, links };
+const graphData = { nodes: data, links };
 
-// 3. Definice sloupců
+// 3. Definice sloupců pro tabulku
 const columns = [
   { key: 'code', label: 'Code', isMono: true },
   { key: 'name', label: 'Country' },
@@ -82,42 +76,35 @@ const columns = [
   { key: 'population', label: 'Population', isNumeric: true }
 ];
 
-// 4. Možnosti filtru
+// 4. Možnosti filtru (Kontinenty)
 const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map(f => ({
   label: f,
   value: f.toLowerCase(),
   count: data.filter(d => d.continent === f).length
 }));
+
+const viewOptions = [
+    { id: 'grid',  label: 'Grid',  icon: 'fa-solid fa-grip' },
+    { id: 'net',   label: 'Net',   icon: 'fa-solid fa-circle-nodes' },
+    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' }
+];
+
+const exportOptions = [
+    { id: 'json', label: 'JSON', extension: '.json', icon: 'fa-solid fa-file-code' },
+    { id: 'csv', label: 'CSV', extension: '.csv', icon: 'fa-solid fa-file-csv' }
+];
 ---
 
 <WideLayout 
   title={lang === 'cs' ? "Země světa" : "Countries"}
-  data={data}
-  graphData={graphData}
-  columns={columns}
-  lang={lang}
-  basePath={`/${lang}/countries`}
-  accentColor="#10b981"
+  searchPlaceholder={lang === 'cs' ? "Hledat zemi..." : "Search country..."}
   filterLabel={lang === 'cs' ? "Kontinenty" : "Continents"}
   filterOptions={filterOptions}
-  searchPlaceholder={lang === 'cs' ? "Hledat zemi..." : "Search country..."}
-  viewOptions={[
-    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
-    { id: 'grid', label: 'Grid', icon: 'fa-solid fa-grip' },
-    { id: 'net', label: 'Net', icon: 'lucide:network' },
-    { id: 'map', label: 'Map', icon: 'fa-solid fa-map' },
-    { id: 'globe', label: 'Globe', icon: 'fa-solid fa-globe' },
-    { id: 'flags', label: 'Flags', icon: 'fa-solid fa-flag' },
-    { id: 'orbicon', label: 'Orbicon', icon: 'fa-solid fa-bomb' }
-  ]}
-
-  exportOptions={[
-    { id: 'json', label: 'JSON Data', extension: '.json', icon: 'fa-file-code' },
-    { id: 'xml', label: 'XML Feed', extension: '.xml', icon: 'fa-file-export' },
-    { id: 'yaml', label: 'YAML Config', extension: '.yaml', icon: 'fa-file-lines' },
-    { id: 'csv', label: 'CSV Config', extension: '.yaml', icon: 'fa-file-csv' }
-  ]}
+  viewOptions={viewOptions}
+  exportOptions={exportOptions}
+  accentColor="#10b981"
 >
-  <ViewTable slot="table" data={data} columns={columns} basePath={basePath} lang={lang} />
   <ViewGrid slot="grid" data={data} columns={columns} basePath={basePath} />
+  <ViewNet slot="net" graphData={graphData} basePath={basePath} />
+  <ViewTable slot="table" data={data} columns={columns} basePath={basePath} lang={lang} />
 </WideLayout>

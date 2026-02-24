@@ -1,0 +1,124 @@
+---
+interface Props {
+  graphData: { nodes: any[], links: any[] };
+  basePath: string;
+}
+
+const { graphData, basePath } = Astro.props;
+---
+
+<div class="graph-wrapper glass-panel shadow-unified">
+    <svg id="main-graph"></svg>
+    <div class="graph-hint">
+        <span><i class="fa-solid fa-arrows-up-down-left-right"></i> Drag to Pan • <i class="fa-solid fa-magnifying-glass-plus"></i> Scroll to Zoom</span>
+    </div>
+</div>
+
+<style>
+  .graph-wrapper { position: relative; width: 100%; margin-top: 1rem; background: var(--sl-color-gray-6); overflow: hidden; height: 70vh; }
+  #main-graph { display: block; width: 100%; height: 100%; cursor: move; }
+  .graph-hint { position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.6); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.7rem; pointer-events: none; z-index: 10; }
+  
+  :global(.links line) { stroke: #888; stroke-opacity: 0.3; stroke-width: 1.5px; }
+  :global([data-theme="dark"] .links line) { stroke: #fff; stroke-opacity: 0.2; }
+  :global(.node circle) { stroke: #000; stroke-width: 1px; cursor: pointer; }
+  :global(.node text) { display: none; font-size: 11px; fill: var(--sl-color-text); pointer-events: none; }
+  :global(.node:hover text) { display: inline; }
+</style>
+
+<script is:inline src="https://d3js.org/d3.v4.min.js"></script>
+<script is:inline define:vars={{ initialData: graphData, basePath }}>
+  let simulation, svg, g, link, node;
+  let currentCategory = "";
+  let currentTerm = "";
+  const colorMapping = { "africa": "#FF6347", "asia": "#DCDCDC", "europe": "#8FBC8F", "north america": "#BA55D3", "oceania": "#1E90FF", "south america": "#FFA500" };
+
+  function initGraph() {
+    const container = document.getElementById('main-graph');
+    if (!container) return;
+    d3.select("#main-graph").selectAll("*").remove();
+
+    const width = container.clientWidth || 960;
+    const height = container.clientHeight || 600;
+
+    svg = d3.select("#main-graph").attr("viewBox", `0 0 ${width} ${height}`);
+    g = svg.append("g");
+
+    svg.call(d3.zoom().on("zoom", () => g.attr("transform", d3.event.transform)));
+
+    simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(d => d.id).distance(50))
+        .force("charge", d3.forceManyBody().strength(-100))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide", d3.forceCollide(d => 15 + (d.neighbor_count || 0)));
+
+    updateGraph();
+  }
+
+  function updateGraph() {
+    if (!g) return;
+
+    // Filtrace dat podle stavu z Layoutu
+    const filteredNodes = initialData.nodes.filter(n => {
+      const matchesSearch = n.displayName.toLowerCase().includes(currentTerm) || n.id.toLowerCase().includes(currentTerm);
+      const matchesCat = currentCategory === "" || (n.continents && n.continents[0].toLowerCase() === currentCategory);
+      return matchesSearch && matchesCat;
+    });
+
+    const nodeIds = new Set(filteredNodes.map(n => n.id));
+    const filteredLinks = initialData.links.filter(l => {
+      const s = l.source.id || l.source;
+      const t = l.target.id || l.target;
+      return nodeIds.has(s) && nodeIds.has(t);
+    });
+
+    // Vykreslení spojů
+    link = g.selectAll(".link").data(filteredLinks, d => (d.source.id || d.source) + "-" + (d.target.id || d.target));
+    link.exit().remove();
+    link = link.enter().append("line").attr("class", "link").merge(link);
+
+    // Vykreslení uzlů
+    node = g.selectAll(".node").data(filteredNodes, d => d.id);
+    node.exit().remove();
+    
+    const nodeEnter = node.enter().append("g").attr("class", "node")
+        .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended))
+        .on("click", d => { 
+          if (!d3.event.defaultPrevented) window.location.href = `${basePath}/${d.id}/`; 
+        });
+
+    nodeEnter.append("circle")
+        .attr("r", d => 6 + ((d.neighbor_count || 0) / 2))
+        .attr("fill", d => colorMapping[d.continents?.[0]?.toLowerCase()] || "#ccc");
+
+    nodeEnter.append("text").attr("dy", ".35em").attr("x", 14).text(d => d.displayName);
+    
+    node = nodeEnter.merge(node);
+
+    simulation.nodes(filteredNodes).on("tick", () => {
+        link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+    simulation.force("link").links(filteredLinks);
+    simulation.alpha(0.3).restart();
+  }
+
+  function dragstarted(d) { if (!d3.event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+  function dragged(d) { d.fx = d3.event.x; d.fy = d3.event.y; }
+  function dragended(d) { if (!d3.event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+
+  // Listeners na eventy z WideLayout
+  document.addEventListener('atlas:view-change', (e) => {
+    if (e.detail.viewId === 'net') setTimeout(initGraph, 10);
+  });
+
+  document.addEventListener('atlas:filter', (e) => {
+    currentTerm = e.detail.term;
+    currentCategory = e.detail.category;
+    if (document.getElementById('view-net').classList.contains('active')) updateGraph();
+  });
+
+  window.addEventListener('load', initGraph);
+  document.addEventListener('astro:after-swap', initGraph);
+</script>

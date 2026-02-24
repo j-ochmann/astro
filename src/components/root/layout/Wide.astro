@@ -24,6 +24,7 @@ const {
 ---
 
 <StarlightPage frontmatter={{ title: title, tableOfContents: false }}>
+  <slot name="title-after" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
   <div class="atlas-container" 
@@ -42,24 +43,56 @@ const {
     </div>
 
     <div class="view-manager">
-      {viewOptions.map((view, index) => (
-        <div id={`view-${view.id}`} class:list={["view-section", { "active": index === 0 }]}>
-          <slot name={view.id} />
-        </div>
-      ))}
+      <div id="view-table" class="view-section active">
+        <slot name="table" />
+      </div>
+      <div id="view-grid" class="view-section">
+        <slot name="grid" />
+      </div>
+      <div id="view-net" class="view-section">
+        <slot name="net" />
+      </div>
+      <div id="view-map" class="view-section">
+        <slot name="map" />
+      </div>
+      <div id="view-globe" class="view-section">
+        <slot name="globe" />
+      </div>
     </div>
   </div>
 </StarlightPage>
 
 <style is:global>
-  /* Reset Starlight šířky na Full Width */
   h1 { padding-left: 1.5rem !important; }
   .main-frame { width: 100% !important; max-width: 100% !important; }
   .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 0 !important; }
   .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
   .sl-markdown-content { max-width: 100% !important; }
+  .pagination-links {
+      margin-inline: 1.5rem !important;
+      width: calc(100% - 3rem) !important;
+  }
+  /* Stylizace pro tlačítka Předchozí / Další na konci stránky */
+  .pagination-links a {
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    transition: transform 0.2s ease, border-color 0.2s ease !important;
+    text-decoration: none !important;
+  }
 
-  /* Společné styly pro panely napříč všemi View */
+  /* Hover efekt pro navigaci */
+  .pagination-links a:hover {
+    border-color: var(--accent) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+    transform: translateY(-3px);
+  }
+
+  /* Úprava pro světlý režim */
+  :global([data-theme="light"]) .pagination-links a {
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+  }
   .glass-panel {
     background: rgba(20, 20, 25, 0.5) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
@@ -88,7 +121,6 @@ const {
       document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
     };
 
-    // Centralizovaný filtr pro všechny elementy s třídou .item-row
     const runFilter = () => {
       const term = searchInput?.value.toLowerCase() || "";
       const items = document.querySelectorAll('.item-row');
@@ -102,7 +134,6 @@ const {
         htmlEl.style.display = (matchesSearch && matchesCat) ? '' : 'none';
       });
 
-      // Custom event pro specifické potřeby (např. re-init grafu)
       document.dispatchEvent(new CustomEvent('atlas:filter', { detail: { term, category: activeCategory } }));
     };
 
@@ -110,9 +141,8 @@ const {
 
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
-      
-      // 1. Dropdown Toggles
       const btn = target.closest('.glass-btn');
+      
       if (btn) {
         e.stopPropagation();
         const menu = btn.nextElementSibling;
@@ -122,10 +152,8 @@ const {
         return;
       }
 
-      // 2. Kliknutí mimo - zavřít vše
       if (!target.closest('.dropdown')) closeAllDropdowns();
 
-      // 3. Přepínání pohledů (View Switcher)
       const viewItem = target.closest('.view-item');
       if (viewItem) {
         const viewId = viewItem.getAttribute('data-view');
@@ -133,31 +161,25 @@ const {
         viewItem.classList.add('active');
         
         document.querySelectorAll('.view-section').forEach(s => {
-          const isActive = s.id === `view-${viewId}`;
-          s.classList.toggle('active', isActive);
+          s.classList.toggle('active', s.id === `view-${viewId}`);
         });
         
         closeAllDropdowns();
-        // Event pro komponenty, které potřebují vědět, že jsou vidět (D3, Mapy)
         document.dispatchEvent(new CustomEvent('atlas:view-change', { detail: { viewId } }));
-        return;
       }
 
-      // 4. Filtrování kategorií
       const catItem = target.closest('.cat-item');
       if (catItem) {
-        activeCategory = catItem.getAttribute('data-cat') || "";
+        activeCategory = (catItem.getAttribute('data-cat') || "").toLowerCase();
         const label = catItem.querySelector('.item-label')?.textContent || "";
         const btnText = document.querySelector('#catBtn .btn-text');
         if (btnText) btnText.textContent = label;
         runFilter();
         closeAllDropdowns();
-        return;
       }
     });
   }
 
-  // Astro lifecycle
   window.addEventListener('load', initWideLayout);
   document.addEventListener('astro:after-swap', initWideLayout);
 </script>
