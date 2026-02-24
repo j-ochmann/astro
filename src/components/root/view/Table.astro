@@ -18,7 +18,6 @@ interface Props {
 
 const { data, columns, basePath, lang } = Astro.props;
 
-// Vynecháme code a name z dynamického cyklu
 const dynamicColumns = columns.filter(col => col.key !== 'code' && col.key !== 'name');
 const codeColumn = columns.find(col => col.key === 'code');
 const nameColumn = columns.find(col => col.key === 'name');
@@ -50,7 +49,7 @@ const shortenContinent = (name: string) => {
           </div>
         </th>
         {dynamicColumns.map(col => (
-          <th data-sort={col.key}>
+          <th data-sort={col.key} class={`col-th-${col.key}`}>
             <div class="th-content">
               <span>{col.label}</span>
               <Icon name="lucide:arrow-up-down" class="sort-icon" />
@@ -70,7 +69,7 @@ const shortenContinent = (name: string) => {
           <td class="num-col index-cell">{index + 1}</td>
           
           <td class="col-code-flag">
-            <span class="mono">{item.code}</span>
+            <span class="mono-code">{item.code}</span>
             {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'table-flag']}></span>}
           </td>
 
@@ -85,8 +84,14 @@ const shortenContinent = (name: string) => {
               { 'mono': col.isMono, 'native-col': col.isNative },
               `col-${col.key}`
             ]}>
-              {col.key === 'continent' ? shortenContinent(item[col.key]) :
-               col.isNumeric && typeof item[col.key] === 'number' ? item[col.key].toLocaleString(lang) : item[col.key]}
+              {col.key === 'continent' ? (
+                <div class="continent-cell">
+                  <span class="dot" style={`background-color: ${item.continentColor}`}></span>
+                  <span>{shortenContinent(item[col.key])}</span>
+                </div>
+              ) : (
+                col.isNumeric && typeof item[col.key] === 'number' ? item[col.key].toLocaleString(lang) : item[col.key]
+              )}
             </td>
           ))}
         </tr>
@@ -96,8 +101,20 @@ const shortenContinent = (name: string) => {
 </div>
 
 <style>
-  .table-container { overflow-x: auto; width: 100%; margin-top: 1rem; }
-  table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .table-container { 
+    overflow-x: auto; 
+    width: 100%; 
+    margin-top: 1rem;
+    display: block; /* Pojistka pro šířku kontejneru */
+  }
+
+  table { 
+    width: 100% !important; /* Totální vynucení šířky */
+    min-width: 100%; /* Další pojistka pro zoomování */
+    border-collapse: separate; 
+    border-spacing: 0;
+    table-layout: fixed; /* Změna na fixed pro absolutní kontrolu nad sloupci */
+  }
   
   th { 
     background: var(--accent-bg) !important; 
@@ -109,6 +126,8 @@ const shortenContinent = (name: string) => {
     text-transform: uppercase; 
     border-bottom: 2px solid var(--sl-color-gray-5);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   td { 
@@ -116,21 +135,43 @@ const shortenContinent = (name: string) => {
     border-bottom: 1px solid var(--sl-color-gray-6); 
     font-size: 0.85rem; 
     vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   tbody tr:hover { background: var(--accent-bg); }
   
-  .num-col { width: 40px; text-align: center; color: var(--sl-color-gray-4); font-size: 0.7rem; }
-  .index-cell { font-family: var(--sl-font-mono); opacity: 0.5; }
+  /* --- FIXNÍ DEFINICE ŠÍŘEK PŘI table-layout: fixed --- */
+  /* Šířky definujeme v <col> nebo v <th>, zde v <th> */
+  .num-col { width: 50px; text-align: center; color: var(--sl-color-gray-4); }
+  .code-flag-col { width: 100px; }
   
-  /* Styl pro spojený sloupec */
-  .col-code-flag { white-space: nowrap; min-width: 100px; }
-  .col-code-flag .mono { margin-right: 0.75rem; display: inline-block; min-width: 2.2em; }
+  /* Klíčová změna: Name sloupec dostane 100 %, což v fixed layoutu znamená "zbytek" */
+  .name-col { width: 100%; } 
+  
+  .col-th-continent { width: 140px; }
+  .col-th-population { width: 130px; }
 
-  .th-content { display: flex; align-items: center; gap: 0.4rem; }
-  .sort-icon { width: 12px; height: 12px; opacity: 0.4; }
+  /* Zarovnání a styl buněk */
+  .col-population { text-align: right; font-variant-numeric: tabular-nums; }
+  .col-th-population .th-content { justify-content: flex-end; }
 
-  .item-link { text-decoration: none !important; display: block; }
+  .index-cell { font-family: var(--sl-font-mono); opacity: 0.5; font-size: 0.7rem; }
+  
+  .col-code-flag .mono-code { 
+    margin-right: 0.5rem; 
+    display: inline-block; 
+    font-family: var(--sl-font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--sl-color-gray-2);
+  }
+
+  .th-content { display: flex; align-items: center; gap: 0.4rem; overflow: hidden; }
+  .sort-icon { width: 12px; height: 12px; opacity: 0.4; flex-shrink: 0; }
+
+  .item-link { text-decoration: none !important; display: block; overflow: hidden; text-overflow: ellipsis; }
   .country-name { 
     color: #ffffff !important; 
     font-weight: 600; 
@@ -147,14 +188,20 @@ const shortenContinent = (name: string) => {
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     display: inline-block;
     vertical-align: middle;
-    margin-top: -2px; /* Jemné doladění výšky */
   }
 
-  .mono { font-family: var(--sl-font-mono); color: var(--sl-color-gray-2); font-weight: 600; font-size: 0.7rem; }
-  
-  .col-continent { white-space: nowrap; font-size: 0.8rem; color: var(--sl-color-gray-3); }
+  .continent-cell { display: flex; align-items: center; gap: 0.5rem; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+  .col-continent { font-size: 0.8rem; color: var(--sl-color-gray-3); }
   :global(html[data-theme='light']) .col-continent { color: var(--sl-color-gray-2); }
   :global(html[data-theme='light']) td { border-bottom-color: var(--sl-color-gray-5); }
+  :global(html[data-theme='light']) .col-code-flag .mono-code { color: var(--sl-color-gray-1); }
+
+  /* Responzivita: pokud je málo místa, name-col se nesmí úplně smrsknout */
+  @media (max-width: 600px) {
+    .name-col { min-width: 150px; }
+  }
 </style>
 
 <script>

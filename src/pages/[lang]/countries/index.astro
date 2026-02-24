@@ -16,20 +16,20 @@ import {
 } from '@/content/config/i18n';
 // Definice barev kontinentů (shodné s grafem)
 const continentColors: Record<string, string> = {
-  "Africa": "#e67e22",        // Oranžová (země)
-  "Asia": "#e74c3c",          // Červená
-  "Europe": "#3498db",        // Modrá (EU styl)
-  "North America": "#2ecc71", // Zelená
-  "South America": "#27ae60", // Tmavě zelená
-  "Oceania": "#9b59b6",       // Fialová
-  "Antarctica": "#95a5a6"     // Šedá
-  // "Africa": "#FF6347",        // Tomato
-  // "Asia": "#DCDCDC",          // Gainsboro
-  // "Europe": "#8FBC8F",        // DarkSeaGreen
-  // "North America": "#BA55D3", // MediumOrchid
-  // "Oceania": "#1E90FF",       // DodgerBlue
-  // "South America": "#FFA500", // Orange
-  // "Antarctica": "#B0E0E6"     // PowderBlue
+  // "Africa": "#e67e22",        // Oranžová (země)
+  // "Asia": "#e74c3c",          // Červená
+  // "Europe": "#3498db",        // Modrá (EU styl)
+  // "North America": "#2ecc71", // Zelená
+  // "South America": "#27ae60", // Tmavě zelená
+  // "Oceania": "#9b59b6",       // Fialová
+  // "Antarctica": "#95a5a6"     // Šedá
+  "Africa": "#FF6347",        // Tomato
+  "Asia": "#DCDCDC",          // Gainsboro
+  "Europe": "#8FBC8F",        // DarkSeaGreen
+  "North America": "#BA55D3", // MediumOrchid
+  "Oceania": "#1E90FF",       // DodgerBlue
+  "South America": "#FFA500", // Orange
+  "Antarctica": "#B0E0E6"     // PowderBlue
 };
 export async function getStaticPaths() { return getI18nPaths(); }
 const { lang = 'en' } = Astro.params;
@@ -104,14 +104,20 @@ const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map
 }));
 
 const viewOptions = [
+    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
     { id: 'grid',  label: 'Grid',  icon: 'fa-solid fa-grip' },
-    { id: 'net',   label: 'Net',   icon: 'fa-solid fa-circle-nodes' },
-    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' }
+    { id: 'net', label: 'Net', icon: 'lucide:network' },
+    { id: 'map', label: 'Map', icon: 'fa-solid fa-map' },
+    { id: 'globe', label: 'Globe', icon: 'fa-solid fa-globe' },
+    { id: 'flags', label: 'Flags', icon: 'fa-solid fa-flag' },
+    { id: 'orbicon', label: 'Orbicon', icon: 'fa-solid fa-bomb' }
 ];
 
 const exportOptions = [
-    { id: 'json', label: 'JSON', extension: '.json', icon: 'fa-solid fa-file-code' },
-    { id: 'csv', label: 'CSV', extension: '.csv', icon: 'fa-solid fa-file-csv' }
+    { id: 'json', label: 'JSON Data',   extension: '.json', icon: 'fa-solid fa-file-code' },
+    { id: 'xml',  label: 'XML  Feed',   extension: '.xml',  icon: 'fa-solid fa-file-export' },
+    { id: 'yaml', label: 'YAML Config', extension: '.yaml', icon: 'fa-solid fa-file-lines' },
+    { id: 'csv',  label: 'CSV  Config', extension: '.yaml', icon: 'fa-solid fa-file-csv' }
 ];
 ---
 
