@@ -1,18 +1,28 @@
 ---
-// src/pages/[lang]/currencies/index.astro
-import TabGridLayout from '@/components/root/TabGridLayout.astro';
+import WideLayout from '@/components/root/layout/Wide.astro';
+import ViewTable from '@/components/root/view/TableCurrencies.astro';
+import ViewGrid from '@/components/root/view/Grid.astro';
 import { getI18nPaths, countriesData, useTranslations } from '@/content/config/i18n';
 
 export async function getStaticPaths() { return getI18nPaths(); }
 
-const { lang } = Astro.params;
+const { lang = 'en' } = Astro.params;
 const t = useTranslations(lang);
+const basePath = `/${lang}/currencies`;
 
-// Inicializace lokalizovaných názvů (např. 'cs' pro češtinu)
-const currencyNames = new Intl.DisplayNames([lang || 'en'], { type: 'currency' });
-
+const currencyNames = new Intl.DisplayNames([lang], { type: 'currency' });
 const allCountries = Object.values(countriesData);
-const currencyMap = new Map<string, { code: string, name: string, usageCount: number }>();
+
+const groupColors: Record<string, string> = {
+  "Majors": "#FFD700",    // Zlatá (USD, EUR...)
+  "Europe": "#3498db",    // Modrá (CZK, PLN...)
+  "Americas": "#2ecc71",  // Zelená
+  "Asia": "#e74c3c",      // Červená
+  "Africa": "#e67e22",    // Oranžová
+  "Oceania": "#9b59b6"    // fialová
+};
+
+const currencyMap = new Map<string, any>();
 
 allCountries.forEach((country: any) => {
   if (country.currency) {
@@ -20,47 +30,112 @@ allCountries.forEach((country: any) => {
       const code = currCode.toUpperCase();
       if (!currencyMap.has(code)) {
         let name = code;
-        try {
-          name = currencyNames.of(code) || code;
-        } catch (e) {
-          name = code;
-        }
-        currencyMap.set(code, { code, name, usageCount: 0 });
+        try { name = currencyNames.of(code) || code; } catch (e) {}
+        currencyMap.set(code, { 
+          code, 
+          name, 
+          usageCount: 0, 
+          continents: new Set<string>(),
+          countryCodes: [] // Seznam kódů zemí pro vlajky
+        });
       }
       const curr = currencyMap.get(code)!;
       curr.usageCount++;
+      curr.continents.add(country.continent);
+      curr.countryCodes.push(country.code.toLowerCase());
     });
   }
 });
 
-const data = Array.from(currencyMap.values()).sort((a, b) => a.code.localeCompare(b.code));
+const data = Array.from(currencyMap.values()).map(c => {
+  const conts = Array.from(c.continents);
+  let group = "Exotic";
+  
+  const majorCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD'];
+  if (majorCurrencies.includes(c.code)) group = "Majors";
+  else if (conts.includes("Europe")) group = "Europe";
+  else if (conts.includes("North America") || conts.includes("South America")) group = "Americas";
+  else if (conts.includes("Asia")) group = "Asia";
+  else if (conts.includes("Africa")) group = "Africa";
+  else if (conts.includes("Oceania")) group = "Oceania";
+
+  return {
+    ...c,
+    id: c.code.toLowerCase(),
+    continent: group, // mapujeme na 'continent' kvůli komponentám Grid/Table
+    continentColor: groupColors[group] || "#94a3b8",
+    // Přidáme speciální vlajku pro EU u Eura
+    flags: c.code === 'EUR' ? ['eu', ...c.countryCodes] : c.countryCodes
+  };
+}).sort((a, b) => a.code.localeCompare(b.code));
+
+// Graf: Propojení měn sdílejících zemi
+const links: any[] = [];
+const processedLinks = new Set();
+data.forEach(currA => {
+  data.forEach(currB => {
+    if (currA.code !== currB.code) {
+      const common = currA.countryCodes.filter((code: string) => currB.countryCodes.includes(code));
+      if (common.length > 0) {
+        const linkId = [currA.code, currB.code].sort().join('-');
+        if (!processedLinks.has(linkId)) {
+          links.push({ source: currA.id, target: currB.id });
+          processedLinks.add(linkId);
+        }
+      }
+    }
+  });
+});
 
 const columns = [
   { key: 'code', label: lang === 'cs' ? 'Kód' : 'Code', isMono: true },
-  { key: 'name', label: lang === 'cs' ? 'Název měny' : 'Currency Name' },
-  { key: 'usageCount', label: lang === 'cs' ? 'Počet zemí' : 'Countries', isNumeric: true }
+  { key: 'name', label: lang === 'cs' ? 'Měna' : 'Currency' },
+  { key: 'continent', label: lang === 'cs' ? 'Kategorie' : 'Category' },
+  { key: 'usageCount', label: lang === 'cs' ? 'Státy' : 'States', isNumeric: true }
 ];
 
-// Filtr pro měny (např. Major podle popularity)
-const filterOptions = [
-  { label: 'Common', value: 'common', count: data.filter(d => d.usageCount > 2).length },
-  { label: 'Rare', value: 'rare', count: data.filter(d => d.usageCount <= 2).length }
-];
+const filterOptions = Object.keys(groupColors).map(group => ({
+  label: group,
+  value: group.toLowerCase(),
+  count: data.filter(d => d.continent === group).length,
+  color: groupColors[group]
+})).filter(opt => opt.count > 0);
 ---
 
-<TabGridLayout 
-  title={lang === 'cs' ? 'Měny' : 'Currencies'}
-  data={data}
-  columns={columns}
-  lang={lang}
-  basePath={`/${lang}/currencies`}
-  accentColor="#eab308"
-  filterLabel={lang === 'cs' ? 'Výskyt' : 'Occurrence'}
-  filterOptions={filterOptions}
+<WideLayout 
+  title={lang === 'cs' ? 'Světové měny' : 'World Currencies'}
   searchPlaceholder={lang === 'cs' ? 'Hledat měnu...' : 'Search currency...'}
+  filterLabel={lang === 'cs' ? 'Kategorie' : 'Category'}
+  filterOptions={filterOptions}
   viewOptions={[
     { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
     { id: 'grid', label: 'Grid', icon: 'fa-solid fa-coins' },
-    { id: 'net', label: 'Net', icon: 'lucide:network' }
   ]}
-/>
+  exportOptions={[
+    { id: 'json', label: 'JSON Data',   extension: '.json', icon: 'fa-solid fa-file-code' },
+    { id: 'xml',  label: 'XML  Feed',   extension: '.xml',  icon: 'fa-solid fa-file-export' },
+    { id: 'yaml', label: 'YAML Config', extension: '.yaml', icon: 'fa-solid fa-file-lines' },
+    { id: 'csv',  label: 'CSV  Config', extension: '.yaml', icon: 'fa-solid fa-file-csv' }
+  ]}
+  accentColor="#eab308"
+>
+  <ViewTable slot="table" data={data} columns={columns} basePath={basePath} lang={lang} />
+  <ViewGrid slot="grid" data={data} columns={columns} basePath={basePath} />
+</WideLayout>
+
+<style is:global>
+  /* Speciální úprava pro zobrazení více vlajek v tabulce měn */
+  .col-code-flag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 180px;
+    overflow: hidden;
+  }
+  
+  .table-flag-container {
+    display: flex;
+    gap: 2px;
+  }
+
+</style>

@@ -60,7 +60,6 @@ export default defineConfig({
         { icon: 'rss', label: 'RSS', href: '/rss.xml' },
       ],
       components: {
-        PageTitle: './src/components/starlight/PageTitle.astro',
         ThemeSelect: './src/components/starlight/ThemeSelect.astro',
         LanguageSelect: './src/components/starlight/LanguageSelect.astro',
         Search: './src/components/Search.astro',
@@ -127,18 +126,12 @@ export default defineConfig({
           items: [
             { 
               label: 'Pyth', 
-              //translations: { cs: 'Pyth' },
               link: '/market/pyth' 
             },
             { 
               label: 'Chainlink', 
-              //translations: { cs: 'Chainlink' },
               link: '/market/chainlink' 
-            },
-            // { 
-            //   label: 'Test', 
-            //   link: '/market/test' 
-            // },
+            }
           ]
         },
         { 
@@ -151,46 +144,16 @@ export default defineConfig({
               translations: { cs: 'Státy' },
               link: '/countries/' 
             },
-            // { 
-            //   label: 'Countries Test', 
-            //   translations: { cs: 'Test sítě států' },
-            //   link: '/test/'
-            // },
-            // { 
-            //   label: 'Countries Network', 
-            //   translations: { cs: 'Síť států' },
-            //   link: '/countries/graph/'
-            // },
             { 
               label: 'Languages', 
               translations: { cs: 'Jazyky' },
               link: '/languages/' 
             },
-            // { 
-            //   label: 'Languages Table', 
-            //   translations: { cs: 'Tabulka jazyků' },
-            //   link: '/languages/table/'
-            // },
-            // { 
-            //   label: 'Speech Test', 
-            //   translations: { cs: 'Dostupnost jazyků' },
-            //   link: '/languages/speech/'
-            // },
             { 
               label: 'Currencies', 
               translations: { cs: 'Měny' },
               link: '/currencies/' 
-            },
-            // { 
-            //   label: 'Currencies Table', 
-            //   translations: { cs: 'Tabulka Měn' },
-            //   link: '/currencies/table/' 
-            // },
-            // { 
-            //   label: 'Notes & Articles',
-            //   translations: { cs: 'Poznámky a články' },
-            //   autogenerate: { directory: 'geo' } 
-            // }
+            }
           ]
         },
       ],

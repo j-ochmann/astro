@@ -21,7 +21,16 @@ const { data, columns, basePath } = Astro.props;
       data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}
     >
       <div class="card-header">
-        {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'flag-small']}></span>}
+        <div class="flag-stack">
+          {item.flags ? (
+            item.flags.slice(0, 4).map((flagCode: string) => (
+              <span class:list={['fi', `fi-${flagCode.toLowerCase()}`, 'flag-small']}></span>
+            ))
+          ) : (
+            item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'flag-small']}></span>
+          )}
+          {item.flags && item.flags.length > 4 && <span class="more-flags">+{item.flags.length - 4}</span>}
+        </div>
         <span class="card-code">
           {item.code}
         </span>
@@ -78,6 +87,11 @@ const { data, columns, basePath } = Astro.props;
     align-items: center; 
     margin-bottom: 0.75rem;
   }
+
+  /* Skládání vlajek */
+  .flag-stack { display: flex; align-items: center; gap: 2px; }
+  .flag-small { width: 1.2rem; height: 0.9rem; border-radius: 2px; flex-shrink: 0; }
+  .more-flags { font-size: 0.6rem; color: var(--sl-color-gray-4); margin-left: 2px; }
   
   .card-code { 
     font-family: var(--sl-font-mono); 
@@ -114,7 +128,6 @@ const { data, columns, basePath } = Astro.props;
   .meta-label { color: var(--sl-color-gray-4); }
   .meta-value { color: var(--sl-color-gray-2); }
 
-  /* Puntík kontinentu */
   .continent-val { display: flex; align-items: center; gap: 4px; }
   .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 

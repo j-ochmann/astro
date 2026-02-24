@@ -105,56 +105,61 @@ const shortenContinent = (name: string) => {
     overflow-x: auto; 
     width: 100%; 
     margin-top: 1rem;
-    display: block; /* Pojistka pro šířku kontejneru */
+    display: block;
+    /* Zajišťuje, že vnitřní stíny panelu nebudou oříznuty */
+    -webkit-overflow-scrolling: touch;
   }
 
   table { 
-    width: 100% !important; /* Totální vynucení šířky */
-    min-width: 100%; /* Další pojistka pro zoomování */
+    width: 100%; 
     border-collapse: separate; 
     border-spacing: 0;
-    table-layout: fixed; /* Změna na fixed pro absolutní kontrolu nad sloupci */
+    table-layout: auto; /* Necháme prohlížeč počítat, ale s našimi limity */
   }
   
   th { 
     background: var(--accent-bg) !important; 
     color: var(--accent) !important; 
-    padding: 0.6rem 0.75rem; 
+    padding: 0.75rem; 
     text-align: left; 
     cursor: pointer; 
     font-size: 0.7rem; 
     text-transform: uppercase; 
     border-bottom: 2px solid var(--sl-color-gray-5);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   td { 
-    padding: 0.5rem 0.75rem; 
+    padding: 0.75rem; 
     border-bottom: 1px solid var(--sl-color-gray-6); 
     font-size: 0.85rem; 
     vertical-align: middle;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   tbody tr:hover { background: var(--accent-bg); }
   
-  /* --- FIXNÍ DEFINICE ŠÍŘEK PŘI table-layout: fixed --- */
-  /* Šířky definujeme v <col> nebo v <th>, zde v <th> */
-  .num-col { width: 50px; text-align: center; color: var(--sl-color-gray-4); }
-  .code-flag-col { width: 100px; }
+  /* Šířky sloupců */
+  .num-col { width: 1%; text-align: center; color: var(--sl-color-gray-4); }
+  .code-flag-col { width: 1%; white-space: nowrap; min-width: 100px; }
   
-  /* Klíčová změna: Name sloupec dostane 100 %, což v fixed layoutu znamená "zbytek" */
-  .name-col { width: 100%; } 
-  
-  .col-th-continent { width: 140px; }
-  .col-th-population { width: 130px; }
+  /* Název země: Povolíme zalamování, pokud je název příliš dlouhý, 
+     aby tabulka nevytékala ven */
+  .col-name { 
+    width: auto; 
+    white-space: normal; 
+    min-width: 150px;
+    word-break: break-word;
+  }
 
-  /* Zarovnání a styl buněk */
-  .col-population { text-align: right; font-variant-numeric: tabular-nums; }
+  /* Kontinent: Tady striktně zakážeme zalamování i zkracování */
+  .col-continent, .col-th-continent { 
+    width: 1%; /* Přinutí sloupec se smrštit na obsah */
+    white-space: nowrap; /* Zakáže zalamování Amerik */
+    padding-right: 2rem; /* Rezerva pro text */
+  }
+
+  .col-th-population { text-align: right; width: 1%; white-space: nowrap; }
+  .col-population { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .col-th-population .th-content { justify-content: flex-end; }
 
   .index-cell { font-family: var(--sl-font-mono); opacity: 0.5; font-size: 0.7rem; }
@@ -168,14 +173,14 @@ const shortenContinent = (name: string) => {
     color: var(--sl-color-gray-2);
   }
 
-  .th-content { display: flex; align-items: center; gap: 0.4rem; overflow: hidden; }
+  .th-content { display: flex; align-items: center; gap: 0.4rem; }
   .sort-icon { width: 12px; height: 12px; opacity: 0.4; flex-shrink: 0; }
 
-  .item-link { text-decoration: none !important; display: block; overflow: hidden; text-overflow: ellipsis; }
+  .item-link { text-decoration: none !important; display: inline-block; }
   .country-name { 
     color: #ffffff !important; 
     font-weight: 600; 
-    transition: color 0.2s; 
+    line-height: 1.2;
   }
 
   :global(html[data-theme='light']) .country-name { color: #000000 !important; }
@@ -193,15 +198,7 @@ const shortenContinent = (name: string) => {
   .continent-cell { display: flex; align-items: center; gap: 0.5rem; }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
-  .col-continent { font-size: 0.8rem; color: var(--sl-color-gray-3); }
-  :global(html[data-theme='light']) .col-continent { color: var(--sl-color-gray-2); }
   :global(html[data-theme='light']) td { border-bottom-color: var(--sl-color-gray-5); }
-  :global(html[data-theme='light']) .col-code-flag .mono-code { color: var(--sl-color-gray-1); }
-
-  /* Responzivita: pokud je málo místa, name-col se nesmí úplně smrsknout */
-  @media (max-width: 600px) {
-    .name-col { min-width: 150px; }
-  }
 </style>
 
 <script>
