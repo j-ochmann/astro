@@ -57,7 +57,7 @@ const {
 <StarlightPage frontmatter={{ title: title, tableOfContents: false }}>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
-  <div class="atlas-container" style={`--accent: ${accentColor}; --accent-bg: ${accentColor}26; --accent-border: ${accentColor}66;`}>
+  <div class="atlas-container" style={`--accent: ${accentColor}; --accent-bg: ${accentColor}26; --accent-border: ${accentColor}66; --filter-accent-color: ${accentColor}; --filter-accent-bg: ${accentColor}26; --filter-accent-border: ${accentColor}66;`}>
     <header class="atlas-header">
        <h1>{title}</h1>
     </header>
@@ -73,7 +73,7 @@ const {
     </div>
 
     <div id="view-table" class="view-section active">
-      <div class="table-wrapper glass-panel shadow-heavy">
+      <div class="table-container glass-panel shadow-unified">
         <table id="atlasTable">
           <thead>
             <tr>
@@ -112,17 +112,17 @@ const {
     <div id="view-grid" class="view-section">
       <div class="grid-wrapper" id="gridContainer">
         {data.map(item => (
-          <div class="atlas-card glass-panel shadow-heavy item-row grid-card" data-id={item.code} data-json={JSON.stringify(item)} data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}>
+          <div class="atlas-card glass-panel shadow-unified item-row grid-card" data-id={item.code} data-json={JSON.stringify(item)} data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}>
             <div class="card-header">
               {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'flag-small']}></span>}
               <span class="card-code">{item.code}</span>
             </div>
-            <h3>{item.name}</h3>
+            <h3 class="card-title">{item.name}</h3>
             <div class="card-meta">
                {columns.slice(2, 6).map(col => (
                  <div class="meta-item">
                     <span>{col.label}:</span> 
-                    <strong>{col.isNumeric && typeof item[col.key] === 'number' ? item[col.key].toLocaleString(lang) : item[col.key]}</strong>
+                    <strong>{item[col.key]}</strong>
                  </div>
                ))}
             </div>
@@ -141,90 +141,67 @@ const {
   .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 0 !important; }
   .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
   .sl-markdown-content { max-width: 100% !important; }
-  
-  .dynamic-accent {
-    --accent-color: var(--accent) !important;
-    --accent-bg: var(--accent-bg) !important;
-    --accent-border: var(--accent-border) !important;
-  }
+  .grid-card:first-child { margin-top: 0 !important; }
 </style>
 
 <style>
   .atlas-container { width: 100%; margin-top: -1rem; padding: 0 1.5rem; }
   .atlas-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--sl-color-gray-5); padding-bottom: 1rem; }
   
-  /* GLASS PANEL S PŘEVZATÝM STÍNEM */
+  .dynamic-accent {
+    --accent-color: var(--accent) !important;
+    --accent-bg: var(--accent-bg) !important;
+    --accent-border: var(--accent-border) !important;
+  }
+
   .glass-panel {
-    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
-    backdrop-filter: blur(30px) !important;
-    border: 1px solid var(--sl-color-gray-5) !important;
+    background: rgba(20, 20, 25, 0.5) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: 0.75rem;
   }
 
-  .shadow-heavy {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+  .shadow-unified {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
   }
 
   :global([data-theme="light"]) .glass-panel {
-    background: rgba(255, 255, 255, 0.7) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+    background: rgba(255, 255, 255, 0.4) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
   }
 
   .view-section { display: none !important; width: 100%; }
   .view-section.active { display: block !important; }
 
-  .table-wrapper { overflow-x: auto; margin-top: 1rem; width: 100%; }
+  /* Table design */
+  .table-container { overflow-x: auto; margin-top: 1rem; width: 100%; }
   table { width: 100%; border-collapse: separate; border-spacing: 0; }
-  
-  th { 
-    background: var(--accent-bg) !important;
-    color: var(--accent) !important;
-    padding: 1rem; 
-    text-align: left; 
-    cursor: pointer; 
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    border-bottom: 2px solid var(--sl-color-gray-5);
-  }
-
-  td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); }
-  tbody tr:hover { background: var(--accent-bg); transition: background 0.2s ease; }
-
-  .th-content { display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
-  .sort-icon { width: 14px; height: 14px; opacity: 0.6; }
-
+  th { background: var(--accent-bg) !important; color: var(--accent) !important; padding: 0.75rem 1rem; text-align: left; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid var(--sl-color-gray-5); }
+  td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); font-size: 0.85rem; }
+  tbody tr:hover { background: var(--accent-bg); }
   .item-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent) !important; text-decoration: none !important; font-weight: 700; }
 
-  /* GRID VIEW */
-  .grid-wrapper { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important; gap: 1.5rem !important; margin-top: 1rem; }
-  .atlas-card { padding: 1.5rem; display: flex; flex-direction: column; transition: all 0.3s ease; position: relative; overflow: hidden; min-height: 240px; }
-  .atlas-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+  /* Grid design - menší a hustší */
+  .grid-wrapper { 
+    display: grid !important; 
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important; 
+    gap: 0.75rem !important; 
+    margin-top: 1rem;
+    align-items: stretch;
+  }
+  .atlas-card { padding: 1rem; display: flex; flex-direction: column; transition: all 0.2s ease; position: relative; min-height: 180px; height: 100%; margin: 0 !important; overflow: hidden; }
+  .atlas-card:hover { border-color: var(--accent) !important; transform: translateY(-3px); }
+  .card-title { margin: 0.5rem 0 0.75rem 0 !important; font-size: 1rem !important; color: var(--sl-color-white) !important; line-height: 1.2; }
   
   .card-header { display: flex; justify-content: space-between; align-items: center; }
-  .card-code { font-family: var(--sl-font-mono); font-size: 0.7rem; color: var(--accent); border: 1px solid var(--accent-border); padding: 2px 8px; border-radius: 4px; }
+  .card-code { font-family: var(--sl-font-mono); font-size: 0.65rem; color: var(--accent); border: 1px solid var(--accent-border); padding: 1px 6px; border-radius: 4px; }
   
-  /* ACTION PANEL FIX */
-  .card-action { 
-    position: absolute; 
-    bottom: 0; 
-    left: 0; 
-    right: 0; 
-    padding: 1rem; 
-    transform: translateY(100%); 
-    transition: 0.3s ease; 
-    background: rgba(0,0,0,0.8); 
-    backdrop-filter: blur(10px); 
-  }
-
-  :global([data-theme="light"]) .card-action {
-    background: rgba(255, 255, 255, 0.9);
-    border-top: 1px solid var(--sl-color-gray-5);
-  }
-
+  .card-action { position: absolute; bottom: 0; left: 0; right: 0; padding: 0.75rem; transform: translateY(100%); transition: 0.3s ease; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
+  :global([data-theme="light"]) .card-action { background: rgba(255, 255, 255, 0.95); border-top: 1px solid var(--sl-color-gray-5); }
   .atlas-card:hover .card-action { transform: translateY(0); }
-  .glass-button { display: block; text-align: center; background: var(--accent); color: white !important; border-radius: 0.5rem; padding: 0.6rem; font-weight: bold; text-decoration: none !important; }
+  .glass-button { display: block; text-align: center; background: var(--accent); color: white !important; border-radius: 0.4rem; padding: 0.5rem; font-weight: bold; text-decoration: none !important; font-size: 0.8rem; }
 
-  .meta-item { display: flex; justify-content: space-between; font-size: 0.85rem; border-bottom: 1px solid var(--sl-color-gray-6); padding: 8px 0; }
+  .meta-item { display: flex; justify-content: space-between; font-size: 0.75rem; border-bottom: 1px solid var(--sl-color-gray-6); padding: 4px 0; }
   .mono { font-family: var(--sl-font-mono); color: var(--accent); font-weight: 600; }
 </style>
 
@@ -236,11 +213,11 @@ const {
     const gridContainer = document.getElementById('gridContainer');
     let activeCategory = "";
 
-    const closeAllDropdowns = () => {
+    const closeAll = () => {
       document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
     };
 
-    const filterAll = () => {
+    const filter = () => {
       const term = searchInput?.value.toLowerCase() || "";
       itemRows.forEach(el => {
         const text = (el as HTMLElement).innerText.toLowerCase();
@@ -251,67 +228,57 @@ const {
       });
     };
 
-    searchInput?.addEventListener('input', filterAll);
+    searchInput?.addEventListener('input', filter);
 
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
-
-      // 1. Otevírání dropdownů
       const btn = target.closest('.glass-btn');
+      
       if (btn) {
         e.stopPropagation();
-        const dropdown = btn.nextElementSibling;
-        const isShown = dropdown?.classList.contains('show');
-        closeAllDropdowns();
-        if (!isShown) dropdown?.classList.add('show');
+        const menu = btn.nextElementSibling;
+        const isShown = menu?.classList.contains('show');
+        closeAll();
+        if (!isShown) menu?.classList.add('show');
         return;
       }
 
-      // 2. Kliknutí mimo dropdown zavře vše
-      if (!target.closest('.dropdown')) {
-        closeAllDropdowns();
-      }
+      if (!target.closest('.dropdown')) closeAll();
 
-      // 3. Výběr filtru kategorie
       const catItem = target.closest('.cat-item');
       if (catItem) {
         activeCategory = catItem.getAttribute('data-cat') || "";
-        const labelText = catItem.querySelector('.item-label')?.textContent || "";
-        const btnTextElem = document.querySelector('#catBtn .btn-text');
-        if (btnTextElem) btnTextElem.textContent = labelText;
-        filterAll();
-        closeAllDropdowns(); // Opravené zavírání
+        const label = catItem.querySelector('.item-label')?.textContent || "";
+        const btnText = document.querySelector('#catBtn .btn-text');
+        if (btnText) btnText.textContent = label;
+        filter();
+        closeAll();
         return;
       }
 
-      // 4. Přepínání pohledů
       const viewItem = target.closest('.view-item');
       if (viewItem) {
         const viewId = viewItem.getAttribute('data-view');
         document.querySelectorAll('.view-item').forEach(b => b.classList.remove('active'));
         viewItem.classList.add('active');
         document.querySelectorAll('.view-section').forEach(s => s.classList.toggle('active', s.id === `view-${viewId}`));
-        closeAllDropdowns(); // Opravené zavírání
+        closeAll();
         return;
       }
 
-      // 5. Řazení
       const th = target.closest('th[data-sort]');
       if (th) {
         const col = th.getAttribute('data-sort');
         const isAsc = th.classList.contains('asc');
         const rows = Array.from(document.querySelectorAll('.table-row'));
-        
         const sorted = rows.sort((a, b) => {
-          const dataA = JSON.parse(a.getAttribute('data-json') || '{}')[col!];
-          const dataB = JSON.parse(b.getAttribute('data-json') || '{}')[col!];
-          return isAsc ? (dataA > dataB ? -1 : 1) : (dataA > dataB ? 1 : -1);
+          const vA = JSON.parse(a.getAttribute('data-json') || '{}')[col!];
+          const vB = JSON.parse(b.getAttribute('data-json') || '{}')[col!];
+          return isAsc ? (vA > vB ? -1 : 1) : (vA > vB ? 1 : -1);
         });
-
         document.querySelectorAll('th').forEach(h => h.classList.remove('asc', 'desc'));
         th.classList.toggle('asc', !isAsc);
         th.classList.toggle('desc', isAsc);
-
         sorted.forEach(row => {
           tableBody?.appendChild(row);
           const card = document.querySelector(`.grid-card[data-id="${row.getAttribute('data-id')}"]`);
