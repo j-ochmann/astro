@@ -1,0 +1,116 @@
+---
+import TabGridLayout from '@/components/root/TabGridNetLayout.astro';
+import { 
+  getI18nPaths, 
+  countriesData, 
+  useTranslations, 
+  getMledozeData, 
+  getCountryName 
+} from '@/content/config/i18n';
+
+export async function getStaticPaths() { return getI18nPaths(); }
+const { lang = 'en' } = Astro.params;
+const t = useTranslations(lang);
+
+// 1. Transformace dat pro tabulku a grid
+const data = Object.values(countriesData).map(c => ({
+  code: c.code,
+  name: getCountryName(c.code, lang),
+  native: c.native,
+  capital: c.capital || '—',
+  continent: c.continent,
+  population: c.population,
+}));
+
+// 2. Příprava dat pro 3D Graf (Nodes & Links)
+const nodes = Object.values(countriesData).map(c => {
+  const mledoze = getMledozeData(c.code);
+  return {
+    id: c.code.toLowerCase(),
+    displayName: getCountryName(c.code, lang),
+    // Přidáváme neighbor_count pro dynamickou velikost kuliček
+    neighbor_count: mledoze?.borders?.length || 0,
+    // Přidáváme continents jako pole pro barvící logiku v komponentě
+    continents: [c.continent],
+    // Explicitní barva jako záloha
+    color: {
+      'EU': '#8FBC8F',
+      'AS': '#DCDCDC',
+      'AF': '#FF6347',
+      'NA': '#BA55D3',
+      'SA': '#FFA500',
+      'OC': '#1E90FF',
+      'AN': '#FFFFFF'
+    }[c.continent] || '#10b981'
+  };
+});
+
+const links: { source: string; target: string }[] = [];
+const processedPairs = new Set();
+
+Object.values(countriesData).forEach(c => {
+  const mledoze = getMledozeData(c.code);
+  if (mledoze?.borders) {
+    mledoze.borders.forEach(neighborCca3 => {
+      const neighborMledoze = getMledozeData(neighborCca3);
+      if (neighborMledoze) {
+        const source = c.code.toLowerCase();
+        const target = neighborMledoze.cca2.toLowerCase();
+        const pairId = [source, target].sort().join('-');
+        
+        if (!processedPairs.has(pairId) && countriesData[neighborMledoze.cca2.toUpperCase()]) {
+          links.push({ source, target });
+          processedPairs.add(pairId);
+        }
+      }
+    });
+  }
+});
+
+const graphData = { nodes, links };
+
+// 3. Definice sloupců
+const columns = [
+  { key: 'code', label: 'Code', isMono: true },
+  { key: 'name', label: 'Country' },
+  { key: 'native', label: 'Native', isNative: true },
+  { key: 'capital', label: 'Capital' },
+  { key: 'continent', label: 'Continent' },
+  { key: 'population', label: 'Population', isNumeric: true }
+];
+
+// 4. Možnosti filtru
+const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map(f => ({
+  label: f,
+  value: f.toLowerCase(),
+  count: data.filter(d => d.continent === f).length
+}));
+---
+
+<TabGridLayout 
+  title={lang === 'cs' ? "Země světa" : "Countries"}
+  data={data}
+  graphData={graphData}
+  columns={columns}
+  lang={lang}
+  basePath={`/${lang}/countries`}
+  accentColor="#10b981"
+  filterLabel={lang === 'cs' ? "Kontinenty" : "Continents"}
+  filterOptions={filterOptions}
+  searchPlaceholder={lang === 'cs' ? "Hledat zemi..." : "Search country..."}
+  viewOptions={[
+    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
+    { id: 'grid', label: 'Grid', icon: 'fa-solid fa-grip' },
+    { id: 'net', label: 'Net', icon: 'fa-solid fa-circle-nodes' },
+    { id: 'map', label: 'Map', icon: 'fa-solid fa-map' },
+    { id: 'globe', label: 'Globe', icon: 'fa-solid fa-globe' },
+    { id: 'flags', label: 'Flags', icon: 'fa-solid fa-flag' },
+    { id: 'orbicon', label: 'Orbicon', icon: 'fa-solid fa-bomb' }
+  ]}
+  exportOptions={[
+    { id: 'json', label: 'JSON Data', extension: '.json', icon: 'fa-solid fa-file-code' },
+    { id: 'xml', label: 'XML Feed', extension: '.xml', icon: 'fa-solid fa-file-export' },
+    { id: 'yaml', label: 'YAML Config', extension: '.yaml', icon: 'fa-solid fa-file-lines' },
+    { id: 'csv', label: 'CSV Data', extension: '.csv', icon: 'fa-solid fa-file-csv' }
+  ]}
+/>

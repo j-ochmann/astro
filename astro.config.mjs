@@ -150,11 +150,11 @@ export default defineConfig({
               translations: { cs: 'Státy' },
               link: '/countries/' 
             },
-            // { 
-            //   label: 'Countries Table', 
-            //   translations: { cs: 'Tabulka států' },
-            //   link: '/countries/table/'
-            // },
+            { 
+              label: 'Countries Test', 
+              translations: { cs: 'Test sítě států' },
+              link: '/test/'
+            },
             { 
               label: 'Countries Network', 
               translations: { cs: 'Síť států' },

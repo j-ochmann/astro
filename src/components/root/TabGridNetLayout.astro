@@ -1,0 +1,322 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
+import { Icon } from 'astro-icon/components';
+
+interface Column {
+  key: string;
+  label: string;
+  isMono?: boolean;
+  isNative?: boolean;
+  isNumeric?: boolean;
+}
+
+interface ViewOption {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+interface ExportOption {
+  id: string;
+  label: string;
+  extension: string;
+  icon: string;
+}
+
+interface Props {
+  title: string;
+  data: any[];
+  graphData: { nodes: any[], links: any[] };
+  columns: Column[];
+  lang: string;
+  searchPlaceholder: string;
+  filterLabel: string;
+  filterOptions: { label: string; value: string; count: number }[];
+  basePath: string;
+  accentColor?: string;
+  viewOptions?: ViewOption[];
+  exportOptions?: ExportOption[];
+}
+
+const { 
+  title, data, graphData, columns, lang, 
+  searchPlaceholder, filterLabel, filterOptions, basePath,
+  accentColor = "#9d7cfd",
+  viewOptions = [
+    { id: 'table', label: 'Table', icon: 'fa-table' },
+    { id: 'grid', label: 'Grid', icon: 'fa-table-cells-large' },
+    { id: 'net', label: 'Net', icon: 'fa-circle-nodes' }
+  ],
+  exportOptions = [
+    { id: 'json', label: 'JSON', extension: '.json', icon: 'fa-file-code' },
+    { id: 'csv', label: 'CSV', extension: '.csv', icon: 'fa-file-csv' }
+  ]
+} = Astro.props;
+---
+
+<StarlightPage frontmatter={{ title: title, tableOfContents: false }}>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+  <div class="atlas-container" style={`--accent: ${accentColor}; --accent-bg: ${accentColor}26; --accent-border: ${accentColor}66; --filter-accent-color: ${accentColor}; --filter-accent-bg: ${accentColor}26; --filter-accent-border: ${accentColor}66;`}>
+
+    <div class="controls-row dynamic-accent">
+      <SearchFilterBar 
+        searchPlaceholder={searchPlaceholder}
+        filterLabel={filterLabel}
+        filterOptions={filterOptions}
+        viewLabel="View"
+        downloadLabel="Export"
+        viewOptions={viewOptions}
+        exportOptions={exportOptions}
+      />
+    </div>
+
+    <div id="view-table" class="view-section active">
+      <div class="table-container glass-panel shadow-unified">
+        <table id="atlasTable">
+          <thead>
+            <tr>
+              {columns.map(col => (
+                <th data-sort={col.key}>
+                  <div class="th-content">
+                    <span>{col.label}</span>
+                    <Icon name="lucide:arrow-up-down" class="sort-icon" />
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            {data.map(item => (
+              <tr class="item-row table-row" data-id={item.code} data-json={JSON.stringify(item)} data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}>
+                {columns.map(col => (
+                  <td class:list={[{ 'mono': col.isMono, 'native-col': col.isNative }]}>
+                    {col.key === 'name' ? (
+                      <a href={`${basePath}/${item.code?.toLowerCase()}/`} class="item-link">
+                        {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`]}></span>}
+                        {item[col.key]}
+                      </a>
+                    ) : (
+                      col.isNumeric && typeof item[col.key] === 'number' ? item[col.key].toLocaleString(lang) : item[col.key]
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-grid" class="view-section">
+      <div class="grid-wrapper" id="gridContainer">
+        {data.map(item => (
+          <div class="atlas-card glass-panel shadow-unified item-row grid-card" data-id={item.code} data-json={JSON.stringify(item)} data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}>
+            <div class="card-header">
+              {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'flag-small']}></span>}
+              <span class="card-code">{item.code}</span>
+            </div>
+            <h3 class="card-title">{item.name}</h3>
+            <div class="card-meta">
+               {columns.slice(2, 6).map(col => (
+                 <div class="meta-item">
+                    <span>{col.label}:</span> 
+                    <strong>{item[col.key]}</strong>
+                 </div>
+               ))}
+            </div>
+            <div class="card-action">
+              <a href={`${basePath}/${item.code?.toLowerCase()}/`} class="glass-button">Detail</a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div id="view-net" class="view-section">
+        <div class="graph-wrapper glass-panel shadow-unified">
+            <svg id="main-graph"></svg>
+            <div class="graph-hint">
+                <span><i class="fa-solid fa-arrows-up-down-left-right"></i> Drag to Pan • <i class="fa-solid fa-magnifying-glass-plus"></i> Scroll to Zoom</span>
+            </div>
+        </div>
+    </div>
+
+  </div>
+</StarlightPage>
+
+<style is:global>
+  h1 { padding-left: 1.5rem !important; }
+  .main-frame { width: 100% !important; max-width: 100% !important; }
+  .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 0 !important; }
+  .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
+  .sl-markdown-content { max-width: 100% !important; }
+  
+  /* D3 Graph Styles */
+  #main-graph { display: block; width: 100%; height: 600px; cursor: move; background: transparent; }
+  .links line { stroke: var(--sl-color-gray-4); stroke-opacity: 0.3; stroke-width: 1.5px; }
+  :global([data-theme="dark"]) .links line { stroke: #ffffff; stroke-opacity: 0.2; }
+  .node circle { stroke: #000; stroke-width: 1px; cursor: pointer; transition: stroke-width 0.2s; }
+  .node:hover circle { stroke-width: 2px; }
+  .node text { display: none; font-size: 11px; fill: var(--sl-color-text); pointer-events: none; font-family: var(--sl-font-sans); }
+  .node:hover text { display: inline; }
+</style>
+
+<style>
+  .atlas-container { width: 100%; margin-top: -1rem; padding: 0 1.5rem; }  
+  .glass-panel { background: rgba(20, 20, 25, 0.5) !important; backdrop-filter: blur(20px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: 0.75rem; }
+  .shadow-unified { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important; }
+  :global([data-theme="light"]) .glass-panel { background: rgba(255, 255, 255, 0.4) !important; border: 1px solid rgba(0, 0, 0, 0.1) !important; }
+
+  .view-section { display: none !important; width: 100%; }
+  .view-section.active { display: block !important; }
+
+  /* Grid/Table common */
+  .table-container { overflow-x: auto; margin-top: 1rem; width: 100%; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  th { background: var(--accent-bg) !important; color: var(--accent) !important; padding: 0.75rem 1rem; text-align: left; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid var(--sl-color-gray-5); }
+  td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); font-size: 0.85rem; }
+  
+  .grid-wrapper { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important; gap: 0.75rem !important; margin-top: 1rem; }
+  .atlas-card { padding: 1rem; display: flex; flex-direction: column; transition: all 0.2s ease; position: relative; min-height: 180px; height: 100%; overflow: hidden; }
+  .card-title { margin: 0.5rem 0 0.75rem 0 !important; font-size: 1rem !important; color: var(--sl-color-white) !important; }
+  .glass-button { display: block; text-align: center; background: var(--accent); color: white !important; border-radius: 0.4rem; padding: 0.5rem; font-weight: bold; text-decoration: none !important; font-size: 0.8rem; }
+
+  .graph-wrapper { position: relative; width: 100%; margin-top: 1rem; background: var(--sl-color-gray-6); overflow: hidden; }
+  .graph-hint { position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.6); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.7rem; pointer-events: none; }
+</style>
+
+<script is:inline src="https://d3js.org/d3.v4.min.js"></script>
+<script is:inline define:vars={{ initialGraphData: graphData }}>
+  let simulation, svg, g, link, node;
+  const width = 960, height = 600;
+  const colorMapping = { "Africa": "#FF6347", "Asia": "#DCDCDC", "Europe": "#8FBC8F", "North America": "#BA55D3", "Oceania": "#1E90FF", "South America": "#FFA500" };
+
+  function initD3Graph() {
+    const container = document.getElementById('main-graph');
+    if (!container) return;
+    d3.select("#main-graph").selectAll("*").remove();
+
+    svg = d3.select("#main-graph").attr("viewBox", `0 0 ${width} ${height}`);
+    g = svg.append("g");
+
+    svg.call(d3.zoom().on("zoom", () => g.attr("transform", d3.event.transform)));
+
+    simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(d => d.id).distance(45))
+        .force("charge", d3.forceManyBody().strength(-70))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide", d3.forceCollide(d => 10 + (d.neighbor_count || 0)));
+
+    link = g.append("g").attr("class", "links").selectAll("line")
+        .data(initialGraphData.links).enter().append("line");
+
+    node = g.append("g").attr("class", "nodes").selectAll(".node")
+        .data(initialGraphData.nodes).enter().append("g").attr("class", "node")
+        .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+
+    node.append("circle")
+        .attr("r", d => 5 + ((d.neighbor_count || 0) / 2))
+        .attr("fill", d => colorMapping[d.continents?.[0]] || "#ccc");
+
+    node.append("text").attr("dy", ".35em").attr("x", 12).text(d => d.displayName);
+
+    simulation.nodes(initialGraphData.nodes).on("tick", () => {
+        link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+    simulation.force("link").links(initialGraphData.links);
+  }
+
+  function dragstarted(d) { if (!d3.event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+  function dragged(d) { d.fx = d3.event.x; d.fy = d3.event.y; }
+  function dragended(d) { if (!d3.event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+
+  function initAtlas() {
+    const searchInput = document.getElementById('searchTab');
+    const itemRows = Array.from(document.querySelectorAll('.item-row'));
+    const tableBody = document.getElementById('tableBody');
+    const gridContainer = document.getElementById('gridContainer');
+    let activeCategory = "";
+
+    const closeAll = () => {
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+    };
+
+    const filter = () => {
+      const term = searchInput?.value.toLowerCase() || "";
+      itemRows.forEach(el => {
+        const text = el.innerText.toLowerCase();
+        const cat = el.getAttribute('data-category') || "";
+        const matchesSearch = text.includes(term);
+        const matchesCat = activeCategory === "" || cat === activeCategory;
+        el.style.display = (matchesSearch && matchesCat) ? '' : 'none';
+      });
+    };
+
+    searchInput?.addEventListener('input', filter);
+
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      
+      const btn = target.closest('.glass-btn');
+      if (btn) {
+        e.stopPropagation();
+        const menu = btn.nextElementSibling;
+        const isShown = menu?.classList.contains('show');
+        closeAll();
+        if (!isShown) menu?.classList.add('show');
+        return;
+      }
+
+      // Zavře dropdowny při kliknutí kamkoliv jinam
+      if (!target.closest('.dropdown')) {
+        closeAll();
+      }
+
+      const viewItem = target.closest('.view-item');
+      if (viewItem) {
+        const viewId = viewItem.getAttribute('data-view');
+        document.querySelectorAll('.view-item').forEach(b => b.classList.remove('active'));
+        viewItem.classList.add('active');
+        document.querySelectorAll('.view-section').forEach(s => s.classList.toggle('active', s.id === `view-${viewId}`));
+        if (viewId === 'net') initD3Graph();
+        closeAll(); // Zavře dropdown po výběru view
+        return;
+      }
+
+      const catItem = target.closest('.cat-item');
+      if (catItem) {
+        activeCategory = catItem.getAttribute('data-cat') || "";
+        const label = catItem.querySelector('.item-label')?.textContent || "";
+        const btnText = document.querySelector('#catBtn .btn-text');
+        if (btnText) btnText.textContent = label;
+        filter();
+        closeAll(); // Zavře dropdown po výběru kategorie
+        return;
+      }
+
+      const th = target.closest('th[data-sort]');
+      if (th) {
+        const col = th.getAttribute('data-sort');
+        const isAsc = th.classList.contains('asc');
+        const rows = Array.from(document.querySelectorAll('.table-row'));
+        const sorted = rows.sort((a, b) => {
+          const vA = JSON.parse(a.getAttribute('data-json') || '{}')[col];
+          const vB = JSON.parse(b.getAttribute('data-json') || '{}')[col];
+          return isAsc ? (vA > vB ? -1 : 1) : (vA > vB ? 1 : -1);
+        });
+        th.classList.toggle('asc', !isAsc);
+        sorted.forEach(row => {
+          tableBody?.appendChild(row);
+          const gridCard = document.querySelector(`.grid-card[data-id="${row.getAttribute('data-id')}"]`);
+          if (gridCard) gridContainer?.appendChild(gridCard);
+        });
+      }
+    });
+  }
+
+  window.addEventListener('load', initAtlas);
+  document.addEventListener('astro:after-swap', initAtlas);
+</script>
