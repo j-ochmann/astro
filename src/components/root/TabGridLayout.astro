@@ -1,4 +1,5 @@
 ---
+// src/components/root/TabGridLayout.astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
 import { Icon } from 'astro-icon/components';
@@ -41,7 +42,7 @@ interface Props {
 const { 
   title, data, columns, lang, 
   searchPlaceholder, filterLabel, filterOptions, basePath,
-  accentColor = "#3b82f6",
+  accentColor = "#9d7cfd",
   viewOptions = [
     { id: 'table', label: 'Table', icon: 'fa-table' },
     { id: 'grid', label: 'Grid', icon: 'fa-table-cells-large' }
@@ -56,7 +57,7 @@ const {
 <StarlightPage frontmatter={{ title: title, tableOfContents: false }}>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
-  <div class="atlas-container" style={`--accent: ${accentColor};`}>
+  <div class="atlas-container" style={`--accent: ${accentColor}; --accent-bg: ${accentColor}26; --accent-border: ${accentColor}66;`}>
     <header class="atlas-header">
        <h1>{title}</h1>
     </header>
@@ -72,7 +73,7 @@ const {
     </div>
 
     <div id="view-table" class="view-section active">
-      <div class="table-wrapper glass-panel">
+      <div class="table-wrapper glass-panel shadow-pyth">
         <table id="atlasTable">
           <thead>
             <tr>
@@ -111,7 +112,7 @@ const {
     <div id="view-grid" class="view-section">
       <div class="grid-wrapper" id="gridContainer">
         {data.map(item => (
-          <div class="atlas-card glass-panel item-row grid-card" data-id={item.code} data-json={JSON.stringify(item)} data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}>
+          <div class="atlas-card glass-panel shadow-pyth item-row grid-card" data-id={item.code} data-json={JSON.stringify(item)} data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}>
             <div class="card-header">
               {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'flag-small']}></span>}
               <span class="card-code">{item.code}</span>
@@ -132,169 +133,110 @@ const {
         ))}
       </div>
     </div>
-    
-    {viewOptions.filter(v => v.id !== 'table' && v.id !== 'grid').map(v => (
-      <div id={`view-${v.id}`} class="view-section">
-        <div class="glass-panel empty-state">
-           <i class={`fa-solid ${v.icon} fa-3x`}></i>
-           <p>{v.label} View coming soon...</p>
-        </div>
-      </div>
-    ))}
   </div>
 </StarlightPage>
 
 <style is:global>
-  /* FULL WIDTH */
   .main-frame { width: 100% !important; max-width: 100% !important; }
   .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 0 !important; }
   .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
   .sl-markdown-content { max-width: 100% !important; }
-  .sl-markdown-content > div:first-child { margin-top: 0 !important; }
-  .grid-wrapper > * { margin: 0 !important; }
-
-  /* SEARCH BAR THEME */
+  
   .dynamic-accent {
-    --accent-color: var(--accent, #3b82f6) !important;
-    --accent-bg: rgba(59, 130, 246, 0.1) !important;
-    --accent-border: rgba(59, 130, 246, 0.3) !important;
+    --accent-color: var(--accent) !important;
+    --accent-bg: var(--accent-bg) !important;
+    --accent-border: var(--accent-border) !important;
   }
 </style>
 
 <style>
   .atlas-container { width: 100%; margin-top: -1rem; padding: 0 1.5rem; }
   .atlas-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--sl-color-gray-5); padding-bottom: 1rem; }
-  .atlas-header h1 { font-size: 2.5rem !important; margin: 0 !important; }
-
+  
+  /* GLASS PANEL DESIGN DLE SEARCHFILTERBAR */
   .glass-panel {
-    background: var(--sl-color-bg-nav);
-    border: 1px solid var(--sl-color-gray-5);
+    background: rgba(20, 20, 25, 0.5) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: 0.75rem;
-    backdrop-filter: blur(12px);
+  }
+
+  .shadow-pyth {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  :global([data-theme="light"]) .glass-panel {
+    background: rgba(255, 255, 255, 0.4) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
   }
 
   .view-section { display: none !important; width: 100%; }
   .view-section.active { display: block !important; }
 
   .table-wrapper { overflow-x: auto; margin-top: 1rem; width: 100%; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; }
   
-  /* HEADER ALIGNMENT FIX */
   th { 
-    background: var(--sl-color-gray-6); 
-    padding: 0.75rem 1rem; 
+    background: var(--accent-bg) !important;
+    color: var(--accent) !important;
+    padding: 1rem; 
     text-align: left; 
     cursor: pointer; 
-    color: var(--sl-color-white);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--sl-color-gray-5);
   }
 
-  .th-content {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    white-space: nowrap;
-  }
+  td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); }
+  tbody tr:hover { background: var(--accent-bg); transition: background 0.2s ease; }
 
-  .sort-icon {
-    width: 14px;
-    height: 14px;
-    opacity: 0.5;
-  }
+  .item-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent) !important; text-decoration: none !important; font-weight: 700; }
 
-  td { 
-    padding: 0.75rem 1rem; 
-    border-bottom: 1px solid var(--sl-color-gray-6); 
-  }
-
-  /* Theme adjustments */
-  :global([data-theme="light"]) .glass-panel {
-    background: rgba(255, 255, 255, 0.8);
-    border-color: var(--sl-color-gray-4);
-  }
-
-  :global([data-theme="light"]) th {
-    background: var(--sl-color-gray-5);
-    color: var(--sl-color-black);
-  }
-
-  :global([data-theme="light"]) td {
-    border-bottom-color: var(--sl-color-gray-5);
-  }
-
-  .item-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent) !important; text-decoration: none !important; font-weight: 500; }
-
-  /* GRID */
-  .grid-wrapper { 
-    display: grid !important; 
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important; 
-    gap: 1.5rem !important; 
-    margin-top: 1rem; 
-  }
-  
-  .atlas-card { padding: 1.5rem; display: flex; flex-direction: column; transition: all 0.25s ease; position: relative; overflow: hidden; min-height: 220px; }
-  .atlas-card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 12px 40px -12px rgba(0,0,0,0.5); }
-  
-  .atlas-card h3 { 
-    margin: 0.5rem 0 1rem 0 !important; 
-    font-size: 1.25rem !important; 
-    color: var(--sl-color-white) !important; 
-  }
+  /* GRID VIEW */
+  .grid-wrapper { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important; gap: 1.5rem !important; margin-top: 1rem; }
+  .atlas-card { padding: 1.5rem; display: flex; flex-direction: column; transition: all 0.3s ease; position: relative; overflow: hidden; min-height: 240px; }
+  .atlas-card:hover { border-color: var(--accent); transform: translateY(-5px); }
   
   .card-header { display: flex; justify-content: space-between; align-items: center; }
-  .card-code { font-family: var(--sl-font-mono); font-size: 0.75rem; opacity: 0.6; padding: 2px 8px; border: 1px solid currentColor; border-radius: 4px; }
+  .card-code { font-family: var(--sl-font-mono); font-size: 0.7rem; color: var(--accent); border: 1px solid var(--accent-border); padding: 2px 8px; border-radius: 4px; }
   
-  /* ACTION PANEL (HOVER) */
+  /* ACTION PANEL S OPRAVENÝM LIGHT REŽIMEM */
   .card-action { 
     position: absolute; 
     bottom: 0; 
     left: 0; 
     right: 0; 
-    padding: 0.8rem; 
+    padding: 1rem; 
     transform: translateY(100%); 
     transition: 0.3s ease; 
-    background: rgba(0,0,0,0.8); 
-    backdrop-filter: blur(8px); 
+    background: rgba(0,0,0,0.85); 
+    backdrop-filter: blur(10px); 
   }
 
   :global([data-theme="light"]) .card-action {
-    background: rgba(255, 255, 255, 0.9);
-    border-top: 1px solid var(--sl-color-gray-4);
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid var(--sl-color-gray-5);
   }
 
   .atlas-card:hover .card-action { transform: translateY(0); }
   .glass-button { display: block; text-align: center; background: var(--accent); color: white !important; border-radius: 0.5rem; padding: 0.6rem; font-weight: bold; text-decoration: none !important; }
 
-  .card-meta { flex-grow: 1; }
-  .meta-item { display: flex; justify-content: space-between; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 6px 0; }
-  
-  :global([data-theme="light"]) .meta-item {
-    border-bottom-color: rgba(0,0,0,0.08);
-  }
-
+  .meta-item { display: flex; justify-content: space-between; font-size: 0.85rem; border-bottom: 1px solid var(--sl-color-gray-6); padding: 8px 0; }
   .mono { font-family: var(--sl-font-mono); color: var(--accent); font-weight: 600; }
-  .empty-state { padding: 6rem; text-align: center; opacity: 0.4; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 </style>
 
 <script>
   function initAtlas() {
-    const viewButtons = document.querySelectorAll('.view-item');
-    const viewSections = document.querySelectorAll('.view-section');
-
-    viewButtons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const viewId = btn.getAttribute('data-view');
-        viewButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        viewSections.forEach(section => {
-          section.classList.toggle('active', section.id === `view-${viewId}`);
-        });
-      });
-    });
-
     const searchInput = document.getElementById('searchTab') as HTMLInputElement;
     const itemRows = Array.from(document.querySelectorAll('.item-row'));
+    const tableBody = document.getElementById('tableBody');
+    const gridContainer = document.getElementById('gridContainer');
     let activeCategory = "";
+
+    const closeAllMenus = () => {
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+    };
 
     const filterAll = () => {
       const term = searchInput?.value.toLowerCase() || "";
@@ -309,56 +251,71 @@ const {
 
     searchInput?.addEventListener('input', filterAll);
 
-    const closeMenus = () => document.querySelectorAll('.dropdown-content').forEach(m => m.classList.remove('show'));
-    document.querySelectorAll('.dropdown button').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+
+      // Dropdown toggle
+      const btn = target.closest('.glass-btn');
+      if (btn) {
         e.stopPropagation();
-        const next = btn.nextElementSibling;
-        const isShown = next?.classList.contains('show');
-        closeMenus();
-        if (!isShown) next?.classList.add('show');
-      });
-    });
+        const dropdown = btn.nextElementSibling;
+        const isShown = dropdown?.classList.contains('show');
+        closeAllMenus();
+        if (!isShown) dropdown?.classList.add('show');
+        return;
+      }
 
-    window.addEventListener('click', closeMenus);
+      // Kliknutí mimo menu
+      if (!target.closest('.dropdown')) {
+        closeAllMenus();
+      }
 
-    document.querySelectorAll('.cat-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        activeCategory = btn.getAttribute('data-cat') || "";
-        const labelText = (btn as HTMLElement).querySelector('.item-label')?.textContent || "";
+      // Kategorie - filtr
+      const catItem = target.closest('.cat-item');
+      if (catItem) {
+        activeCategory = catItem.getAttribute('data-cat') || "";
+        const labelText = catItem.querySelector('.item-label')?.textContent || "";
         const btnTextElem = document.querySelector('#catBtn .btn-text');
         if (btnTextElem) btnTextElem.textContent = labelText;
         filterAll();
-        closeMenus();
-      });
-    });
+        closeAllMenus(); // Oprava zavírání
+        return;
+      }
 
-    document.querySelectorAll('th[data-sort]').forEach(th => {
-      th.addEventListener('click', () => {
+      // View switcher
+      const viewItem = target.closest('.view-item');
+      if (viewItem) {
+        const viewId = viewItem.getAttribute('data-view');
+        document.querySelectorAll('.view-item').forEach(b => b.classList.remove('active'));
+        viewItem.classList.add('active');
+        document.querySelectorAll('.view-section').forEach(s => s.classList.toggle('active', s.id === `view-${viewId}`));
+        closeAllMenus(); // Oprava zavírání
+        return;
+      }
+
+      // Sort logic
+      const th = target.closest('th[data-sort]');
+      if (th) {
         const col = th.getAttribute('data-sort');
-        if (!col) return;
         const isAsc = th.classList.contains('asc');
         const rows = Array.from(document.querySelectorAll('.table-row'));
         
         const sorted = rows.sort((a, b) => {
-          const dataA = JSON.parse(a.getAttribute('data-json') || '{}')[col];
-          const dataB = JSON.parse(b.getAttribute('data-json') || '{}')[col];
+          const dataA = JSON.parse(a.getAttribute('data-json') || '{}')[col!];
+          const dataB = JSON.parse(b.getAttribute('data-json') || '{}')[col!];
           return isAsc ? (dataA > dataB ? -1 : 1) : (dataA > dataB ? 1 : -1);
         });
 
-        document.querySelectorAll('th[data-sort]').forEach(header => header.classList.remove('asc', 'desc'));
+        document.querySelectorAll('th').forEach(h => h.classList.remove('asc', 'desc'));
         th.classList.toggle('asc', !isAsc);
         th.classList.toggle('desc', isAsc);
 
-        const tableBody = document.getElementById('tableBody');
-        const gridContainer = document.getElementById('gridContainer');
-        
         sorted.forEach(row => {
           tableBody?.appendChild(row);
           const card = document.querySelector(`.grid-card[data-id="${row.getAttribute('data-id')}"]`);
           if (card) gridContainer?.appendChild(card);
         });
-      });
+      }
     });
   }
 
