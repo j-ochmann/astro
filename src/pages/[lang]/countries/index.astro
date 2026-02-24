@@ -14,7 +14,16 @@ import {
   getMledozeData, 
   getCountryName 
 } from '@/content/config/i18n';
-
+// Definice barev kontinentů (shodné s grafem)
+const continentColors: Record<string, string> = {
+  "Africa": "#FF6347",        // Tomato
+  "Asia": "#DCDCDC",          // Gainsboro
+  "Europe": "#8FBC8F",        // DarkSeaGreen
+  "North America": "#BA55D3", // MediumOrchid
+  "Oceania": "#1E90FF",       // DodgerBlue
+  "South America": "#FFA500", // Orange
+  "Antarctica": "#B0E0E6"     // PowderBlue
+};
 export async function getStaticPaths() { return getI18nPaths(); }
 const { lang = 'en' } = Astro.params;
 const t = useTranslations(lang);
@@ -65,7 +74,10 @@ countries.forEach(c => {
 });
 
 const graphData = { nodes: data, links };
-
+const enrichedData = data.map(item => ({
+  ...item,
+  continentColor: continentColors[item.continent] || "#ccc"
+}));
 // 3. Definice sloupců pro tabulku
 const columns = [
   { key: 'code', label: 'Code', isMono: true },
@@ -80,7 +92,8 @@ const columns = [
 const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map(f => ({
   label: f,
   value: f.toLowerCase(),
-  count: data.filter(d => d.continent === f).length
+  count: data.filter(d => d.continent === f).length,
+  color: continentColors[f] || "#ccc" // Předání barvy do WideLayoutu
 }));
 
 const viewOptions = [
@@ -97,14 +110,14 @@ const exportOptions = [
 
 <WideLayout 
   title={lang === 'cs' ? "Země světa" : "Countries"}
-  searchPlaceholder={lang === 'cs' ? "Hledat zemi..." : "Search country..."}
+  searchPlaceholder={lang === 'cs' ? "Hledat..." : "Search..."}
   filterLabel={lang === 'cs' ? "Kontinenty" : "Continents"}
   filterOptions={filterOptions}
   viewOptions={viewOptions}
   exportOptions={exportOptions}
   accentColor="#10b981"
 >
-  <ViewGrid slot="grid" data={data} columns={columns} basePath={basePath} />
-  <ViewNet slot="net" graphData={graphData} basePath={basePath} />
-  <ViewTable slot="table" data={data} columns={columns} basePath={basePath} lang={lang} />
+<ViewGrid slot="grid" data={enrichedData} columns={columns} basePath={basePath} />
+  <ViewNet slot="net" graphData={{nodes: enrichedData, links}} basePath={basePath} />
+  <ViewTable slot="table" data={enrichedData} columns={columns} basePath={basePath} lang={lang} />
 </WideLayout>

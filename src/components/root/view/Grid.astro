@@ -22,7 +22,9 @@ const { data, columns, basePath } = Astro.props;
     >
       <div class="card-header">
         {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'flag-small']}></span>}
-        <span class="card-code">{item.code}</span>
+        <span class="card-code" style={`border-color: ${item.continentColor}; color: ${item.continentColor};`}>
+          {item.code}
+        </span>
       </div>
       <h3 class="card-title">{item.name}</h3>
       <div class="card-meta">

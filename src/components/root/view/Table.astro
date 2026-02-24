@@ -70,7 +70,7 @@ const shortenContinent = (name: string) => {
           <td class="num-col index-cell">{index + 1}</td>
           
           <td class="col-code-flag">
-            <span class="mono">{item.code}</span>
+            <span class="mono" style={`color: ${item.continentColor};`}>{item.code}</span>
             {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'table-flag']}></span>}
           </td>
 
