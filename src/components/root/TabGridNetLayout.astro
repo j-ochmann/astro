@@ -140,6 +140,17 @@ const {
         </div>
     </div>
 
+    <!-- UNIVERZÁLNÍ DYNAMICKÉ SLOTY -->
+    {viewOptions.map(option => {
+      // Přeskočíme ty, které už máme definované nahoře
+      if (option.id === 'table' || option.id === 'grid' || option.id === 'net') return null;
+      
+      return (
+        <div id={`view-${option.id}`} class="view-section">
+          <slot name={`view-${option.id}`} />
+        </div>
+      );
+    })}
   </div>
 </StarlightPage>
 

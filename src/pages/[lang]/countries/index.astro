@@ -7,6 +7,7 @@ import {
   getMledozeData, 
   getCountryName 
 } from '@/content/config/i18n';
+import FlagGrid from '@/components/geo/Flags.astro';
 
 export async function getStaticPaths() { return getI18nPaths(); }
 const { lang = 'en' } = Astro.params;
@@ -114,4 +115,8 @@ const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map
     { id: 'yaml', label: 'YAML Config', extension: '.yaml', icon: 'fa-file-lines' },
     { id: 'csv', label: 'CSV Config', extension: '.yaml', icon: 'fa-file-csv' }
   ]}
+
+  <div slot="view-flags">
+     <FlagGrid countries={data} />
+  </div>
 />
