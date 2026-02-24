@@ -140,7 +140,6 @@ const {
 </StarlightPage>
 
 <style is:global>
-  /* FULL WIDTH */
   .main-frame { width: 100% !important; max-width: 100% !important; }
   .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 0 !important; }
   .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
@@ -148,7 +147,6 @@ const {
   .sl-markdown-content > div:first-child { margin-top: 0 !important; }
   .grid-wrapper > * { margin: 0 !important; }
 
-  /* SEARCH BAR THEME */
   .dynamic-accent {
     --accent-color: var(--accent, #3b82f6) !important;
     --accent-bg: rgba(59, 130, 246, 0.1) !important;
@@ -157,20 +155,23 @@ const {
 </style>
 
 <style>
-  /* BASE COLORS & THEME ADAPTATION */
   .atlas-container { 
     width: 100%; 
     margin-top: -1rem; 
     padding: 0 1.5rem;
     --panel-bg: rgba(20, 20, 25, 0.5);
+    --header-bg: rgba(255, 255, 255, 0.05);
     --panel-border: var(--sl-color-gray-5);
+    --action-bg: rgba(0, 0, 0, 0.6);
     --text-main: var(--sl-color-white);
     --text-muted: var(--sl-color-gray-3);
   }
 
   :global([data-theme="light"]) .atlas-container {
-    --panel-bg: rgba(245, 245, 250, 0.7);
+    --panel-bg: rgba(245, 245, 250, 0.8);
+    --header-bg: rgba(0, 0, 0, 0.05);
     --panel-border: var(--sl-color-gray-4);
+    --action-bg: rgba(255, 255, 255, 0.8);
     --text-main: var(--sl-color-black);
     --text-muted: var(--sl-color-gray-5);
   }
@@ -191,8 +192,7 @@ const {
   /* TABLE */
   .table-wrapper { overflow-x: auto; margin-top: 1rem; width: 100%; }
   table { width: 100%; border-collapse: collapse; font-size: 0.9rem; color: var(--text-main); }
-  th { background: var(--sl-color-gray-6); padding: 0.75rem 1rem; text-align: left; cursor: pointer; color: var(--text-main); }
-  :global([data-theme="light"]) th { background: var(--sl-color-gray-2); }
+  th { background: var(--header-bg); padding: 0.75rem 1rem; text-align: left; cursor: pointer; color: var(--text-main); }
   td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--panel-border); }
   .item-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent) !important; text-decoration: none !important; font-weight: 500; }
 
@@ -210,7 +210,14 @@ const {
   
   .card-code { font-family: var(--sl-font-mono); font-size: 0.75rem; color: var(--text-muted); padding: 2px 8px; border: 1px solid var(--panel-border); border-radius: 4px; }
   
-  .card-action { position: absolute; bottom: 0; left: 0; right: 0; padding: 0.8rem; transform: translateY(100%); transition: 0.3s ease; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); }
+  /* ACTION LAYER ADAPTATION */
+  .card-action { 
+    position: absolute; bottom: 0; left: 0; right: 0; padding: 0.8rem; 
+    transform: translateY(100%); transition: 0.3s ease; 
+    background: var(--action-bg); 
+    backdrop-filter: blur(8px); 
+    border-top: 1px solid var(--panel-border);
+  }
   .atlas-card:hover .card-action { transform: translateY(0); }
   .glass-button { display: block; text-align: center; background: var(--accent); color: white !important; border-radius: 0.5rem; padding: 0.6rem; font-weight: bold; text-decoration: none !important; }
 
