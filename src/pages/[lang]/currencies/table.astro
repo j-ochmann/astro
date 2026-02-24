@@ -1,357 +1,66 @@
 ---
-import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { Icon } from 'astro-icon/components';
-import { 
-  getI18nPaths, 
-  countriesData, 
-  useTranslations 
-} from '@/content/config/i18n';
+// src/pages/[lang]/currencies/index.astro
+import TabGridLayout from '@/components/root/TabGridLayout.astro';
+import { getI18nPaths, countriesData, useTranslations } from '@/content/config/i18n';
 
-export async function getStaticPaths() {
-  return getI18nPaths();
-}
+export async function getStaticPaths() { return getI18nPaths(); }
 
 const { lang } = Astro.params;
 const t = useTranslations(lang);
 
-// Inicializace lokalizovaných názvů
+// Inicializace lokalizovaných názvů (např. 'cs' pro češtinu)
 const currencyNames = new Intl.DisplayNames([lang || 'en'], { type: 'currency' });
 
-// 1. Agregace dat o měnách včetně názvů
 const allCountries = Object.values(countriesData);
-const currencyMap = new Map<string, { code: string, name: string, countries: string[], usageCount: number }>();
+const currencyMap = new Map<string, { code: string, name: string, usageCount: number }>();
 
 allCountries.forEach((country: any) => {
-  country.currency?.forEach((currCode: string) => {
-    const code = currCode.toUpperCase();
-    if (!currencyMap.has(code)) {
-      let name = code;
-      try {
-        name = currencyNames.of(code) || code;
-      } catch (e) {
-        name = code;
+  if (country.currency) {
+    country.currency.forEach((currCode: string) => {
+      const code = currCode.toUpperCase();
+      if (!currencyMap.has(code)) {
+        let name = code;
+        try {
+          name = currencyNames.of(code) || code;
+        } catch (e) {
+          name = code;
+        }
+        currencyMap.set(code, { code, name, usageCount: 0 });
       }
-      currencyMap.set(code, { code, name, countries: [], usageCount: 0 });
-    }
-    const curr = currencyMap.get(code)!;
-    if (!curr.countries.includes(country.code)) {
-      curr.countries.push(country.code);
+      const curr = currencyMap.get(code)!;
       curr.usageCount++;
-    }
-  });
+    });
+  }
 });
 
-const currenciesDataRaw = Array.from(currencyMap.values())
-  .sort((a, b) => a.code.localeCompare(b.code))
-  .map(curr => ({
-    code: curr.code,
-    name: curr.name,
-    usageCount: curr.usageCount,
-    countries: curr.countries.join(', ')
-  }));
+const data = Array.from(currencyMap.values()).sort((a, b) => a.code.localeCompare(b.code));
 
-const labels = {
-  code: lang === 'cs' ? 'Kód' : 'Code',
-  name: lang === 'cs' ? 'Název měny' : 'Currency Name',
-  usage: lang === 'cs' ? 'Země' : 'Countries',
-  list: lang === 'cs' ? 'Používáno v' : 'Used in',
-  search: lang === 'cs' ? 'Hledat...' : 'Search...',
-  title: lang === 'cs' ? 'Tabulka měn' : 'Currencies Table'
-};
+const columns = [
+  { key: 'code', label: lang === 'cs' ? 'Kód' : 'Code', isMono: true },
+  { key: 'name', label: lang === 'cs' ? 'Název měny' : 'Currency Name' },
+  { key: 'usageCount', label: lang === 'cs' ? 'Počet zemí' : 'Countries', isNumeric: true }
+];
+
+// Filtr pro měny (např. Major podle popularity)
+const filterOptions = [
+  { label: 'Common', value: 'common', count: data.filter(d => d.usageCount > 2).length },
+  { label: 'Rare', value: 'rare', count: data.filter(d => d.usageCount <= 2).length }
+];
 ---
 
-<StarlightPage frontmatter={{ title: labels.title, template: 'doc' }}>
-  <div class="table-controls">
-    <div class="search-box">
-      <input 
-        type="text" 
-        id="tableSearch" 
-        placeholder={labels.search} 
-        aria-label={labels.search}
-      />
-    </div>
-    
-    <div class="export-group">
-      <span class="export-label">Export:</span>
-      <div class="export-buttons">
-        <button class="export-btn" data-type="json">JSON</button>
-        <button class="export-btn" data-type="csv">CSV</button>
-        <button class="export-btn" data-type="xml">XML</button>
-        <button class="export-btn" data-type="yaml">YAML</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="table-wrapper">
-    <table id="currenciesTable">
-      <thead>
-        <tr>
-          <th data-sort="code" style="width: 80px;">{labels.code} <Icon name="lucide:arrow-up-down" /></th>
-          <th data-sort="name">{labels.name} <Icon name="lucide:arrow-up-down" /></th>
-          <th data-sort="usageCount" style="width: 80px;">{labels.usage} <Icon name="lucide:arrow-up-down" /></th>
-          <th>{labels.list}</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody">
-        {currenciesDataRaw.map(curr => (
-          <tr data-item={JSON.stringify(curr)}>
-            <td class="mono">
-              <a href={`/${lang}/currencies/${curr.code.toLowerCase()}/`} class="detail-link">
-                {curr.code}
-              </a>
-            </td>
-            <td class="currency-name-cell">{curr.name}</td>
-            <td class="text-center"><strong>{curr.usageCount}</strong></td>
-            <td>
-              <div class="flag-list">
-                {curr.countries.split(', ').map(cCode => (
-                  <a href={`/${lang}/countries/${cCode.toLowerCase()}/`} title={t(cCode as any) || cCode}>
-                    <span class:list={['fi', `fi-${cCode.toLowerCase()}`]}></span>
-                  </a>
-                ))}
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-</StarlightPage>
-
-<style>
-  .table-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-    padding: 0.75rem 1rem;
-    background: var(--sl-color-gray-6);
-    border: 1px solid var(--sl-color-hairline);
-    border-radius: 0.5rem;
-  }
-
-  .search-box {
-    flex: 1;
-    min-width: 200px;
-  }
-
-  .search-box input {
-    width: 100%;
-    height: 1.8rem;
-    padding: 0 0.75rem;
-    background: var(--sl-color-bg);
-    color: var(--sl-color-white);
-    border: 1px solid var(--sl-color-gray-4);
-    border-radius: 4px;
-    font-size: 0.85rem;
-  }
-
-  .export-group {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .export-label {
-    font-size: 0.7rem;
-    font-weight: bold;
-    color: var(--sl-color-gray-3);
-    text-transform: uppercase;
-  }
-
-  .export-buttons {
-    display: flex;
-    background: var(--sl-color-gray-4);
-    border: 1px solid var(--sl-color-gray-4);
-    border-radius: 4px;
-    overflow: hidden;
-    gap: 1px;
-  }
-
-  .export-btn {
-    appearance: none;
-    margin: 0;
-    border: none;
-    height: 1.6rem;
-    display: flex;
-    align-items: center;
-    padding: 0 0.6rem;
-    background: var(--sl-color-gray-5);
-    color: var(--sl-color-white);
-    cursor: pointer;
-    font-size: 0.7rem;
-    font-weight: 600;
-    transition: background 0.2s ease;
-  }
-
-  .export-btn:hover {
-    background: var(--sl-color-accent-low);
-  }
-
-  .table-wrapper {
-    overflow-x: auto;
-    border: 1px solid var(--sl-color-hairline);
-    border-radius: 0.5rem;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.8rem; /* Menší písmo pro kompaktnost */
-    margin: 0;
-  }
-
-  th {
-    background: var(--sl-color-gray-6);
-    padding: 0.5rem 0.75rem; /* Tenčí řádky */
-    text-align: left;
-    cursor: pointer;
-    white-space: nowrap;
-    border-bottom: 2px solid var(--sl-color-hairline);
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.02em;
-  }
-
-  td {
-    padding: 0.4rem 0.75rem; /* Tenčí řádky */
-    border-bottom: 1px solid var(--sl-color-hairline);
-    vertical-align: middle;
-  }
-
-  tr:hover td {
-    background: rgba(var(--sl-color-accent-rgb, 59, 130, 246), 0.05);
-  }
-
-  .mono {
-    font-family: var(--sl-font-mono);
-    color: var(--sl-color-accent-high);
-    font-weight: 700;
-  }
-
-  .currency-name-cell {
-    font-weight: 500;
-    color: var(--sl-color-gray-2);
-  }
-
-  .text-center {
-    text-align: center;
-  }
-
-  .detail-link {
-    text-decoration: none !important;
-    color: inherit !important;
-  }
-
-  .flag-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-  }
-
-  .fi {
-    width: 1.1em;
-    line-height: 1em;
-    border-radius: 1px;
-  }
-
-  th svg {
-    width: 12px;
-    height: 12px;
-    margin-left: 2px;
-    opacity: 0.5;
-  }
-
-  @media (max-width: 45rem) {
-    .table-controls { flex-direction: column; align-items: stretch; gap: 0.75rem; }
-  }
-</style>
-
-<script>
-  // Script zůstává funkčně stejný, jen počítá s novým polem 'name'
-  const searchInput = document.getElementById('tableSearch') as HTMLInputElement | null;
-  const table = document.getElementById('currenciesTable') as HTMLTableElement | null;
-  const tableBody = document.getElementById('tableBody');
-  const exportBtns = document.querySelectorAll('.export-btn');
-  
-  if (searchInput && table && tableBody) {
-    const rows = Array.from(tableBody.querySelectorAll('tr'));
-
-    searchInput.addEventListener('input', () => {
-      const term = searchInput.value.toLowerCase();
-      rows.forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
-      });
-    });
-
-    table.querySelectorAll('th[data-sort]').forEach(th => {
-      th.addEventListener('click', () => {
-        const col = th.getAttribute('data-sort');
-        if (!col) return;
-        const isAsc = th.classList.contains('asc');
-        
-        const sortedRows = rows.sort((a, b) => {
-          const dataA = JSON.parse(a.getAttribute('data-item') || '{}');
-          const dataB = JSON.parse(b.getAttribute('data-item') || '{}');
-          const valA = dataA[col];
-          const valB = dataB[col];
-          
-          if (col === 'usageCount') {
-            return isAsc ? Number(valB) - Number(valA) : Number(valA) - Number(valB);
-          }
-          
-          return isAsc 
-            ? String(valB).localeCompare(String(valA)) 
-            : String(valA).localeCompare(String(valB));
-        });
-
-        table.querySelectorAll('th').forEach(h => h.classList.remove('asc', 'desc'));
-        th.classList.toggle('asc', !isAsc);
-        th.classList.toggle('desc', isAsc);
-        tableBody.append(...sortedRows);
-      });
-    });
-
-    exportBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const type = btn.getAttribute('data-type');
-        const visibleData = rows
-          .filter(r => r.style.display !== 'none')
-          .map(r => JSON.parse(r.getAttribute('data-item') || '{}'));
-
-        if (visibleData.length === 0) return;
-
-        let content = '';
-        let mime = 'text/plain';
-
-        if (type === 'json') {
-          content = JSON.stringify(visibleData, null, 2);
-          mime = 'application/json';
-        } else if (type === 'csv') {
-          const keys = Object.keys(visibleData[0]);
-          content = [keys.join(','), ...visibleData.map(row => keys.map(k => `"${String(row[k]).replace(/"/g, '""')}"`).join(','))].join('\n');
-          mime = 'text/csv';
-        } else if (type === 'yaml') {
-          content = visibleData.map(obj => Object.entries(obj).map(([k, v]) => `${k}: "${v}"`).join('\n')).join('\n---\n');
-          mime = 'text/yaml';
-        } else if (type === 'xml') {
-          content = `<?xml version="1.0" encoding="UTF-8"?>\n<currencies>\n` + 
-            visibleData.map(obj => `  <currency>\n${Object.entries(obj).map(([k, v]) => `    <${k}>${v}</${k}>`).join('\n')}\n  </currency>`).join('\n') + 
-            `\n</currencies>`;
-          mime = 'application/xml';
-        }
-
-        const blob = new Blob([content], { type: mime });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `currencies_export.${type}`;
-        a.click();
-        URL.revokeObjectURL(url);
-      });
-    });
-  }
-</script>
+<TabGridLayout 
+  title={lang === 'cs' ? 'Měny' : 'Currencies'}
+  data={data}
+  columns={columns}
+  lang={lang}
+  basePath={`/${lang}/currencies`}
+  accentColor="#eab308"
+  filterLabel={lang === 'cs' ? 'Výskyt' : 'Occurrence'}
+  filterOptions={filterOptions}
+  searchPlaceholder={lang === 'cs' ? 'Hledat měnu...' : 'Search currency...'}
+  viewOptions={[
+    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
+    { id: 'grid', label: 'Grid', icon: 'fa-solid fa-coins' },
+    { id: 'net', label: 'Net', icon: 'lucide:network' }
+  ]}
+/>
