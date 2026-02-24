@@ -1,8 +1,5 @@
 ---
-// pages/[lang]/countries/index.astro
-import WideLayout from '@/components/root/layout/Wide.astro';
-import ViewTable from '@/components/root/view/Table.astro';
-import ViewGrid from '@/components/root/view/Grid.astro';
+import TabGridLayout from '@/components/root/TabGridNetLayout.astro';
 import { 
   getI18nPaths, 
   countriesData, 
@@ -10,6 +7,7 @@ import {
   getMledozeData, 
   getCountryName 
 } from '@/content/config/i18n';
+import FlagGrid from '@/components/geo/Flags.astro';
 
 export async function getStaticPaths() { return getI18nPaths(); }
 const { lang = 'en' } = Astro.params;
@@ -90,7 +88,7 @@ const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map
 }));
 ---
 
-<WideLayout 
+<TabGridLayout 
   title={lang === 'cs' ? "Země světa" : "Countries"}
   data={data}
   graphData={graphData}
@@ -117,7 +115,8 @@ const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map
     { id: 'yaml', label: 'YAML Config', extension: '.yaml', icon: 'fa-file-lines' },
     { id: 'csv', label: 'CSV Config', extension: '.yaml', icon: 'fa-file-csv' }
   ]}
->
-  <ViewTable slot="table" data={data} columns={columns} basePath={basePath} lang={lang} />
-  <ViewGrid slot="grid" data={data} columns={columns} basePath={basePath} />
-</WideLayout>
+
+  <div slot="view-flags">
+     <FlagGrid countries={data} />
+  </div>
+/>

@@ -1,0 +1,102 @@
+---
+import { Icon } from 'astro-icon/components';
+
+interface Column {
+  key: string;
+  label: string;
+  isMono?: boolean;
+  isNative?: boolean;
+  isNumeric?: boolean;
+}
+
+interface Props {
+  data: any[];
+  columns: Column[];
+  basePath: string;
+  lang: string;
+}
+
+const { data, columns, basePath, lang } = Astro.props;
+---
+<!-- Používá item-row, aby fungoval filtr z WideLayout.astro. -->
+<!-- Řeší pouze tabulku a její vnitřní řazení. -->
+<div class="table-container glass-panel shadow-unified">
+  <table id="atlasTable">
+    <thead>
+      <tr>
+        {columns.map(col => (
+          <th data-sort={col.key}>
+            <div class="th-content">
+              <span>{col.label}</span>
+              <Icon name="lucide:arrow-up-down" class="sort-icon" />
+            </div>
+          </th>
+        ))}
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      {data.map(item => (
+        <tr 
+          class="item-row table-row" 
+          data-id={item.code} 
+          data-json={JSON.stringify(item)} 
+          data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}
+        >
+          {columns.map(col => (
+            <td class:list={[{ 'mono': col.isMono, 'native-col': col.isNative }]}>
+              {col.key === 'name' ? (
+                <a href={`${basePath}/${item.code?.toLowerCase()}/`} class="item-link">
+                  {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`]}></span>}
+                  {item[col.key]}
+                </a>
+              ) : (
+                col.isNumeric && typeof item[col.key] === 'number' ? item[col.key].toLocaleString(lang) : item[col.key]
+              )}
+            </td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .table-container { overflow-x: auto; width: 100%; margin-top: 1rem; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  th { background: var(--accent-bg) !important; color: var(--accent) !important; padding: 0.75rem 1rem; text-align: left; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid var(--sl-color-gray-5); }
+  td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--sl-color-gray-6); font-size: 0.85rem; }
+  tbody tr:hover { background: var(--accent-bg); }
+  .th-content { display: flex; align-items: center; gap: 0.5rem; }
+  .sort-icon { width: 14px; height: 14px; opacity: 0.5; }
+  .item-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent) !important; text-decoration: none !important; font-weight: 700; }
+  .mono { font-family: var(--sl-font-mono); color: var(--accent); font-weight: 600; }
+</style>
+
+<script>
+  function initTableSort() {
+    const tableBody = document.getElementById('tableBody');
+    
+    document.addEventListener('click', (e) => {
+      const th = (e.target as HTMLElement).closest('th[data-sort]');
+      if (!th || !tableBody) return;
+
+      const col = th.getAttribute('data-sort')!;
+      const isAsc = th.classList.contains('asc');
+      const rows = Array.from(tableBody.querySelectorAll('.table-row'));
+
+      const sorted = rows.sort((a, b) => {
+        const vA = JSON.parse(a.getAttribute('data-json') || '{}')[col];
+        const vB = JSON.parse(b.getAttribute('data-json') || '{}')[col];
+        return isAsc ? (vA > vB ? -1 : 1) : (vA > vB ? 1 : -1);
+      });
+
+      document.querySelectorAll('th').forEach(h => h.classList.remove('asc', 'desc'));
+      th.classList.toggle('asc', !isAsc);
+      th.classList.toggle('desc', isAsc);
+
+      sorted.forEach(row => tableBody.appendChild(row));
+    });
+  }
+  initTableSort();
+  document.addEventListener('astro:after-swap', initTableSort);
+</script>

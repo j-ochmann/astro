@@ -1,0 +1,57 @@
+---
+interface Props {
+  data: any[];
+  columns: Column[]; // Použijeme pro metadata na kartě
+  basePath: string;
+}
+
+const { data, columns, basePath } = Astro.props;
+---
+<!-- Používá item-row, aby fungoval filtr z WideLayout.astro. -->
+<!-- Řeší pouze vizuál Grid Cards -->
+<div class="grid-wrapper" id="gridContainer">
+  {data.map(item => (
+    <div 
+      class="atlas-card glass-panel shadow-unified item-row grid-card" 
+      data-id={item.code} 
+      data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}
+    >
+      <div class="card-header">
+        {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'flag-small']}></span>}
+        <span class="card-code">{item.code}</span>
+      </div>
+      <h3 class="card-title">{item.name}</h3>
+      <div class="card-meta">
+         {columns.slice(2, 6).map(col => (
+           <div class="meta-item">
+              <span>{col.label}:</span> 
+              <strong>{item[col.key]}</strong>
+           </div>
+         ))}
+      </div>
+      <div class="card-action">
+        <a href={`${basePath}/${item.code?.toLowerCase()}/`} class="glass-button">Detail</a>
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .grid-wrapper { 
+    display: grid !important; 
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important; 
+    gap: 0.75rem !important; 
+    margin-top: 1rem;
+  }
+  .atlas-card { padding: 1rem; display: flex; flex-direction: column; transition: all 0.2s ease; position: relative; min-height: 180px; height: 100%; overflow: hidden; }
+  .atlas-card:hover { border-color: var(--accent) !important; transform: translateY(-3px); }
+  .card-title { margin: 0.5rem 0 0.75rem 0 !important; font-size: 1rem !important; color: var(--sl-color-white) !important; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; }
+  .card-code { font-family: var(--sl-font-mono); font-size: 0.65rem; color: var(--accent); border: 1px solid var(--accent-border); padding: 1px 6px; border-radius: 4px; }
+  .meta-item { display: flex; justify-content: space-between; font-size: 0.75rem; border-bottom: 1px solid var(--sl-color-gray-6); padding: 4px 0; }
+  .card-action { position: absolute; bottom: 0; left: 0; right: 0; padding: 0.75rem; transform: translateY(100%); transition: 0.3s ease; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
+  .atlas-card:hover .card-action { transform: translateY(0); }
+  .glass-button { display: block; text-align: center; background: var(--accent); color: white !important; border-radius: 0.4rem; padding: 0.5rem; font-weight: bold; text-decoration: none !important; font-size: 0.8rem; }
+  
+  :global([data-theme="light"]) .card-action { background: rgba(255, 255, 255, 0.95); border-top: 1px solid var(--sl-color-gray-5); }
+</style>

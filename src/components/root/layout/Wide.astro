@@ -1,0 +1,163 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
+
+interface Props {
+  title: string;
+  accentColor?: string;
+  searchPlaceholder: string;
+  filterLabel: string;
+  filterOptions: { label: string; value: string; count: number }[];
+  viewOptions: { id: string; label: string; icon: string }[];
+  exportOptions: { id: string; label: string; extension: string; icon: string }[];
+}
+
+const { 
+  title, 
+  accentColor = "#9d7cfd",
+  searchPlaceholder, 
+  filterLabel, 
+  filterOptions,
+  viewOptions,
+  exportOptions
+} = Astro.props;
+---
+
+<StarlightPage frontmatter={{ title: title, tableOfContents: false }}>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+  <div class="atlas-container" 
+    style={`--accent: ${accentColor}; --accent-bg: ${accentColor}26; --accent-border: ${accentColor}66; --filter-accent-color: ${accentColor}; --filter-accent-bg: ${accentColor}26; --filter-accent-border: ${accentColor}66;`}
+  >
+    <div class="controls-row dynamic-accent">
+      <SearchFilterBar 
+        searchPlaceholder={searchPlaceholder}
+        filterLabel={filterLabel}
+        filterOptions={filterOptions}
+        viewLabel="View"
+        downloadLabel="Export"
+        viewOptions={viewOptions}
+        exportOptions={exportOptions}
+      />
+    </div>
+
+    <div class="view-manager">
+      {viewOptions.map((view, index) => (
+        <div id={`view-${view.id}`} class:list={["view-section", { "active": index === 0 }]}>
+          <slot name={view.id} />
+        </div>
+      ))}
+    </div>
+  </div>
+</StarlightPage>
+
+<style is:global>
+  /* Reset Starlight šířky na Full Width */
+  h1 { padding-left: 1.5rem !important; }
+  .main-frame { width: 100% !important; max-width: 100% !important; }
+  .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 0 !important; }
+  .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
+  .sl-markdown-content { max-width: 100% !important; }
+
+  /* Společné styly pro panely napříč všemi View */
+  .glass-panel {
+    background: rgba(20, 20, 25, 0.5) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 0.75rem;
+  }
+  .shadow-unified { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important; }
+  [data-theme="light"] .glass-panel {
+    background: rgba(255, 255, 255, 0.4) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
+</style>
+
+<style>
+  .atlas-container { width: 100%; margin-top: -1rem; padding: 0 1.5rem; }  
+  .view-section { display: none !important; width: 100%; }
+  .view-section.active { display: block !important; }
+</style>
+
+<script>
+  function initWideLayout() {
+    const searchInput = document.getElementById('searchTab') as HTMLInputElement;
+    let activeCategory = "";
+
+    const closeAllDropdowns = () => {
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+    };
+
+    // Centralizovaný filtr pro všechny elementy s třídou .item-row
+    const runFilter = () => {
+      const term = searchInput?.value.toLowerCase() || "";
+      const items = document.querySelectorAll('.item-row');
+      
+      items.forEach(el => {
+        const htmlEl = el as HTMLElement;
+        const text = htmlEl.innerText.toLowerCase();
+        const cat = htmlEl.getAttribute('data-category') || "";
+        const matchesSearch = text.includes(term);
+        const matchesCat = activeCategory === "" || cat === activeCategory;
+        htmlEl.style.display = (matchesSearch && matchesCat) ? '' : 'none';
+      });
+
+      // Custom event pro specifické potřeby (např. re-init grafu)
+      document.dispatchEvent(new CustomEvent('atlas:filter', { detail: { term, category: activeCategory } }));
+    };
+
+    searchInput?.addEventListener('input', runFilter);
+
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      
+      // 1. Dropdown Toggles
+      const btn = target.closest('.glass-btn');
+      if (btn) {
+        e.stopPropagation();
+        const menu = btn.nextElementSibling;
+        const isShown = menu?.classList.contains('show');
+        closeAllDropdowns();
+        if (!isShown) menu?.classList.add('show');
+        return;
+      }
+
+      // 2. Kliknutí mimo - zavřít vše
+      if (!target.closest('.dropdown')) closeAllDropdowns();
+
+      // 3. Přepínání pohledů (View Switcher)
+      const viewItem = target.closest('.view-item');
+      if (viewItem) {
+        const viewId = viewItem.getAttribute('data-view');
+        document.querySelectorAll('.view-item').forEach(b => b.classList.remove('active'));
+        viewItem.classList.add('active');
+        
+        document.querySelectorAll('.view-section').forEach(s => {
+          const isActive = s.id === `view-${viewId}`;
+          s.classList.toggle('active', isActive);
+        });
+        
+        closeAllDropdowns();
+        // Event pro komponenty, které potřebují vědět, že jsou vidět (D3, Mapy)
+        document.dispatchEvent(new CustomEvent('atlas:view-change', { detail: { viewId } }));
+        return;
+      }
+
+      // 4. Filtrování kategorií
+      const catItem = target.closest('.cat-item');
+      if (catItem) {
+        activeCategory = catItem.getAttribute('data-cat') || "";
+        const label = catItem.querySelector('.item-label')?.textContent || "";
+        const btnText = document.querySelector('#catBtn .btn-text');
+        if (btnText) btnText.textContent = label;
+        runFilter();
+        closeAllDropdowns();
+        return;
+      }
+    });
+  }
+
+  // Astro lifecycle
+  window.addEventListener('load', initWideLayout);
+  document.addEventListener('astro:after-swap', initWideLayout);
+</script>
