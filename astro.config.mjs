@@ -60,6 +60,7 @@ export default defineConfig({
         { icon: 'rss', label: 'RSS', href: '/rss.xml' },
       ],
       components: {
+        PageTitle: './src/components/starlight/PageTitle.astro',
         ThemeSelect: './src/components/starlight/ThemeSelect.astro',
         LanguageSelect: './src/components/starlight/LanguageSelect.astro',
         Search: './src/components/Search.astro',
@@ -170,11 +171,11 @@ export default defineConfig({
             //   translations: { cs: 'Tabulka jazyků' },
             //   link: '/languages/table/'
             // },
-            { 
-              label: 'Speech Test', 
-              translations: { cs: 'Dostupnost jazyků' },
-              link: '/languages/speech/'
-            },
+            // { 
+            //   label: 'Speech Test', 
+            //   translations: { cs: 'Dostupnost jazyků' },
+            //   link: '/languages/speech/'
+            // },
             { 
               label: 'Currencies', 
               translations: { cs: 'Měny' },

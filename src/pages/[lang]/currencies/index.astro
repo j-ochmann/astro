@@ -1,299 +1,66 @@
 ---
-import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+// src/pages/[lang]/currencies/index.astro
+import TabGridLayout from '@/components/root/TabGridLayout.astro';
 import { getI18nPaths, countriesData, useTranslations } from '@/content/config/i18n';
 
-export async function getStaticPaths() {
-  return getI18nPaths();
-}
+export async function getStaticPaths() { return getI18nPaths(); }
 
 const { lang } = Astro.params;
 const t = useTranslations(lang);
 
+// Inicializace lokalizovaných názvů (např. 'cs' pro češtinu)
 const currencyNames = new Intl.DisplayNames([lang || 'en'], { type: 'currency' });
 
 const allCountries = Object.values(countriesData);
-const currencyMap = new Map<string, { code: string; name: string; countries: string[] }>();
+const currencyMap = new Map<string, { code: string, name: string, usageCount: number }>();
 
 allCountries.forEach((country: any) => {
-  country.currency?.forEach((currCode: string) => {
-    const code = currCode.toUpperCase();
-    if (!currencyMap.has(code)) {
-      let name = code;
-      try {
-        name = currencyNames.of(code) || code;
-      } catch (e) {
-        name = code;
+  if (country.currency) {
+    country.currency.forEach((currCode: string) => {
+      const code = currCode.toUpperCase();
+      if (!currencyMap.has(code)) {
+        let name = code;
+        try {
+          name = currencyNames.of(code) || code;
+        } catch (e) {
+          name = code;
+        }
+        currencyMap.set(code, { code, name, usageCount: 0 });
       }
-      currencyMap.set(code, { code, name, countries: [] });
-    }
-    const curr = currencyMap.get(code)!;
-    if (!curr.countries.includes(country.code)) {
-      curr.countries.push(country.code);
-    }
-  });
+      const curr = currencyMap.get(code)!;
+      curr.usageCount++;
+    });
+  }
 });
 
-const sortedCurrencies = Array.from(currencyMap.values()).sort((a, b) => 
-  a.code.localeCompare(b.code)
-);
+const data = Array.from(currencyMap.values()).sort((a, b) => a.code.localeCompare(b.code));
 
-const letters = [...new Set(sortedCurrencies.map(c => c.code[0]))].sort();
+const columns = [
+  { key: 'code', label: lang === 'cs' ? 'Kód' : 'Code', isMono: true },
+  { key: 'name', label: lang === 'cs' ? 'Název měny' : 'Currency Name' },
+  { key: 'usageCount', label: lang === 'cs' ? 'Počet zemí' : 'Countries', isNumeric: true }
+];
 
-const headings = letters.map(letter => ({
-  depth: 2,
-  slug: `letter-${letter.toLowerCase()}`,
-  text: letter
-}));
-
-const title = lang === 'cs' ? 'Měny světa' : 'World Currencies';
-const RAY_COUNT = 65;
+// Filtr pro měny (např. Major podle popularity)
+const filterOptions = [
+  { label: 'Common', value: 'common', count: data.filter(d => d.usageCount > 2).length },
+  { label: 'Rare', value: 'rare', count: data.filter(d => d.usageCount <= 2).length }
+];
 ---
 
-<StarlightPage 
-  frontmatter={{ 
-    title: title, 
-    template: 'doc',
-    description: lang === 'cs' ? 'Seznam všech používaných měn' : 'List of all currencies'
-  }}
-  headings={headings}
->
-  <div class="pyth-visual-context">
-    <div class="wormhole-background" aria-hidden="true">
-      <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="ray-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="10%" stop-color="var(--sl-color-accent)" stop-opacity="0" />
-            <stop offset="40%" stop-color="var(--sl-color-accent)" stop-opacity="0.4" />
-            <stop offset="90%" stop-color="var(--sl-color-accent-high)" stop-opacity="0" />
-          </linearGradient>
-        </defs>
-        
-        <g transform="translate(750, 350)">
-          <g>
-            <animateTransform 
-              attributeName="transform" 
-              type="rotate" 
-              from="0" to="360" 
-              dur="160s" 
-              repeatCount="indefinite" />
-            
-            {Array.from({ length: RAY_COUNT }).map((_, i) => (
-              <rect 
-                x="-1" y="100" 
-                width="1.5" height="1000" 
-                fill="url(#ray-gradient)" 
-                transform={`rotate(${(360 / RAY_COUNT) * i})`}
-              />
-            ))}
-          </g>
-          <circle r="150" fill="var(--sl-color-bg)" filter="blur(40px)" />
-        </g>
-      </svg>
-    </div>
-
-    <div class="currency-grid-container">
-      {letters.map(letter => (
-        <section class="letter-section">
-          <h2 id={`letter-${letter.toLowerCase()}`}>{letter}</h2>
-          <div class="currency-grid">
-            {sortedCurrencies
-              .filter(c => c.code.startsWith(letter))
-              .map(curr => (
-                <a href={`/${lang}/currencies/${curr.code.toLowerCase()}/`} class="currency-card">
-                  <div class="glow-bg"></div>
-                  
-                  <div class="card-content">
-                    <p class="sr-only">{curr.name} ({curr.code})</p>
-                    
-                    <div class="card-header" aria-hidden="true">
-                      <div class="code-box">
-                        <span class="code">{curr.code}</span>
-                      </div>
-                      <div class="currency-label">
-                        {curr.name}
-                      </div>
-                    </div>
-                    
-                    <div class="info" aria-hidden="true">
-                      <div class="flag-mini-list">
-                        {curr.countries.slice(0, 8).map(cCode => (
-                          <span class:list={['fi', `fi-${cCode.toLowerCase()}`]} title={cCode}></span>
-                        ))}
-                        {curr.countries.length > 8 && <span class="more">+{curr.countries.length - 8}</span>}
-                      </div>
-                    </div>
-                  </div>
-                </a>
-              ))}
-          </div>
-        </section>
-      ))}
-    </div>
-  </div>
-</StarlightPage>
-
-<style is:global>
-  /* ZESKLOVATĚNÍ HLAVNÍCH PRVKŮ */
-  header.header {
-    background-color: rgba(var(--sl-color-bg-nav-rgb), 0.7) !important;
-    backdrop-filter: blur(12px) !important;
-  }
-
-  .right-sidebar, starlight-toc {
-    background-color: rgba(var(--sl-color-bg-nav-rgb), 0.2) !important;
-    backdrop-filter: blur(12px) !important;
-  }
-
-  /* Průhlednost panelů aby pozadí prosvítalo */
-  .main-frame, .content-panel, .sl-container, .main-pane {
-    background-color: transparent !important;
-  }
-</style>
-
-<style>
-  .pyth-visual-context {
-    position: relative;
-    /* Vyrovnání paddingu Starlightu pro efekt přes celou plochu */
-    margin: -2rem -3rem;
-    padding: 2rem 3rem;
-  }
-
-  .wormhole-background {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-color: var(--sl-color-bg);
-  }
-
-  svg {
-    width: 100%;
-    height: 100%;
-    opacity: 0.8;
-  }
-
-  .currency-grid-container {
-    position: relative;
-    z-index: 10;
-  }
-
-  .sr-only {
-    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
-  }
-
-  .currency-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
-  }
-
-  /* KARTA - Původní design */
-  .currency-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: 1.25rem;
-    text-decoration: none;
-    border-radius: 1rem;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    color: var(--sl-color-white) !important;
-  }
-
-  .currency-card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(var(--sl-color-accent-rgb), 0.2) 0%, transparent 60%);
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    z-index: 0;
-  }
-
-  .glow-bg {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: radial-gradient(circle at 50% 50%, rgba(var(--sl-color-accent-rgb), 0.15) 0%, transparent 70%);
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    z-index: 1;
-  }
-
-  .currency-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(var(--sl-color-accent-rgb), 0.4);
-    background: rgba(255, 255, 255, 0.06);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-  }
-
-  .currency-card:hover::before,
-  .currency-card:hover .glow-bg {
-    opacity: 1;
-  }
-
-  /* LIGHT MODE ADAPTACE */
-  :root[data-theme='light'] .currency-card {
-    background: rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    color: var(--sl-color-gray-1) !important;
-  }
-  :root[data-theme='light'] .currency-card:hover {
-    background: rgba(0, 0, 0, 0.05);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
-  }
-
-  .card-content {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-    gap: 1rem;
-  }
-
-  .code-box {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 1.5rem;
-    line-height: 1;
-    color: var(--sl-color-accent-high);
-  }
-
-  .currency-label {
-    font-size: 0.85rem;
-    color: var(--sl-color-gray-3);
-    font-weight: 500;
-    margin-top: 0.25rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  :root[data-theme='light'] .currency-label { color: var(--sl-color-gray-4); }
-
-  .flag-mini-list {
-    display: flex; gap: 0.35rem; flex-wrap: wrap; align-items: center;
-    padding-top: 0.75rem; border-top: 1px solid rgba(128, 128, 128, 0.15);
-  }
-
-  .fi { font-size: 0.9rem; border-radius: 2px; filter: saturate(0.8); }
-  .currency-card:hover .fi { filter: saturate(1.1); }
-  
-  .more {
-    font-size: 0.7rem; color: var(--sl-color-accent-high); 
-    font-weight: 700; background: rgba(var(--sl-color-accent-rgb), 0.1);
-    padding: 2px 6px; border-radius: 4px;
-  }
-
-  h2 {
-    scroll-margin-top: 5rem; margin-top: 4rem;
-    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.5rem;
-    opacity: 0.2; margin-bottom: -1.5rem;
-  }
-</style>
+<TabGridLayout 
+  title={lang === 'cs' ? 'Měny' : 'Currencies'}
+  data={data}
+  columns={columns}
+  lang={lang}
+  basePath={`/${lang}/currencies`}
+  accentColor="#eab308"
+  filterLabel={lang === 'cs' ? 'Výskyt' : 'Occurrence'}
+  filterOptions={filterOptions}
+  searchPlaceholder={lang === 'cs' ? 'Hledat měnu...' : 'Search currency...'}
+  viewOptions={[
+    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
+    { id: 'grid', label: 'Grid', icon: 'fa-solid fa-coins' },
+    { id: 'net', label: 'Net', icon: 'lucide:network' }
+  ]}
+/>
