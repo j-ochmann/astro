@@ -107,7 +107,7 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
               {isFontAwesome(view.icon) ? (
                 <i class:list={[view.icon, "fa-fw"]}></i>
               ) : (
-                <iconify-icon icon={view.icon} style="font-size: 1rem; color: var(--accent-color);"></iconify-icon>
+                <iconify-icon icon={view.icon} style="font-size: 1rem;"></iconify-icon>
               )}
               <span>{view.label}</span>
             </span>
