@@ -116,7 +116,7 @@ const {
                {columns.slice(2, 6).map(col => (
                  <div class="meta-item">
                     <span>{col.label}:</span> 
-                    <strong class="meta-value">{col.isNumeric && typeof item[col.key] === 'number' ? item[col.key].toLocaleString(lang) : item[col.key]}</strong>
+                    <strong>{col.isNumeric && typeof item[col.key] === 'number' ? item[col.key].toLocaleString(lang) : item[col.key]}</strong>
                  </div>
                ))}
             </div>
@@ -140,6 +140,7 @@ const {
 </StarlightPage>
 
 <style is:global>
+  /* FULL WIDTH */
   .main-frame { width: 100% !important; max-width: 100% !important; }
   .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 0 !important; }
   .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
@@ -147,6 +148,7 @@ const {
   .sl-markdown-content > div:first-child { margin-top: 0 !important; }
   .grid-wrapper > * { margin: 0 !important; }
 
+  /* SEARCH BAR THEME */
   .dynamic-accent {
     --accent-color: var(--accent, #3b82f6) !important;
     --accent-bg: rgba(59, 130, 246, 0.1) !important;
@@ -155,33 +157,13 @@ const {
 </style>
 
 <style>
-  .atlas-container { 
-    width: 100%; 
-    margin-top: -1rem; 
-    padding: 0 1.5rem;
-    --panel-bg: rgba(20, 20, 25, 0.5);
-    --header-bg: rgba(255, 255, 255, 0.05);
-    --panel-border: var(--sl-color-gray-5);
-    --action-bg: rgba(0, 0, 0, 0.6);
-    --text-main: var(--sl-color-white);
-    --text-muted: var(--sl-color-gray-3);
-  }
-
-  :global([data-theme="light"]) .atlas-container {
-    --panel-bg: rgba(245, 245, 250, 0.8);
-    --header-bg: rgba(0, 0, 0, 0.05);
-    --panel-border: var(--sl-color-gray-4);
-    --action-bg: rgba(255, 255, 255, 0.8);
-    --text-main: var(--sl-color-black);
-    --text-muted: var(--sl-color-gray-5);
-  }
-
-  .atlas-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--panel-border); padding-bottom: 1rem; }
-  .atlas-header h1 { font-size: 2.5rem !important; margin: 0 !important; color: var(--text-main) !important; }
+  .atlas-container { width: 100%; margin-top: -1rem; padding: 0 1.5rem; }
+  .atlas-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--sl-color-gray-5); padding-bottom: 1rem; }
+  .atlas-header h1 { font-size: 2.5rem !important; margin: 0 !important; }
 
   .glass-panel {
-    background: var(--panel-bg);
-    border: 1px solid var(--panel-border);
+    background: var(--sl-color-bg-nav);
+    border: 1px solid var(--sl-color-gray-5);
     border-radius: 0.75rem;
     backdrop-filter: blur(12px);
   }
@@ -189,11 +171,37 @@ const {
   .view-section { display: none !important; width: 100%; }
   .view-section.active { display: block !important; }
 
-  /* TABLE */
   .table-wrapper { overflow-x: auto; margin-top: 1rem; width: 100%; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; color: var(--text-main); }
-  th { background: var(--header-bg); padding: 0.75rem 1rem; text-align: left; cursor: pointer; color: var(--text-main); }
-  td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--panel-border); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  
+  th { 
+    background: var(--sl-color-gray-6); 
+    padding: 0.75rem 1rem; 
+    text-align: left; 
+    cursor: pointer; 
+    color: var(--sl-color-white);
+  }
+
+  td { 
+    padding: 0.75rem 1rem; 
+    border-bottom: 1px solid var(--sl-color-gray-6); 
+  }
+
+  /* Téma úpravy */
+  :global([data-theme="light"]) .glass-panel {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: var(--sl-color-gray-4);
+  }
+
+  :global([data-theme="light"]) th {
+    background: var(--sl-color-gray-5);
+    color: var(--sl-color-black);
+  }
+
+  :global([data-theme="light"]) td {
+    border-bottom-color: var(--sl-color-gray-5);
+  }
+
   .item-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent) !important; text-decoration: none !important; font-weight: 500; }
 
   /* GRID */
@@ -205,27 +213,47 @@ const {
   }
   
   .atlas-card { padding: 1.5rem; display: flex; flex-direction: column; transition: all 0.25s ease; position: relative; overflow: hidden; min-height: 220px; }
-  .atlas-card:hover { border-color: var(--accent); transform: translateY(-5px); }
-  .atlas-card h3 { margin: 0.5rem 0 1rem 0 !important; font-size: 1.25rem !important; color: var(--text-main) !important; }
+  .atlas-card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 12px 40px -12px rgba(0,0,0,0.5); }
   
-  .card-code { font-family: var(--sl-font-mono); font-size: 0.75rem; color: var(--text-muted); padding: 2px 8px; border: 1px solid var(--panel-border); border-radius: 4px; }
-  
-  /* ACTION LAYER ADAPTATION */
-  .card-action { 
-    position: absolute; bottom: 0; left: 0; right: 0; padding: 0.8rem; 
-    transform: translateY(100%); transition: 0.3s ease; 
-    background: var(--action-bg); 
-    backdrop-filter: blur(8px); 
-    border-top: 1px solid var(--panel-border);
+  .atlas-card h3 { 
+    margin: 0.5rem 0 1rem 0 !important; 
+    font-size: 1.25rem !important; 
+    color: var(--sl-color-white) !important; 
   }
+  
+  .card-header { display: flex; justify-content: space-between; align-items: center; }
+  .card-code { font-family: var(--sl-font-mono); font-size: 0.75rem; opacity: 0.6; padding: 2px 8px; border: 1px solid currentColor; border-radius: 4px; }
+  
+  /* ACTION PANEL FIX */
+  .card-action { 
+    position: absolute; 
+    bottom: 0; 
+    left: 0; 
+    right: 0; 
+    padding: 0.8rem; 
+    transform: translateY(100%); 
+    transition: 0.3s ease; 
+    background: rgba(0,0,0,0.8); 
+    backdrop-filter: blur(8px); 
+  }
+
+  :global([data-theme="light"]) .card-action {
+    background: rgba(255, 255, 255, 0.9);
+    border-top: 1px solid var(--sl-color-gray-4);
+  }
+
   .atlas-card:hover .card-action { transform: translateY(0); }
   .glass-button { display: block; text-align: center; background: var(--accent); color: white !important; border-radius: 0.5rem; padding: 0.6rem; font-weight: bold; text-decoration: none !important; }
 
   .card-meta { flex-grow: 1; }
-  .meta-item { display: flex; justify-content: space-between; font-size: 0.85rem; border-bottom: 1px solid var(--panel-border); padding: 6px 0; color: var(--text-muted); }
-  .meta-value { color: var(--text-main); }
+  .meta-item { display: flex; justify-content: space-between; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 6px 0; }
+  
+  :global([data-theme="light"]) .meta-item {
+    border-bottom-color: rgba(0,0,0,0.08);
+  }
+
   .mono { font-family: var(--sl-font-mono); color: var(--accent); font-weight: 600; }
-  .empty-state { padding: 6rem; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .empty-state { padding: 6rem; text-align: center; opacity: 0.4; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 </style>
 
 <script>
