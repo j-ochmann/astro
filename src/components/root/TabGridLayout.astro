@@ -73,7 +73,7 @@ const {
     </div>
 
     <div id="view-table" class="view-section active">
-      <div class="table-wrapper glass-panel shadow-pyth">
+      <div class="table-wrapper glass-panel shadow-heavy">
         <table id="atlasTable">
           <thead>
             <tr>
@@ -112,7 +112,7 @@ const {
     <div id="view-grid" class="view-section">
       <div class="grid-wrapper" id="gridContainer">
         {data.map(item => (
-          <div class="atlas-card glass-panel shadow-pyth item-row grid-card" data-id={item.code} data-json={JSON.stringify(item)} data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}>
+          <div class="atlas-card glass-panel shadow-heavy item-row grid-card" data-id={item.code} data-json={JSON.stringify(item)} data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}>
             <div class="card-header">
               {item.code && <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'flag-small']}></span>}
               <span class="card-code">{item.code}</span>
@@ -153,21 +153,20 @@ const {
   .atlas-container { width: 100%; margin-top: -1rem; padding: 0 1.5rem; }
   .atlas-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--sl-color-gray-5); padding-bottom: 1rem; }
   
-  /* GLASS PANEL DESIGN DLE SEARCHFILTERBAR */
+  /* GLASS PANEL S PŘEVZATÝM STÍNEM */
   .glass-panel {
-    background: rgba(20, 20, 25, 0.5) !important;
-    backdrop-filter: blur(20px) saturate(180%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: rgba(var(--sl-color-bg-nav-rgb), 0.85) !important;
+    backdrop-filter: blur(30px) !important;
+    border: 1px solid var(--sl-color-gray-5) !important;
     border-radius: 0.75rem;
   }
 
-  .shadow-pyth {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  .shadow-heavy {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
   }
 
   :global([data-theme="light"]) .glass-panel {
-    background: rgba(255, 255, 255, 0.4) !important;
-    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    background: rgba(255, 255, 255, 0.7) !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
   }
 
@@ -191,6 +190,9 @@ const {
   td { padding: 1rem; border-bottom: 1px solid var(--sl-color-gray-6); }
   tbody tr:hover { background: var(--accent-bg); transition: background 0.2s ease; }
 
+  .th-content { display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+  .sort-icon { width: 14px; height: 14px; opacity: 0.6; }
+
   .item-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--accent) !important; text-decoration: none !important; font-weight: 700; }
 
   /* GRID VIEW */
@@ -201,7 +203,7 @@ const {
   .card-header { display: flex; justify-content: space-between; align-items: center; }
   .card-code { font-family: var(--sl-font-mono); font-size: 0.7rem; color: var(--accent); border: 1px solid var(--accent-border); padding: 2px 8px; border-radius: 4px; }
   
-  /* ACTION PANEL S OPRAVENÝM LIGHT REŽIMEM */
+  /* ACTION PANEL FIX */
   .card-action { 
     position: absolute; 
     bottom: 0; 
@@ -210,12 +212,12 @@ const {
     padding: 1rem; 
     transform: translateY(100%); 
     transition: 0.3s ease; 
-    background: rgba(0,0,0,0.85); 
+    background: rgba(0,0,0,0.8); 
     backdrop-filter: blur(10px); 
   }
 
   :global([data-theme="light"]) .card-action {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.9);
     border-top: 1px solid var(--sl-color-gray-5);
   }
 
@@ -234,7 +236,7 @@ const {
     const gridContainer = document.getElementById('gridContainer');
     let activeCategory = "";
 
-    const closeAllMenus = () => {
+    const closeAllDropdowns = () => {
       document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
     };
 
@@ -254,23 +256,23 @@ const {
     document.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
 
-      // Dropdown toggle
+      // 1. Otevírání dropdownů
       const btn = target.closest('.glass-btn');
       if (btn) {
         e.stopPropagation();
         const dropdown = btn.nextElementSibling;
         const isShown = dropdown?.classList.contains('show');
-        closeAllMenus();
+        closeAllDropdowns();
         if (!isShown) dropdown?.classList.add('show');
         return;
       }
 
-      // Kliknutí mimo menu
+      // 2. Kliknutí mimo dropdown zavře vše
       if (!target.closest('.dropdown')) {
-        closeAllMenus();
+        closeAllDropdowns();
       }
 
-      // Kategorie - filtr
+      // 3. Výběr filtru kategorie
       const catItem = target.closest('.cat-item');
       if (catItem) {
         activeCategory = catItem.getAttribute('data-cat') || "";
@@ -278,22 +280,22 @@ const {
         const btnTextElem = document.querySelector('#catBtn .btn-text');
         if (btnTextElem) btnTextElem.textContent = labelText;
         filterAll();
-        closeAllMenus(); // Oprava zavírání
+        closeAllDropdowns(); // Opravené zavírání
         return;
       }
 
-      // View switcher
+      // 4. Přepínání pohledů
       const viewItem = target.closest('.view-item');
       if (viewItem) {
         const viewId = viewItem.getAttribute('data-view');
         document.querySelectorAll('.view-item').forEach(b => b.classList.remove('active'));
         viewItem.classList.add('active');
         document.querySelectorAll('.view-section').forEach(s => s.classList.toggle('active', s.id === `view-${viewId}`));
-        closeAllMenus(); // Oprava zavírání
+        closeAllDropdowns(); // Opravené zavírání
         return;
       }
 
-      // Sort logic
+      // 5. Řazení
       const th = target.closest('th[data-sort]');
       if (th) {
         const col = th.getAttribute('data-sort');
