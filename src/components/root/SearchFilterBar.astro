@@ -4,6 +4,7 @@ interface FilterOption {
   label: string;
   value: string;
   count?: number;
+  color?: string; // PŘIDÁNO: barva pro badge
 }
 
 interface ViewOption {
@@ -87,7 +88,14 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
             {filterOptions.map(opt => (
               <button class="cat-item menu-btn" data-cat={opt.value}>
                 <span class="item-label">{opt.label}</span>
-                {opt.count !== undefined && <span class="badge-cat">{opt.count}</span>}
+                {opt.count !== undefined && (
+                  <span 
+                    class="badge-cat" 
+                    style={opt.color ? `background-color: ${opt.color}22 !important; color: ${opt.color} !important; border-color: ${opt.color}44 !important; border-width: 1px; border-style: solid;` : ""}
+                  >
+                    {opt.count}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -141,7 +149,7 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
 </div>
 
 <style>
-  /* Zachování tvého původního CSS pro pozicování */
+  /* Původní styly zachovány beze změny */
   .dynamic-accent {
     --accent-color: var(--filter-accent-color, #9d7cfd);
     --accent-bg: var(--filter-accent-bg, rgba(157, 124, 253, 0.15));
@@ -166,7 +174,6 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
   .search-container { flex: 1; position: relative; }
   .export-group { gap: 0.5rem; }
 
-  /* Základní vzhled glass panelu (klidový stav) */
   .glass-panel.glass-panel {
     background: rgba(20, 20, 25, 0.5) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
@@ -183,14 +190,10 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
     color: var(--sl-color-gray-1) !important;
   }
 
-  /* --- Aktivní stavy (změna barvy rámečku) --- */
-  
-  /* Focus v search inputu */
   .main-input:focus {
     border-color: var(--accent-color) !important;
   }
 
-  /* Hover na tlačítka a focus inputu mění barvu i ve světlém módu */
   :global([data-theme="light"]) .main-input:focus,
   :global([data-theme="light"]) .glass-btn:hover {
     border-color: var(--accent-color) !important;
@@ -213,7 +216,6 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
     align-items: center;
   }
 
-  /* Rozsvícení lupy při focusu */
   .search-container:focus-within .search-icon-inside {
     color: var(--accent-color);
   }
