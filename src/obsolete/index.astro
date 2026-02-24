@@ -1,0 +1,63 @@
+---
+import TabGridLayout from '@/components/root/TabGridLayout.astro';
+import { getI18nPaths, countriesData, useTranslations } from '@/content/config/i18n';
+
+export async function getStaticPaths() { return getI18nPaths(); }
+const { lang } = Astro.params;
+const t = useTranslations(lang);
+
+// Transformace dat
+const data = Object.values(countriesData).map(c => ({
+  code: c.code,
+  name: lang === 'cs' ? (t(c.code as any) !== c.code ? t(c.code as any) : c.name) : c.name,
+  native: c.native,
+  capital: c.capital || '—',
+  continent: c.continent,
+  population: c.population,
+}));
+
+// Definice sloupců
+const columns = [
+  { key: 'code', label: 'Code', isMono: true },
+  { key: 'name', label: 'Country' },
+  { key: 'native', label: 'Native', isNative: true },
+  { key: 'capital', label: 'Capital' },
+  { key: 'continent', label: 'Continent' },
+  { key: 'population', label: 'Population', isNumeric: true }
+];
+
+// Možnosti filtru
+const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map(f => ({
+  label: f,
+  value: f.toLowerCase(),
+  count: data.filter(d => d.continent === f).length
+}));
+---
+
+<TabGridLayout 
+  title="Countries"
+  data={data}
+  columns={columns}
+  lang={lang}
+  basePath={`/${lang}/countries`}
+  accentColor="#10b981"
+  filterLabel="Continents"
+  filterOptions={filterOptions}
+  searchPlaceholder="Search..."
+  viewOptions={[
+    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
+    { id: 'grid', label: 'Grid', icon: 'fa-solid fa-grip' },
+    { id: 'net', label: 'Net', icon: 'lucide:network' },
+    { id: 'map', label: 'Map', icon: 'fa-solid fa-map' },
+    { id: 'globe', label: 'Globe', icon: 'fa-solid fa-globe' },
+    { id: 'flags', label: 'Flags', icon: 'fa-solid fa-flag' },
+    { id: 'orbicon', label: 'Orbicon', icon: 'fa-solid fa-bomb' }
+  ]}
+
+  exportOptions={[
+    { id: 'json', label: 'JSON Data', extension: '.json', icon: 'fa-file-code' },
+    { id: 'xml', label: 'XML Feed', extension: '.xml', icon: 'fa-file-export' },
+    { id: 'yaml', label: 'YAML Config', extension: '.yaml', icon: 'fa-file-lines' },
+    { id: 'csv', label: 'CSV Config', extension: '.yaml', icon: 'fa-file-csv' }
+  ]}
+/>

@@ -1,22 +1,75 @@
 ---
-import TabGridLayout from '@/components/root/TabGridLayout.astro';
-import { getI18nPaths, countriesData, useTranslations } from '@/content/config/i18n';
+import TabGridLayout from '@/components/root/TabGridNetLayout.astro';
+import { 
+  getI18nPaths, 
+  countriesData, 
+  useTranslations, 
+  getMledozeData, 
+  getCountryName 
+} from '@/content/config/i18n';
 
 export async function getStaticPaths() { return getI18nPaths(); }
-const { lang } = Astro.params;
+const { lang = 'en' } = Astro.params;
 const t = useTranslations(lang);
 
-// Transformace dat
+// 1. Transformace dat pro tabulku a grid
 const data = Object.values(countriesData).map(c => ({
   code: c.code,
-  name: lang === 'cs' ? (t(c.code as any) !== c.code ? t(c.code as any) : c.name) : c.name,
+  name: getCountryName(c.code, lang),
   native: c.native,
   capital: c.capital || '—',
   continent: c.continent,
   population: c.population,
 }));
 
-// Definice sloupců
+// 2. Příprava dat pro 3D Graf (Nodes & Links)
+const nodes = Object.values(countriesData).map(c => {
+  const mledoze = getMledozeData(c.code);
+  return {
+    id: c.code.toLowerCase(),
+    displayName: getCountryName(c.code, lang),
+    // Přidáváme neighbor_count pro dynamickou velikost kuliček
+    neighbor_count: mledoze?.borders?.length || 0,
+    // Přidáváme continents jako pole pro barvící logiku v komponentě
+    continents: [c.continent],
+    // Explicitní barva jako záloha
+    color: {
+      'EU': '#8FBC8F',
+      'AS': '#DCDCDC',
+      'AF': '#FF6347',
+      'NA': '#BA55D3',
+      'SA': '#FFA500',
+      'OC': '#1E90FF',
+      'AN': '#FFFFFF'
+    }[c.continent] || '#10b981'
+  };
+});
+
+const links: { source: string; target: string }[] = [];
+const processedPairs = new Set();
+
+Object.values(countriesData).forEach(c => {
+  const mledoze = getMledozeData(c.code);
+  if (mledoze?.borders) {
+    mledoze.borders.forEach(neighborCca3 => {
+      const neighborMledoze = getMledozeData(neighborCca3);
+      if (neighborMledoze) {
+        const source = c.code.toLowerCase();
+        const target = neighborMledoze.cca2.toLowerCase();
+        const pairId = [source, target].sort().join('-');
+        
+        if (!processedPairs.has(pairId) && countriesData[neighborMledoze.cca2.toUpperCase()]) {
+          links.push({ source, target });
+          processedPairs.add(pairId);
+        }
+      }
+    });
+  }
+});
+
+const graphData = { nodes, links };
+
+// 3. Definice sloupců
 const columns = [
   { key: 'code', label: 'Code', isMono: true },
   { key: 'name', label: 'Country' },
@@ -26,7 +79,7 @@ const columns = [
   { key: 'population', label: 'Population', isNumeric: true }
 ];
 
-// Možnosti filtru
+// 4. Možnosti filtru
 const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map(f => ({
   label: f,
   value: f.toLowerCase(),
@@ -35,15 +88,16 @@ const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map
 ---
 
 <TabGridLayout 
-  title="Countries"
+  title={lang === 'cs' ? "Země světa" : "Countries"}
   data={data}
+  graphData={graphData}
   columns={columns}
   lang={lang}
   basePath={`/${lang}/countries`}
   accentColor="#10b981"
-  filterLabel="Continents"
+  filterLabel={lang === 'cs' ? "Kontinenty" : "Continents"}
   filterOptions={filterOptions}
-  searchPlaceholder="Search..."
+  searchPlaceholder={lang === 'cs' ? "Hledat zemi..." : "Search country..."}
   viewOptions={[
     { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
     { id: 'grid', label: 'Grid', icon: 'fa-solid fa-grip' },

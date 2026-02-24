@@ -150,26 +150,26 @@ export default defineConfig({
               translations: { cs: 'Státy' },
               link: '/countries/' 
             },
-            { 
-              label: 'Countries Test', 
-              translations: { cs: 'Test sítě států' },
-              link: '/test/'
-            },
-            { 
-              label: 'Countries Network', 
-              translations: { cs: 'Síť států' },
-              link: '/countries/graph/'
-            },
+            // { 
+            //   label: 'Countries Test', 
+            //   translations: { cs: 'Test sítě států' },
+            //   link: '/test/'
+            // },
+            // { 
+            //   label: 'Countries Network', 
+            //   translations: { cs: 'Síť států' },
+            //   link: '/countries/graph/'
+            // },
             { 
               label: 'Languages', 
               translations: { cs: 'Jazyky' },
               link: '/languages/' 
             },
-            { 
-              label: 'Languages Table', 
-              translations: { cs: 'Tabulka jazyků' },
-              link: '/languages/table/'
-            },
+            // { 
+            //   label: 'Languages Table', 
+            //   translations: { cs: 'Tabulka jazyků' },
+            //   link: '/languages/table/'
+            // },
             { 
               label: 'Speech Test', 
               translations: { cs: 'Dostupnost jazyků' },
@@ -180,16 +180,16 @@ export default defineConfig({
               translations: { cs: 'Měny' },
               link: '/currencies/' 
             },
-            { 
-              label: 'Currencies Table', 
-              translations: { cs: 'Tabulka Měn' },
-              link: '/currencies/table/' 
-            },
-            { 
-              label: 'Notes & Articles',
-              translations: { cs: 'Poznámky a články' },
-              autogenerate: { directory: 'geo' } 
-            }
+            // { 
+            //   label: 'Currencies Table', 
+            //   translations: { cs: 'Tabulka Měn' },
+            //   link: '/currencies/table/' 
+            // },
+            // { 
+            //   label: 'Notes & Articles',
+            //   translations: { cs: 'Poznámky a články' },
+            //   autogenerate: { directory: 'geo' } 
+            // }
           ]
         },
       ],

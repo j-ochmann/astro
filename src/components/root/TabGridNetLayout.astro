@@ -137,9 +137,6 @@ const {
     <div id="view-net" class="view-section">
         <div class="graph-wrapper glass-panel shadow-unified">
             <svg id="main-graph"></svg>
-            <div class="graph-hint">
-                <span><i class="fa-solid fa-arrows-up-down-left-right"></i> Drag to Pan • <i class="fa-solid fa-magnifying-glass-plus"></i> Scroll to Zoom</span>
-            </div>
         </div>
     </div>
 
@@ -184,7 +181,6 @@ const {
   .glass-button { display: block; text-align: center; background: var(--accent); color: white !important; border-radius: 0.4rem; padding: 0.5rem; font-weight: bold; text-decoration: none !important; font-size: 0.8rem; }
 
   .graph-wrapper { position: relative; width: 100%; margin-top: 1rem; background: var(--sl-color-gray-6); overflow: hidden; }
-  .graph-hint { position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.6); color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.7rem; pointer-events: none; }
 </style>
 
 <script is:inline src="https://d3js.org/d3.v4.min.js"></script>
