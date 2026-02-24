@@ -58,9 +58,6 @@ const {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
   <div class="atlas-container" style={`--accent: ${accentColor}; --accent-bg: ${accentColor}26; --accent-border: ${accentColor}66; --filter-accent-color: ${accentColor}; --filter-accent-bg: ${accentColor}26; --filter-accent-border: ${accentColor}66;`}>
-    <header class="atlas-header">
-       <h1>{title}</h1>
-    </header>
 
     <div class="controls-row dynamic-accent">
       <SearchFilterBar 
@@ -137,6 +134,7 @@ const {
 </StarlightPage>
 
 <style is:global>
+  h1 { padding-left: 1.5rem !important; }
   .main-frame { width: 100% !important; max-width: 100% !important; }
   .content-panel { width: 100% !important; max-width: 100% !important; padding-inline: 0 !important; }
   .sl-container { margin-inline: 0 !important; max-width: 100% !important; }
@@ -145,9 +143,7 @@ const {
 </style>
 
 <style>
-  .atlas-container { width: 100%; margin-top: -1rem; padding: 0 1.5rem; }
-  .atlas-header { margin-bottom: 1.5rem; border-bottom: 1px solid var(--sl-color-gray-5); padding-bottom: 1rem; }
-  
+  .atlas-container { width: 100%; margin-top: -1rem; padding: 0 1.5rem; }  
   .dynamic-accent {
     --accent-color: var(--accent) !important;
     --accent-bg: var(--accent-bg) !important;

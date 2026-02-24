@@ -35,7 +35,7 @@ const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map
 ---
 
 <TabGridLayout 
-  title="Global Atlas"
+  title="Countries"
   data={data}
   columns={columns}
   lang={lang}
@@ -43,7 +43,7 @@ const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map
   accentColor="#10b981"
   filterLabel="Continents"
   filterOptions={filterOptions}
-  searchPlaceholder="Find anything..."
+  searchPlaceholder="Search..."
   viewOptions={[
     { id: 'table', label: 'Classic Table', icon: 'fa-table' },
     { id: 'grid', label: 'Photo Grid', icon: 'fa-grip' },
