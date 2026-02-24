@@ -6,14 +6,13 @@ interface Column {
 
 interface Props {
   data: any[];
-  columns: Column[]; // Použijeme pro metadata na kartě
+  columns: Column[];
   basePath: string;
 }
 
 const { data, columns, basePath } = Astro.props;
 ---
-<!-- Používá item-row, aby fungoval filtr z WideLayout.astro. -->
-<!-- Řeší pouze vizuál Grid Cards -->
+
 <div class="grid-wrapper" id="gridContainer">
   {data.map(item => (
     <div 
@@ -29,8 +28,8 @@ const { data, columns, basePath } = Astro.props;
       <div class="card-meta">
          {columns.slice(2, 6).map(col => (
            <div class="meta-item">
-              <span>{col.label}:</span> 
-              <strong>{item[col.key]}</strong>
+              <span class="meta-label">{col.label}</span> 
+              <strong class="meta-value">{item[col.key]}</strong>
            </div>
          ))}
       </div>
@@ -44,19 +43,113 @@ const { data, columns, basePath } = Astro.props;
 <style>
   .grid-wrapper { 
     display: grid !important; 
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important; 
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important; 
     gap: 0.75rem !important; 
     margin-top: 1rem;
+    align-items: stretch;
   }
-  .atlas-card { padding: 1rem; display: flex; flex-direction: column; transition: all 0.2s ease; position: relative; min-height: 180px; height: 100%; overflow: hidden; }
+
+  .atlas-card { 
+    padding: 0.65rem 0.75rem; 
+    display: flex; 
+    flex-direction: column; 
+    transition: all 0.2s ease; 
+    position: relative; 
+    min-height: 130px; 
+    height: 100%; 
+    overflow: hidden;
+    margin-top: 0 !important;
+  }
+
   .atlas-card:hover { border-color: var(--accent) !important; transform: translateY(-3px); }
-  .card-title { margin: 0.5rem 0 0.75rem 0 !important; font-size: 1rem !important; color: var(--sl-color-white) !important; }
-  .card-header { display: flex; justify-content: space-between; align-items: center; }
-  .card-code { font-family: var(--sl-font-mono); font-size: 0.65rem; color: var(--accent); border: 1px solid var(--accent-border); padding: 1px 6px; border-radius: 4px; }
-  .meta-item { display: flex; justify-content: space-between; font-size: 0.75rem; border-bottom: 1px solid var(--sl-color-gray-6); padding: 4px 0; }
-  .card-action { position: absolute; bottom: 0; left: 0; right: 0; padding: 0.75rem; transform: translateY(100%); transition: 0.3s ease; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
-  .atlas-card:hover .card-action { transform: translateY(0); }
-  .glass-button { display: block; text-align: center; background: var(--accent); color: white !important; border-radius: 0.4rem; padding: 0.5rem; font-weight: bold; text-decoration: none !important; font-size: 0.8rem; }
+
+  .card-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 0.75rem; /* Více prostoru pod vlajkou */
+  }
   
-  :global([data-theme="light"]) .card-action { background: rgba(255, 255, 255, 0.95); border-top: 1px solid var(--sl-color-gray-5); }
+  .card-code { 
+    font-family: var(--sl-font-mono); 
+    font-size: 0.6rem; 
+    color: var(--accent); 
+    border: 1px solid var(--accent-border); 
+    padding: 0px 4px; 
+    border-radius: 4px; 
+    line-height: 1.2;
+  }
+
+  .card-title { 
+    margin: 0 0 0.15rem 0 !important; /* Minimum prostoru pod jménem */
+    font-size: 0.95rem !important; 
+    color: #ffffff !important; /* Výchozí bílá pro dark */
+    line-height: 1.1;
+    font-weight: 700;
+  }
+
+  .card-meta { display: flex; flex-direction: column; gap: 0px; }
+  
+  .meta-item { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: baseline;
+    font-size: 0.68rem; 
+    border-bottom: 1px solid var(--sl-color-gray-6); 
+    padding: 1px 0; 
+    line-height: 1.2;
+  }
+
+  .meta-item:last-child { border-bottom: none; }
+
+  /* Barvy pro Dark Theme */
+  .meta-label { color: var(--sl-color-gray-4); }
+  .meta-value { color: var(--sl-color-gray-2); }
+
+  /* TOTÁLNÍ OPRAVA PRO LIGHT THEME */
+  /* Používáme html[data-theme='light'] pro maximální sílu selektoru */
+  :global(html[data-theme='light']) .card-title { 
+    color: #000000 !important; 
+  }
+  :global(html[data-theme='light']) .meta-label { 
+    color: #4b5563 !important; 
+  }
+  :global(html[data-theme='light']) .meta-value { 
+    color: #111827 !important; 
+  }
+  :global(html[data-theme='light']) .meta-item { 
+    border-bottom-color: #e5e7eb !important; 
+  }
+
+  .card-action { 
+    position: absolute; 
+    bottom: 0; 
+    left: 0; 
+    right: 0; 
+    padding: 0.5rem; 
+    transform: translateY(100%); 
+    transition: 0.3s ease; 
+    background: rgba(0,0,0,0.9); 
+    backdrop-filter: blur(10px); 
+    z-index: 10;
+  }
+
+  .atlas-card:hover .card-action { transform: translateY(0); }
+  
+  .glass-button { 
+    display: block; 
+    text-align: center; 
+    background: var(--accent); 
+    color: #ffffff !important; 
+    border-radius: 0.4rem; 
+    padding: 0.35rem; 
+    font-weight: bold; 
+    text-decoration: none !important; 
+    font-size: 0.75rem; 
+  }
+  
+  :global(html[data-theme='light']) .card-action { 
+    background: rgba(255, 255, 255, 0.95); 
+    border-top: 1px solid #e5e7eb; 
+  }
 </style>
