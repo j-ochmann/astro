@@ -51,7 +51,7 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
           </button>
           <div class="dropdown-content glass-panel" id="catMenu">
             <button class="cat-item menu-btn active" data-cat="">
-              <span class="item-label">All</span>
+              <span class="item-label">All Assets</span>
               <span class="badge-cat">{totalItemsSum}</span>
             </button>
             <div class="menu-divider"></div>
@@ -166,6 +166,12 @@ const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0),
     background: rgba(255, 255, 255, 0.4) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
     color: var(--sl-color-gray-1) !important;
+  }
+
+  /* Vynucení barevného rámečku ve světlém theme */
+  :global([data-theme="light"]) .main-input:focus,
+  :global([data-theme="light"]) .glass-btn:hover {
+    border-color: var(--accent-color) !important;
   }
 
   .main-input.main-input {

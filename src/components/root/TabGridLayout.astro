@@ -77,7 +77,12 @@ const {
           <thead>
             <tr>
               {columns.map(col => (
-                <th data-sort={col.key}>{col.label} <Icon name="lucide:arrow-up-down" /></th>
+                <th data-sort={col.key}>
+                  <div class="th-content">
+                    <span>{col.label}</span>
+                    <Icon name="lucide:arrow-up-down" class="sort-icon" />
+                  </div>
+                </th>
               ))}
             </tr>
           </thead>
@@ -174,6 +179,7 @@ const {
   .table-wrapper { overflow-x: auto; margin-top: 1rem; width: 100%; }
   table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   
+  /* HEADER ALIGNMENT FIX */
   th { 
     background: var(--sl-color-gray-6); 
     padding: 0.75rem 1rem; 
@@ -182,12 +188,25 @@ const {
     color: var(--sl-color-white);
   }
 
+  .th-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+  }
+
+  .sort-icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.5;
+  }
+
   td { 
     padding: 0.75rem 1rem; 
     border-bottom: 1px solid var(--sl-color-gray-6); 
   }
 
-  /* Téma úpravy */
+  /* Theme adjustments */
   :global([data-theme="light"]) .glass-panel {
     background: rgba(255, 255, 255, 0.8);
     border-color: var(--sl-color-gray-4);
@@ -224,7 +243,7 @@ const {
   .card-header { display: flex; justify-content: space-between; align-items: center; }
   .card-code { font-family: var(--sl-font-mono); font-size: 0.75rem; opacity: 0.6; padding: 2px 8px; border: 1px solid currentColor; border-radius: 4px; }
   
-  /* ACTION PANEL FIX */
+  /* ACTION PANEL (HOVER) */
   .card-action { 
     position: absolute; 
     bottom: 0; 
