@@ -14,12 +14,12 @@ const currencyNames = new Intl.DisplayNames([lang], { type: 'currency' });
 const allCountries = Object.values(countriesData);
 
 const groupColors: Record<string, string> = {
-  "Majors": "#FFD700",    // Zlatá (USD, EUR...)
-  "Europe": "#3498db",    // Modrá (CZK, PLN...)
-  "Americas": "#2ecc71",  // Zelená
-  "Asia": "#e74c3c",      // Červená
-  "Africa": "#e67e22",    // Oranžová
-  "Oceania": "#9b59b6"    // fialová
+  "Majors": "#FFD700",
+  "Europe": "#3498db",
+  "Americas": "#2ecc71",
+  "Asia": "#e74c3c",
+  "Africa": "#e67e22",
+  "Oceania": "#9b59b6"
 };
 
 const currencyMap = new Map<string, any>();
@@ -36,7 +36,7 @@ allCountries.forEach((country: any) => {
           name, 
           usageCount: 0, 
           continents: new Set<string>(),
-          countryCodes: [] // Seznam kódů zemí pro vlajky
+          countryCodes: [] 
         });
       }
       const curr = currencyMap.get(code)!;
@@ -62,30 +62,11 @@ const data = Array.from(currencyMap.values()).map(c => {
   return {
     ...c,
     id: c.code.toLowerCase(),
-    continent: group, // mapujeme na 'continent' kvůli komponentám Grid/Table
+    continent: group, 
     continentColor: groupColors[group] || "#94a3b8",
-    // Přidáme speciální vlajku pro EU u Eura
     flags: c.code === 'EUR' ? ['eu', ...c.countryCodes] : c.countryCodes
   };
 }).sort((a, b) => a.code.localeCompare(b.code));
-
-// Graf: Propojení měn sdílejících zemi
-const links: any[] = [];
-const processedLinks = new Set();
-data.forEach(currA => {
-  data.forEach(currB => {
-    if (currA.code !== currB.code) {
-      const common = currA.countryCodes.filter((code: string) => currB.countryCodes.includes(code));
-      if (common.length > 0) {
-        const linkId = [currA.code, currB.code].sort().join('-');
-        if (!processedLinks.has(linkId)) {
-          links.push({ source: currA.id, target: currB.id });
-          processedLinks.add(linkId);
-        }
-      }
-    }
-  });
-});
 
 const columns = [
   { key: 'code', label: lang === 'cs' ? 'Kód' : 'Code', isMono: true },
@@ -122,20 +103,3 @@ const filterOptions = Object.keys(groupColors).map(group => ({
   <ViewTable slot="table" data={data} columns={columns} basePath={basePath} lang={lang} />
   <ViewGrid slot="grid" data={data} columns={columns} basePath={basePath} />
 </WideLayout>
-
-<style is:global>
-  /* Speciální úprava pro zobrazení více vlajek v tabulce měn */
-  .col-code-flag {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    max-width: 180px;
-    overflow: hidden;
-  }
-  
-  .table-flag-container {
-    display: flex;
-    gap: 2px;
-  }
-
-</style>

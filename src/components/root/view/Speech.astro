@@ -1,0 +1,280 @@
+---
+import { Icon } from 'astro-icon/components';
+
+interface Props {
+  data: any[];
+  lang: string;
+}
+
+const { data, lang } = Astro.props;
+
+const allLangs = data.map(l => ({
+  code: l.code,
+  nameEn: l.nameEn,
+  native: l.native,
+  usageCount: l.usageCount || 0,
+  isoLength: l.code.length,
+  flags: l.flags || []
+}));
+
+const playIconHtml = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+---
+
+<div class="speech-view-container">
+  <section class="debug-section glass-panel">
+    <div class="section-header">
+      <h3 class="flex items-center gap-2">
+        <Icon name="lucide:cpu" class="w-5 h-5" />
+        {lang === 'cs' ? 'Systémové hlasy (Engine)' : 'System Voice Engine'}
+      </h3>
+      <button id="playAllVoices" class="action-btn">
+        <Icon name="lucide:play" /> {lang === 'cs' ? 'Přehrát vše' : 'Play All'}
+      </button>
+    </div>
+    
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th class="w-1">#</th>
+            <th>Kód</th>
+            <th>Jazyk</th>
+            <th>Název (Engine)</th>
+            <th class="w-1">Local</th>
+            <th class="w-1">Akce</th>
+          </tr>
+        </thead>
+        <tbody id="systemVoicesBody">
+          <tr><td colspan="6" class="p-4 text-center">Načítám hlasy ze systému...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="debug-section glass-panel">
+    <div class="section-header">
+      <h3 class="flex items-center gap-2">
+        <Icon name="lucide:languages" class="w-5 h-5" />
+        {lang === 'cs' ? 'Audit kompatibility webu' : 'Web Compatibility Audit'}
+      </h3>
+    </div>
+
+    <div class="controls-grid">
+      <div class="filter-group">
+        <span class="filter-label">ISO:</span>
+        <label><input type="checkbox" id="v-filterISO2" checked /> 639-1</label>
+        <label><input type="checkbox" id="v-filterISO3" checked /> 639-3</label>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Status:</span>
+        <label><input type="checkbox" id="v-filterOK" checked /> <span class="status-ok">OK</span></label>
+        <label><input type="checkbox" id="v-filterNE" checked /> <span class="status-err">NE</span></label>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th class="w-1">#</th>
+            <th class="w-1">ISO</th>
+            <th>{lang === 'cs' ? 'Název' : 'Name'}</th>
+            <th class="w-1">{lang === 'cs' ? 'Státy' : 'States'}</th>
+            <th class="w-1">Status</th>
+            <th class="w-1">Test</th>
+          </tr>
+        </thead>
+        <tbody id="myLangsBody">
+          {allLangs.map((l, index) => (
+            <tr data-item={JSON.stringify(l)} data-iso={l.isoLength} class="speech-audit-row">
+              <td class="row-index">{index + 1}</td>
+              <td><code class="mono">{l.code}</code></td>
+              <td>
+                <div class="flex flex-col">
+                  <strong>{l.nameEn}</strong>
+                  <small class="opacity-60">{l.native}</small>
+                </div>
+              </td>
+              <td>
+                 <div class="flex gap-1 items-center">
+                    <span class="font-bold mr-1">{l.usageCount}</span>
+                    <div class="flex gap-0.5">
+                      {l.flags?.slice(0, 4).map((f: string) => (
+                          <span class:list={['fi', `fi-${f}`, 'mini-flag']}></span>
+                      ))}
+                    </div>
+                 </div>
+              </td>
+              <td class="status-cell">---</td>
+              <td>
+                <button class="play-btn" data-code={l.code} data-text={l.native} disabled>
+                   <Fragment set:html={playIconHtml} />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<style>
+  .speech-view-container { display: flex; flex-direction: column; gap: 2rem; margin-top: 1rem; }
+  .debug-section { padding: 1.5rem; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+  
+  .action-btn { 
+    display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; 
+    background: var(--sl-color-accent-low); color: var(--sl-color-accent); 
+    border: 1px solid var(--sl-color-accent); border-radius: 6px; cursor: pointer; font-weight: 600; 
+  }
+
+  .controls-grid { 
+    display: flex; gap: 2rem; padding: 1rem; background: var(--sl-color-gray-6); 
+    border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--sl-color-hairline);
+  }
+
+  .filter-group { display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; }
+  .filter-label { font-weight: bold; color: var(--sl-color-gray-3); text-transform: uppercase; font-size: 0.7rem; }
+  
+  .table-wrapper { border-radius: 8px; border: 1px solid var(--sl-color-hairline); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { background: var(--sl-color-gray-6); padding: 0.75rem; text-align: left; font-size: 0.7rem; text-transform: uppercase; }
+  td { padding: 0.75rem; border-top: 1px solid var(--sl-color-hairline); }
+
+  .status-ok { color: #22c55e; font-weight: bold; }
+  .status-err { color: #ef4444; font-weight: bold; }
+  
+  .play-btn, .sys-play-btn { 
+    background: var(--sl-color-accent); color: white; border: none; border-radius: 50%; 
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; 
+    cursor: pointer; opacity: 0.2; transition: all 0.2s; 
+  }
+  .play-btn:not(:disabled), .sys-play-btn { opacity: 1; }
+  .play-btn:hover:not(:disabled), .sys-play-btn:hover { transform: scale(1.1); }
+
+  .mini-flag { width: 14px; height: 10px; border-radius: 1px; flex-shrink: 0; }
+  .mono { font-family: var(--sl-font-mono); color: var(--sl-color-accent); }
+  .active-voice-row { background: var(--sl-color-accent-low) !important; }
+</style>
+
+<script is:inline define:vars={{ playIconHtml }}>
+  const synth = window.speechSynthesis;
+  let cachedVoices = [];
+  let isLooping = false;
+
+  function getBestVoice(langCode) {
+    const cleanCode = langCode.toLowerCase().split('-')[0];
+    const available = cachedVoices.filter(v => 
+      v.lang.toLowerCase().replace('_', '-').startsWith(cleanCode)
+    );
+    return available.find(v => v.name.includes('Google') || v.name.includes('Microsoft')) 
+           || available.find(v => v.localService) 
+           || available[0];
+  }
+
+  function updateVoices() {
+    const rawVoices = synth.getVoices();
+    if (rawVoices.length === 0) return;
+
+    cachedVoices = rawVoices.filter((v, index, self) =>
+      index === self.findIndex((t) => t.lang === v.lang && t.name === v.name)
+    ).slice(0, 150);
+
+    const sysBody = document.getElementById('systemVoicesBody');
+    if (sysBody) {
+      sysBody.innerHTML = cachedVoices.map((v, index) => `
+        <tr class="sys-voice-row">
+          <td>${index + 1}</td>
+          <td><code class="mono">${v.lang}</code></td>
+          <td><strong>${v.name.split(' ')[0]}</strong></td>
+          <td><small>${v.name}</small></td>
+          <td>${v.localService ? '✅' : '🌐'}</td>
+          <td><button class="sys-play-btn" data-idx="${index}">${playIconHtml}</button></td>
+        </tr>
+      `).join('');
+    }
+
+    document.querySelectorAll('.speech-audit-row').forEach(row => {
+      const data = JSON.parse(row.getAttribute('data-item'));
+      const statusCell = row.querySelector('.status-cell');
+      const btn = row.querySelector('.play-btn');
+      const match = getBestVoice(data.code);
+
+      if (match) {
+        statusCell.innerHTML = `<span class="status-ok">OK</span>`;
+        row.setAttribute('data-status', 'OK');
+        btn.disabled = false;
+      } else {
+        statusCell.innerHTML = `<span class="status-err">NE</span>`;
+        row.setAttribute('data-status', 'NE');
+        btn.disabled = true;
+      }
+    });
+  }
+
+  async function speak(voice, text) {
+    return new Promise(resolve => {
+      synth.cancel();
+      setTimeout(() => {
+        const ut = new SpeechSynthesisUtterance(text);
+        ut.voice = voice;
+        ut.lang = voice.lang;
+        ut.onend = () => setTimeout(resolve, 300);
+        ut.onerror = () => resolve();
+        synth.speak(ut);
+      }, 100);
+    });
+  }
+
+  // Play All Logic
+  const playAllBtn = document.getElementById('playAllVoices');
+  playAllBtn?.addEventListener('click', async () => {
+    if (isLooping) {
+      isLooping = false;
+      synth.cancel();
+      playAllBtn.innerHTML = 'Play All';
+      return;
+    }
+    
+    if (cachedVoices.length === 0) return;
+    
+    isLooping = true;
+    playAllBtn.innerHTML = 'Stop Loop';
+    const rows = document.querySelectorAll('.sys-voice-row');
+
+    for (let i = 0; i < cachedVoices.length; i++) {
+      if (!isLooping) break;
+      rows.forEach(r => r.classList.remove('active-voice-row'));
+      rows[i]?.classList.add('active-voice-row');
+      
+      const v = cachedVoices[i];
+      await speak(v, `Testing ${v.name}`);
+    }
+    
+    isLooping = false;
+    playAllBtn.innerHTML = 'Play All';
+    rows.forEach(r => r.classList.remove('active-voice-row'));
+  });
+
+  document.addEventListener('click', e => {
+    const sysBtn = e.target.closest('.sys-play-btn');
+    if (sysBtn) {
+      const v = cachedVoices[sysBtn.dataset.idx];
+      speak(v, `Test: ${v.name}`);
+    }
+
+    const playBtn = e.target.closest('.play-btn');
+    if (playBtn && !playBtn.disabled) {
+      const v = getBestVoice(playBtn.dataset.code);
+      if (v) speak(v, playBtn.dataset.text);
+    }
+  });
+
+  if (typeof speechSynthesis !== 'undefined') {
+    speechSynthesis.onvoiceschanged = updateVoices;
+    updateVoices();
+    setTimeout(updateVoices, 800);
+  }
+</script>

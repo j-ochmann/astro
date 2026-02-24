@@ -55,7 +55,11 @@ const groupColumn = columns.find(col => col.key === 'continent');
     </thead>
     <tbody id="tableBody">
       {data.map((item, index) => (
-        <tr class="item-row table-row" data-json={JSON.stringify(item)}>
+        <tr 
+          class="item-row table-row" 
+          data-json={JSON.stringify(item)}
+          data-category={item.continent?.toLowerCase() || ""}
+        >
           <td class="num-col index-cell">{index + 1}</td>
           <td class="col-code mono">{item.code}</td>
           <td class="col-name">

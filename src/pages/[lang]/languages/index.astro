@@ -1,89 +1,98 @@
 ---
-// src/pages/[lang]/languages/index.astro
-import TabGridLayout from '@/components/root/TabGridLayout.astro';
+import WideLayout from '@/components/root/layout/Wide.astro';
+import ViewTable from '@/components/root/view/TableLanguages.astro';
+import ViewGrid from '@/components/root/view/Grid.astro';
+import ViewSpeech from '@/components/root/view/Speech.astro';
 import { 
   getI18nPaths, 
   useTranslations,
   getUsedLanguagesData,
-  getUnusedLanguagesData
+  getUnusedLanguagesData,
+  countriesData
 } from '@/content/config/i18n';
 
 export async function getStaticPaths() { return getI18nPaths(); }
 
-const { lang } = Astro.params;
+const { lang = 'en' } = Astro.params;
 const t = useTranslations(lang);
+const basePath = `/${lang}/languages`;
 
 const usedLangs = getUsedLanguagesData();
 const unusedLangs = getUnusedLanguagesData();
+const allCountries = Object.values(countriesData);
 
-const data = ([...usedLangs, ...unusedLangs] as any[]).map(l => ({
-  code: l.code,
-  nameEn: l.nameEn,
-  native: l.native,
-  type: l.type,
-  usageCount: Number(l.usageCount || 0)
-}));
+const typeColors: Record<string, string> = {
+  "Slavic": "#3498db",
+  "Germanic": "#2ecc71",
+  "Romance": "#e74c3c",
+  "Constructed": "#f1c40f",
+  "Living": "#2ecc71",
+  "Other": "#95a5a6"
+};
+
+const langToCountries = new Map<string, string[]>();
+allCountries.forEach((country: any) => {
+  const lData = country.language || country.languages;
+  if (!lData) return;
+  const codes = typeof lData === 'object' && !Array.isArray(lData) 
+    ? Object.keys(lData) 
+    : Array.isArray(lData) ? lData : [lData];
+  codes.forEach((rawCode: any) => {
+    const code = String(rawCode).toLowerCase();
+    if (!langToCountries.has(code)) langToCountries.set(code, []);
+    langToCountries.get(code)!.push(country.code.toLowerCase());
+  });
+});
+
+const data = ([...usedLangs, ...unusedLangs] as any[]).map(l => {
+  const code = l.code.toLowerCase();
+  const flags = langToCountries.get(code) || [];
+  return {
+    ...l,
+    id: code,
+    usageCount: flags.length,
+    flags: flags,
+    typeColor: typeColors[l.type] || "#94a3b8"
+  };
+}).sort((a, b) => b.usageCount - a.usageCount || a.nameEn.localeCompare(b.nameEn));
 
 const columns = [
   { key: 'code', label: 'ISO', isMono: true },
-  { key: 'nameEn', label: lang === 'cs' ? 'Anglicky' : 'English' },
+  { key: 'nameEn', label: lang === 'cs' ? 'Jazyk' : 'Language' },
   { key: 'native', label: lang === 'cs' ? 'Nativně' : 'Native', isNative: true },
-  { key: 'type', label: lang === 'cs' ? 'Typ' : 'Type' },
-  { key: 'usageCount', label: lang === 'cs' ? 'Počet zemí' : 'Countries', isNumeric: true }
+  { key: 'type', label: lang === 'cs' ? 'Kategorie' : 'Category' },
+  { key: 'usageCount', label: lang === 'cs' ? 'Státy' : 'States', isNumeric: true }
 ];
 
 const filterOptions = Array.from(new Set(data.map(l => l.type))).sort().map(f => ({
   label: f,
   value: f.toLowerCase(),
-  count: data.filter(d => d.type === f).length
+  count: data.filter(d => d.type === f).length,
+  color: typeColors[f] || "#94a3b8"
 }));
+
+const viewOptions = [
+    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
+    { id: 'grid',  label: 'Grid',  icon: 'fa-solid fa-grip' },
+    { id: 'speech', label: 'Speech Test', icon: 'fa-solid fa-microphone' }
+];
+
+const exportOptions = [
+    { id: 'json', label: 'JSON Data',   extension: '.json', icon: 'fa-solid fa-file-code' },
+    { id: 'csv',  label: 'CSV Data',    extension: '.csv',  icon: 'fa-solid fa-file-csv' }
+];
 ---
 
-<TabGridLayout 
-  title={String(t('world.nav.languages'))}
-  data={data}
-  columns={columns}
-  lang={lang}
-  basePath={`/${lang}/languages`}
-  accentColor="#3b82f6"
-  filterLabel={lang === 'cs' ? 'Typy' : 'Types'}
+<WideLayout 
+  title={lang === 'cs' ? "Světové jazyky" : "World Languages"}
+  searchPlaceholder={lang === 'cs' ? "Hledat jazyk..." : "Search language..."}
+  filterLabel={lang === 'cs' ? "Kategorie" : "Category"}
   filterOptions={filterOptions}
-  searchPlaceholder={String(t('atlas.table.search'))}
+  viewOptions={viewOptions}
+  exportOptions={exportOptions}
+  accentColor="#3b82f6"
 >
-  <a 
-    slot="title-after" 
-    href={`/${lang}/languages/speech/`} 
-    class="speech-btn"
-  >
-    <i class="fa-solid fa-microphone-lines"></i>
-    <span>Speech</span>
-  </a>
-</TabGridLayout>
-
-<style>
-  .speech-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.8rem;
-    background: var(--sl-color-gray-6);
-    border: 1px solid var(--sl-color-hairline);
-    border-radius: 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--sl-color-white) !important;
-    text-decoration: none !important;
-    transition: all 0.2s ease;
-    margin-left: 1rem;
-    vertical-align: middle;
-  }
-
-  .speech-btn:hover {
-    background: var(--sl-color-accent-low);
-    border-color: var(--sl-color-accent);
-  }
-
-  .speech-btn i {
-    color: var(--sl-color-accent);
-  }
-</style>
+  <ViewTable slot="table" data={data} columns={columns} basePath={basePath} lang={lang} />
+  <ViewGrid slot="grid" data={data} columns={columns} basePath={basePath} />
+  <ViewSpeech slot="speech" data={data} lang={lang} />
+</WideLayout>
