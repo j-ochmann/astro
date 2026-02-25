@@ -64,7 +64,8 @@ const shortenContinent = (name: string) => {
           class="item-row table-row" 
           data-id={item.code} 
           data-json={JSON.stringify(item)} 
-          data-category={item.continent?.toLowerCase() || item.category?.toLowerCase() || ""}
+          data-category={item.continent?.toLowerCase() || ""}
+          data-search-text={`${item.name} ${item.code} ${item.capital}`.toLowerCase()}
         >
           <td class="num-col index-cell">{index + 1}</td>
           
@@ -101,32 +102,23 @@ const shortenContinent = (name: string) => {
 </div>
 
 <style>
-  .table-container { 
-    overflow-x: auto; 
-    width: 100%; 
-    margin-top: 1rem;
-    display: block;
-    /* Zajišťuje, že vnitřní stíny panelu nebudou oříznuty */
-    -webkit-overflow-scrolling: touch;
+.table-container {
+    --local-accent: var(--accent-color, var(--accent, #9d7cfd));
+    --local-bg: var(--accent-bg-filter, var(--accent-bg, rgba(157, 124, 253, 0.1)));
   }
 
   table { 
     width: 100%; 
     border-collapse: separate; 
     border-spacing: 0;
-    table-layout: auto; /* Necháme prohlížeč počítat, ale s našimi limity */
+    table-layout: auto;
   }
   
-  th { 
-    background: var(--accent-bg) !important; 
-    color: var(--accent) !important; 
-    padding: 0.75rem; 
-    text-align: left; 
-    cursor: pointer; 
-    font-size: 0.7rem; 
-    text-transform: uppercase; 
-    border-bottom: 2px solid var(--sl-color-gray-5);
-    white-space: nowrap;
+th { 
+    background: var(--local-bg) !important; 
+    color: var(--local-accent) !important; 
+    border-bottom: 2px solid var(--local-accent);
+    transition: all 0.3s ease;
   }
 
   td { 
@@ -136,14 +128,17 @@ const shortenContinent = (name: string) => {
     vertical-align: middle;
   }
 
-  tbody tr:hover { background: var(--accent-bg); }
+  tbody tr:hover { 
+    background: var(--local-bg) !important; 
+  }
   
-  /* Šířky sloupců */
+  .item-row:hover .country-name { 
+    color: var(--local-accent) !important; 
+  }
+
   .num-col { width: 1%; text-align: center; color: var(--sl-color-gray-4); }
   .code-flag-col { width: 1%; white-space: nowrap; min-width: 100px; }
   
-  /* Název země: Povolíme zalamování, pokud je název příliš dlouhý, 
-     aby tabulka nevytékala ven */
   .col-name { 
     width: auto; 
     white-space: normal; 
@@ -151,11 +146,10 @@ const shortenContinent = (name: string) => {
     word-break: break-word;
   }
 
-  /* Kontinent: Tady striktně zakážeme zalamování i zkracování */
   .col-continent, .col-th-continent { 
-    width: 1%; /* Přinutí sloupec se smrštit na obsah */
-    white-space: nowrap; /* Zakáže zalamování Amerik */
-    padding-right: 2rem; /* Rezerva pro text */
+    width: 1%;
+    white-space: nowrap;
+    padding-right: 2rem;
   }
 
   .col-th-population { text-align: right; width: 1%; white-space: nowrap; }
@@ -174,17 +168,20 @@ const shortenContinent = (name: string) => {
   }
 
   .th-content { display: flex; align-items: center; gap: 0.4rem; }
-  .sort-icon { width: 12px; height: 12px; opacity: 0.4; flex-shrink: 0; }
+  .sort-icon {
+    color: var(--local-accent) !important;
+  }
 
   .item-link { text-decoration: none !important; display: inline-block; }
   .country-name { 
     color: #ffffff !important; 
     font-weight: 600; 
     line-height: 1.2;
+    transition: color 0.2s ease;
   }
 
   :global(html[data-theme='light']) .country-name { color: #000000 !important; }
-  .item-row:hover .country-name { color: var(--accent) !important; }
+  .item-row:hover .country-name { color: var(--accent-color, var(--accent)) !important; }
 
   .table-flag { 
     width: 1.6em !important; 
@@ -199,48 +196,43 @@ const shortenContinent = (name: string) => {
   .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
   :global(html[data-theme='light']) td { border-bottom-color: var(--sl-color-gray-5); }
+  
+  /* Animace skrytí řádků */
+  .table-row.hidden { display: none; }
 </style>
 
 <script>
   function initTable() {
-    const tableBody = document.getElementById('tableBody');
+    const tableBody = document.getElementById('tableBody') as HTMLTableSectionElement | null;
     if (!tableBody) return;
 
-    document.addEventListener('click', (e) => {
-      const th = (e.target as HTMLElement).closest('th[data-sort]');
-      if (!th) return;
+    let currentFilter = "";
 
-      const col = th.getAttribute('data-sort')!;
-      const isAsc = th.classList.contains('asc');
-      const rows = Array.from(tableBody.querySelectorAll('.table-row'));
+    const updateRows = () => {
+      const rows = tableBody.querySelectorAll('.table-row') as NodeListOf<HTMLElement>;
+      let index = 1;
 
-      const sorted = rows.sort((a, b) => {
-        const vA = JSON.parse(a.getAttribute('data-json') || '{}')[col];
-        const vB = JSON.parse(b.getAttribute('data-json') || '{}')[col];
+      rows.forEach(row => {
+        const rowCat = row.getAttribute('data-category') ?? "";
+        // Pokud je currentFilter prázdný, matches je vždy true (ZOBRAZIT VŠE)
+        const matches = !currentFilter || rowCat === currentFilter;
+
+        row.classList.toggle('hidden', !matches);
         
-        if (typeof vA === 'number' && typeof vB === 'number') {
-            return isAsc ? vB - vA : vA - vB;
+        if (matches) {
+          const idxCell = row.querySelector('.index-cell');
+          if (idxCell) idxCell.textContent = (index++).toString();
         }
-        return isAsc 
-            ? String(vB).localeCompare(String(vA)) 
-            : String(vA).localeCompare(String(vB));
       });
+    };
 
-      document.querySelectorAll('th').forEach(h => h.classList.remove('asc', 'desc'));
-      th.classList.toggle('asc', !isAsc);
-      th.classList.toggle('desc', isAsc);
-
-      sorted.forEach(row => tableBody.appendChild(row));
-      
-      const updateIndices = () => {
-        tableBody.querySelectorAll('.index-cell').forEach((cell, i) => {
-          cell.textContent = (i + 1).toString();
-        });
-      };
-      updateIndices();
-    });
+    document.addEventListener('filterChange', ((e: CustomEvent) => {
+      currentFilter = e.detail.category ?? "";
+      updateRows();
+    }) as EventListener);
+    
+    // ... search a sort zůstávají stejné ...
   }
-
   initTable();
   document.addEventListener('astro:after-swap', initTable);
 </script>

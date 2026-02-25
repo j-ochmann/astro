@@ -1,0 +1,429 @@
+---
+// src/components/root/SearchFilterBar.astro
+import { Icon } from 'astro-icon/components';
+
+interface FilterOption {
+  label: string;
+  value: string;
+  count?: number;
+  color?: string;
+}
+
+interface ViewOption {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+interface ExportOption {
+  id: string;
+  label: string;
+  extension: string;
+  icon: string;
+}
+
+interface Props {
+  searchPlaceholder?: string;
+  filterLabel?: string;
+  allLabel?: string; // PŘIDÁNO: label pro první položku
+  filterOptions?: FilterOption[];
+  viewLabel?: string;
+  downloadLabel?: string;
+  viewOptions?: ViewOption[];
+  exportOptions?: ExportOption[];
+  mainIcon?: string; // PŘIDÁNO: globe, languages, atd.
+}
+
+const { 
+  searchPlaceholder = "Search...", 
+  filterLabel = "Type",
+  allLabel = "All Items",
+  filterOptions = [],
+  viewLabel = "View",
+  downloadLabel = "Download",
+  mainIcon = "fa-solid fa-layer-group",
+  viewOptions = [
+    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
+    { id: 'grid', label: 'Grid', icon: 'fa-solid fa-table-cells-large' }
+  ],
+  exportOptions = [
+    { id: 'json', label: 'JSON', extension: '.json', icon: 'fa-solid fa-file-code' },
+    { id: 'csv', label: 'CSV', extension: '.csv', icon: 'fa-solid fa-file-csv' },
+    { id: 'xml', label: 'XML', extension: '.xml', icon: 'fa-solid fa-file-export' },
+    { id: 'yaml', label: 'YAML', extension: '.yaml', icon: 'fa-solid fa-file-lines' }
+  ]
+} = Astro.props;
+
+const totalTypesCount = filterOptions.length;
+const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0), 0);
+
+const isFontAwesome = (icon: string) => icon.includes(' ');
+---
+
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
+<div class="controls-row dynamic-accent" id="filterBarRoot">
+  <div class="search-container">
+    <div class="search-icon-inside">
+      <iconify-icon icon="lucide:search" style="font-size: 1.1rem;"></iconify-icon>
+    </div>
+    <input
+      type="text"
+      id="searchTab"
+      class="glass-panel main-input"
+      placeholder={searchPlaceholder}
+      autocomplete="off"
+    />
+  </div>
+
+  <div class="export-group">
+    <div class="dropdown-wrapper">
+      {totalTypesCount > 0 && (
+        <div class="dropdown" id="catDropdown">
+          <button class="glass-btn glass-panel" id="catBtn">
+            {isFontAwesome(mainIcon) ? (
+              <i class:list={[mainIcon, "fa-fw"]} id="mainCatIcon"></i>
+            ) : (
+              <iconify-icon icon={mainIcon} id="mainCatIcon" style="font-size: 1.1rem;"></iconify-icon>
+            )}
+            <span class="btn-text" id="catBtnLabel">{filterLabel}</span>
+            <span class="badge-count" id="catBtnBadge" data-default={totalTypesCount}>{totalTypesCount}</span>
+          </button>
+          
+          <div class="dropdown-content glass-panel" id="catMenu">
+            <button class="cat-item menu-btn active" data-cat="all" data-label={filterLabel} data-count={totalTypesCount}>
+              <span class="item-label">{allLabel}</span>
+              <span class="badge-cat">{totalItemsSum}</span>
+            </button>
+            <div class="menu-divider"></div>
+            {filterOptions.map(opt => (
+              <button 
+                class="cat-item menu-btn" 
+                data-cat={opt.value} 
+                data-label={opt.label} 
+                data-count={opt.count}
+                data-color={opt.color}
+              >
+                <span class="item-label">{opt.label}</span>
+                {opt.count !== undefined && (
+                  <span 
+                    class="badge-cat" 
+                    style={opt.color ? `--opt-color: ${opt.color}` : ""}
+                  >
+                    {opt.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+
+    <div class="dropdown" id="viewDropdown">
+      <button class="glass-btn glass-panel" id="viewBtn">
+        <i class="fa-solid fa-table-cells-large fa-fw"></i>
+        <span class="btn-text">{viewLabel}</span>
+      </button>
+      <div class="dropdown-content glass-panel" id="viewMenu">
+        {viewOptions.map((view, index) => (
+          <button class:list={["view-item menu-btn", { active: index === 0 }]} data-view={view.id}>
+            <span class="view-inner">
+              {isFontAwesome(view.icon) ? (
+                <i class:list={[view.icon, "fa-fw"]}></i>
+              ) : (
+                <iconify-icon icon={view.icon} style="font-size: 1rem;"></iconify-icon>
+              )}
+              <span>{view.label}</span>
+            </span>
+            <iconify-icon icon="lucide:chevron-right" class="active-indicator" style="font-size: 0.8rem;"></iconify-icon>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div class="dropdown" id="dlDropdown">
+      <button class="glass-btn glass-panel icon-only" id="dlBtn" title={downloadLabel}>
+        <i class="fa-solid fa-download"></i>
+      </button>
+      <div class="dropdown-content glass-panel dl-menu" id="dlMenu">
+        {exportOptions.map(exp => (
+          <button class="menu-btn export-item" data-export={exp.id}>
+            <span class="view-inner">
+              {isFontAwesome(exp.icon) ? (
+                <i class:list={[exp.icon, "fa-fw"]}></i>
+              ) : (
+                <iconify-icon icon={exp.icon} style="font-size: 1rem; color: var(--accent-color);"></iconify-icon>
+              )}
+              <span>{exp.label}</span>
+            </span>
+            <span class="ext-tag">{exp.extension}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .dynamic-accent {
+    --accent-color: var(--filter-accent-color, #9d7cfd);
+    --accent-bg: var(--filter-accent-bg, rgba(157, 124, 253, 0.15));
+    --accent-border: var(--filter-accent-border, rgba(157, 124, 253, 0.4));
+  }
+
+  /* Logika pro barevné badge v menu */
+  .badge-cat[style*="--opt-color"] {
+    background-color: color-mix(in srgb, var(--opt-color), transparent 85%) !important;
+    color: var(--opt-color) !important;
+    border: 1px solid color-mix(in srgb, var(--opt-color), transparent 60%) !important;
+  }
+
+  .controls-row, .search-container, .export-group, .dropdown-wrapper, .dropdown {
+    display: flex !important;
+    align-items: center !important;
+    height: 44px !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+
+  .controls-row {
+    width: 100%;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem !important;
+    position: relative;
+  }
+
+  .search-container { flex: 1; position: relative; }
+  .export-group { gap: 0.5rem; }
+
+  .glass-panel.glass-panel {
+    background: rgba(20, 20, 25, 0.5) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    color: #ffffff !important;
+    border-radius: 0.75rem !important;
+    transition: all 0.2s ease;
+  }
+
+  :global([data-theme="light"]) .glass-panel.glass-panel {
+    background: rgba(255, 255, 255, 0.4) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: var(--sl-color-gray-1) !important;
+  }
+
+  .main-input.main-input {
+    width: 100%;
+    height: 44px !important;
+    padding: 0 1rem 0 3.2rem !important;
+    font-size: 0.9rem;
+    outline: none !important;
+  }
+
+  .main-input:focus { border-color: var(--accent-color) !important; }
+
+  .search-icon-inside {
+    position: absolute;
+    left: 1.2rem;
+    z-index: 10;
+    color: var(--sl-color-gray-3);
+    display: flex;
+    align-items: center;
+  }
+
+  .search-container:focus-within .search-icon-inside { color: var(--accent-color); }
+
+  .glass-btn.glass-btn {
+    height: 44px !important;
+    padding: 0 1.1rem !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.7rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .glass-btn i, .glass-btn iconify-icon { color: var(--accent-color); }
+  .glass-btn:hover { border-color: var(--accent-color) !important; }
+
+  .badge-count.badge-count {
+    background: var(--accent-bg);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-border);
+    min-width: 1.6rem;
+    height: 1.3rem;
+    border-radius: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.2rem;
+  }
+
+  .dropdown-content.glass-panel {
+    display: none;
+    position: absolute;
+    top: 54px;
+    right: 0;
+    min-width: 240px;
+    z-index: 1000;
+    padding: 0.6rem !important;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .dropdown-content.show { display: flex; }
+
+  .menu-btn.menu-btn {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.7) !important;
+    white-space: nowrap;
+  }
+
+  :global([data-theme="light"]) .menu-btn { color: var(--sl-color-gray-2) !important; }
+
+  .menu-btn.active { 
+    background: var(--accent-bg) !important; 
+    color: var(--accent-color) !important; 
+    font-weight: 700; 
+  }
+
+  .badge-cat {
+    font-size: 0.7rem;
+    background: var(--accent-bg);
+    color: var(--accent-color);
+    padding: 1px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--accent-border);
+  }
+
+  .view-inner { display: flex; align-items: center; gap: 0.75rem; }
+  .active-indicator { opacity: 0; color: var(--accent-color); }
+  .active .active-indicator { opacity: 1; }
+
+  .ext-tag {
+    font-size: 0.6rem;
+    opacity: 0.6;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+
+  .menu-divider { height: 1px; background: var(--sl-color-gray-6); margin: 0.3rem 0; opacity: 0.5; }
+
+  @media (max-width: 900px) { .btn-text { display: none; } }
+</style>
+
+<script>
+  function initFilters() {
+    const root = document.getElementById('filterBarRoot');
+    if (!root) return;
+
+    // Dropdown toggles
+    const setups = [
+      { btn: 'catBtn', menu: 'catMenu' },
+      { btn: 'viewBtn', menu: 'viewMenu' },
+      { btn: 'dlBtn', menu: 'dlMenu' }
+    ];
+
+    setups.forEach(s => {
+      const btn = document.getElementById(s.btn);
+      const menu = document.getElementById(s.menu);
+      if (btn && menu) {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isShow = menu.classList.contains('show');
+          document.querySelectorAll('.dropdown-content').forEach(m => m.classList.remove('show'));
+          if (!isShow) menu.classList.add('show');
+        });
+      }
+    });
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.dropdown-content').forEach(m => m.classList.remove('show'));
+    });
+
+    // --- LOGIKA FILTRU ---
+    const catItems = document.querySelectorAll('.cat-item');
+    const catBtnLabel = document.getElementById('catBtnLabel');
+    const catBtnBadge = document.getElementById('catBtnBadge');
+    const catBtnIcon = document.getElementById('mainCatIcon');
+    const defaultCount = catBtnBadge?.getAttribute('data-default');
+    const defaultLabel = catBtnLabel?.textContent;
+
+    catItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const cat = item.getAttribute('data-cat');
+        const label = item.getAttribute('data-label');
+        const count = item.getAttribute('data-count');
+        const color = (item as HTMLElement).getAttribute('data-color');
+
+        catItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+
+        if (catBtnLabel && catBtnBadge) {
+          if (cat === 'all') {
+            catBtnLabel.textContent = defaultLabel || 'Type';
+            catBtnBadge.textContent = defaultCount || '0';
+            // Reset stylů
+            root.style.setProperty('--filter-accent-color', '');
+            root.style.setProperty('--filter-accent-bg', '');
+            root.style.setProperty('--filter-accent-border', '');
+          } else {
+            catBtnLabel.textContent = label || '';
+            catBtnBadge.textContent = count || '0';
+            // Aplikace barvy kategorie do CSS proměnných
+            if (color) {
+              root.style.setProperty('--filter-accent-color', color);
+              root.style.setProperty('--filter-accent-bg', `${color}26`); // 15% opacity
+              root.style.setProperty('--filter-accent-border', `${color}66`); // 40% opacity
+            }
+          }
+        }
+
+        document.dispatchEvent(new CustomEvent('filterChange', { detail: { category: cat } }));
+      });
+    });
+
+    // Search
+    document.getElementById('searchTab')?.addEventListener('input', (e) => {
+      const query = (e.target as HTMLInputElement).value.toLowerCase();
+      document.dispatchEvent(new CustomEvent('searchChange', { detail: { query } }));
+    });
+
+    // View
+    document.querySelectorAll('.view-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const view = btn.getAttribute('data-view');
+        document.querySelectorAll('.view-item').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.dispatchEvent(new CustomEvent('viewChange', { detail: { view } }));
+      });
+    });
+    
+    // Export
+    document.querySelectorAll('.export-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const format = btn.getAttribute('data-export');
+        document.dispatchEvent(new CustomEvent('exportRequest', { detail: { format } }));
+      });
+    });
+  }
+
+  initFilters();
+  document.addEventListener('astro:after-swap', initFilters);
+</script>

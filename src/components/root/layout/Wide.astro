@@ -1,12 +1,14 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
+import PageBar from '@/components/root/bar/PageBar.astro';
 
 interface Props {
   title: string;
   accentColor?: string;
   searchPlaceholder: string;
   filterLabel: string;
+  allLabel?: string;
+  mainIcon?: string;
   filterOptions: { label: string; value: string; count: number; color?: string }[];
   viewOptions: { id: string; label: string; icon: string }[];
   exportOptions: { id: string; label: string; extension: string; icon: string }[];
@@ -16,7 +18,9 @@ const {
   title, 
   accentColor = "#9d7cfd",
   searchPlaceholder, 
-  filterLabel, 
+  filterLabel,
+  allLabel,               // PŘIDÁNO
+  mainIcon,
   filterOptions,
   viewOptions,
   exportOptions
@@ -31,9 +35,11 @@ const {
     style={`--accent: ${accentColor}; --accent-bg: ${accentColor}26; --accent-border: ${accentColor}66; --filter-accent-color: ${accentColor}; --filter-accent-bg: ${accentColor}26; --filter-accent-border: ${accentColor}66;`}
   >
     <div class="controls-row dynamic-accent">
-      <SearchFilterBar 
+      <PageBar 
         searchPlaceholder={searchPlaceholder}
         filterLabel={filterLabel}
+        allLabel={allLabel}
+        mainIcon={mainIcon}
         filterOptions={filterOptions}
         viewLabel="View"
         downloadLabel="Export"

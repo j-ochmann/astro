@@ -122,9 +122,11 @@ const exportOptions = [
 ---
 
 <WideLayout 
-  title={lang === 'cs' ? "Země světa" : "Countries"}
+  title={lang === 'cs' ? "Státy" : "Countries"}
   searchPlaceholder={lang === 'cs' ? "Hledat..." : "Search..."}
   filterLabel={lang === 'cs' ? "Kontinenty" : "Continents"}
+  allLabel={lang === 'cs' ? "Všechny Státy" : "All Countries"}
+  mainIcon="fa-solid fa-globe"
   filterOptions={filterOptions}
   viewOptions={viewOptions}
   exportOptions={exportOptions}
