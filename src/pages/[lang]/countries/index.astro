@@ -6,7 +6,7 @@ import ViewGrid from '@/components/root/view/Grid.astro';
 import ViewMap from '@/components/root/view/Map.astro';
 import ViewNet from '@/components/root/view/Net.astro';
 import ViewOrbs from '@/components/root/view/Orbs.astro';
-import ViewTable from '@/components/root/view/Table.astro';
+import ViewTable from '@/components/root/view/UniversalTable.astro';
 import { 
   getI18nPaths, 
   countriesData, 
@@ -14,15 +14,8 @@ import {
   getMledozeData, 
   getCountryName 
 } from '@/content/config/i18n';
-// Definice barev kontinentů (shodné s grafem)
+
 const continentColors: Record<string, string> = {
-  // "Africa": "#e67e22",        // Oranžová (země)
-  // "Asia": "#e74c3c",          // Červená
-  // "Europe": "#3498db",        // Modrá (EU styl)
-  // "North America": "#2ecc71", // Zelená
-  // "South America": "#27ae60", // Tmavě zelená
-  // "Oceania": "#9b59b6",       // Fialová
-  // "Antarctica": "#95a5a6"     // Šedá
   "Africa": "#FF6347",        // Tomato
   "Asia": "#DCDCDC",          // Gainsboro
   "Europe": "#8FBC8F",        // DarkSeaGreen
@@ -35,10 +28,7 @@ export async function getStaticPaths() { return getI18nPaths(); }
 const { lang = 'en' } = Astro.params;
 const t = useTranslations(lang);
 const basePath = `/${lang}/countries`;
-
 const countries = Object.values(countriesData);
-
-// 1. Transformace dat pro Nodes (uzly) a základní seznam
 const data = countries.map(c => {
   const mledoze = getMledozeData(c.code);
   return {
@@ -48,7 +38,6 @@ const data = countries.map(c => {
     capital: c.capital || '—',
     continent: c.continent,
     population: c.population,
-    // Data specifická pro graf
     id: c.code.toLowerCase(),
     displayName: getCountryName(c.code, lang),
     neighbor_count: mledoze?.borders?.length || 0,
@@ -56,7 +45,6 @@ const data = countries.map(c => {
   };
 });
 
-// 2. Transformace dat pro Links (propojení v grafu)
 const links: any[] = [];
 const processedPairs = new Set();
 
@@ -69,8 +57,6 @@ countries.forEach(c => {
         const source = c.code.toLowerCase();
         const target = neighborMledoze.cca2.toLowerCase();
         const pairId = [source, target].sort().join('-');
-        
-        // Přidáme link pouze pokud cílová země existuje v našem seznamu a pár ještě nebyl zpracován
         if (!processedPairs.has(pairId) && countriesData[neighborMledoze.cca2.toUpperCase()]) {
           links.push({ source, target });
           processedPairs.add(pairId);
@@ -85,17 +71,17 @@ const enrichedData = data.map(item => ({
   ...item,
   continentColor: continentColors[item.continent] || "#ccc"
 }));
-// 3. Definice sloupců pro tabulku
+
 const columns = [
-  { key: 'code', label: 'Code', isMono: true },
-  { key: 'name', label: 'Country' },
-  { key: 'native', label: 'Native', isNative: true },
-  { key: 'capital', label: 'Capital' },
-  { key: 'continent', label: 'Continent' },
-  { key: 'population', label: 'Population', isNumeric: true }
+  { key: 'code',      label: t('world.stats.code'),      type: 'code' },
+  { key: 'name',      label: t('world.stats.name'),      type: 'country' },
+  { key: 'native',    label: t('world.stats.native'),    type: 'text', isMono: true },
+  { key: 'capital',   label: t('world.stats.capital'),   type: 'text' },
+  { key: 'continent', label: t('world.stats.continent'), type: 'continent' },
+  { key: 'population',label: t('world.stats.population'), isNumeric: true }
 ];
 
-// 4. Možnosti filtru (Kontinenty)
+// Možnosti filtru (Kontinenty)
 const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map(f => ({
   label: f,
   value: f.toLowerCase(),
@@ -104,13 +90,13 @@ const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map
 }));
 
 const viewOptions = [
-    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
-    { id: 'grid',  label: 'Grid',  icon: 'fa-solid fa-grip' },
-    { id: 'net', label: 'Net', icon: 'lucide:network' },
-    { id: 'map', label: 'Map', icon: 'fa-solid fa-map' },
-    { id: 'globe', label: 'Globe', icon: 'fa-solid fa-globe' },
-    { id: 'flags', label: 'Flags', icon: 'fa-solid fa-flag' },
-    { id: 'orbicon', label: 'Orbicon', icon: 'fa-solid fa-bomb' }
+    { id: 'table',   label: 'Table',   icon: 'fa-solid fa-table' },
+    { id: 'grid',    label: 'Grid',    icon: 'fa-solid fa-grip'  },
+    { id: 'net',     label: 'Net',     icon: 'lucide:network'    },
+    { id: 'map',     label: 'Map',     icon: 'fa-solid fa-map'   },
+    { id: 'globe',   label: 'Globe',   icon: 'fa-solid fa-globe' },
+    { id: 'flags',   label: 'Flags',   icon: 'fa-solid fa-flag'  },
+    { id: 'orbicon', label: 'Orbicon', icon: 'fa-solid fa-bomb'  }
 ];
 
 const exportOptions = [
@@ -133,6 +119,14 @@ const exportOptions = [
   accentColor="#10b981"
 >
 <ViewGrid slot="grid" data={enrichedData} columns={columns} basePath={basePath} />
-  <ViewNet slot="net" graphData={{nodes: enrichedData, links}} basePath={basePath} />
-  <ViewTable slot="table" data={enrichedData} columns={columns} basePath={basePath} lang={lang} />
+<ViewNet slot="net" graphData={{nodes: enrichedData, links}} basePath={basePath} />
+<ViewTable 
+  id="countriesTable"
+  data={enrichedData}
+  columns={columns}
+  basePath={basePath}
+  lang={lang} 
+  slot="table"
+/>
+
 </WideLayout>

@@ -1,7 +1,7 @@
 ---
 // src/pages/[lang]/market/chainlink/index.astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
+import PageBar from '@/components/root/bar/PageBar.astro';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PATHS } from '../../../../scripts/fetch/fetch.config.ts'; 
@@ -92,7 +92,7 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
         </div>
       </div>
 
-      <SearchFilterBar 
+      <PageBar 
         searchPlaceholder="Search Chainlink pair..." 
         filterLabel="Category"
         filterOptions={categories}

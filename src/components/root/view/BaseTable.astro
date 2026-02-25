@@ -1,0 +1,82 @@
+---
+// src/components/root/view/BaseTable.astro
+import { Icon } from 'astro-icon/components';
+
+// Definice rozhraní pro sloupec, aby TS věděl, co 'col' obsahuje
+interface Column {
+  key: string;
+  label: string;
+  isNumeric?: boolean;
+}
+
+interface Props {
+  id: string;
+  columns: Column[];
+}
+
+const { id, columns } = Astro.props;
+---
+<div class="table-container glass-panel shadow-unified">
+  <table id={id}>
+    <thead>
+      <tr>
+        <th class="num-col">#</th>
+        {columns.map((col: Column) => (
+          <th data-sort={col.key} class:list={[{ 'text-right': col.isNumeric }]}>
+            <div class="th-content">
+              <span>{col.label}</span>
+              <Icon name="lucide:arrow-up-down" class="sort-icon" />
+            </div>
+          </th>
+        ))}
+      </tr>
+    </thead>
+    <tbody class="table-body">
+      <slot />
+    </tbody>
+  </table>
+</div>
+
+<style is:global>
+  .table-container { overflow-x: auto; width: 100%; margin-top: 1rem; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  
+  th { 
+    background: var(--sl-color-gray-6) !important; 
+    color: var(--sl-color-gray-2) !important; 
+    padding: 0.75rem; text-align: left; cursor: pointer; 
+    font-size: 0.7rem; text-transform: uppercase; 
+    border-bottom: 2px solid var(--sl-color-gray-5);
+  }
+
+  td { 
+    padding: 0.75rem 0.6rem; border-bottom: 1px solid var(--sl-color-gray-6); 
+    font-size: 0.85rem; vertical-align: middle; color: var(--sl-color-white);
+  }
+  :global([data-theme='light']) td { color: var(--sl-color-black); }
+
+  tr:hover { background: var(--sl-color-gray-6) !important; }
+
+  /* Elementy buněk */
+  .mono { font-family: var(--sl-font-mono); font-weight: 600; color: var(--sl-color-accent-high); }
+  .item-link { text-decoration: none !important; color: inherit !important; font-weight: 600; }
+  tr:hover .item-link { color: var(--sl-color-accent-high) !important; }
+
+  .group-cell { display: flex; align-items: center; gap: 0.5rem; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  
+  .usage-badge { 
+    font-family: var(--sl-font-mono); font-weight: 700; 
+    background: var(--sl-color-gray-5); color: var(--sl-color-gray-2);
+    padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;
+  }
+
+  .fi { width: 1.2rem; height: 0.9rem; border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+  .table-flag { margin-right: 0.5rem; vertical-align: middle; }
+
+  .num-col { width: 1%; text-align: center; color: var(--sl-color-gray-4); font-size: 0.7rem; }
+  .th-content { display: flex; align-items: center; gap: 0.4rem; }
+  .sort-icon { width: 12px; height: 12px; opacity: 0.3; }
+  
+  .table-row.hidden { display: none; }
+</style>

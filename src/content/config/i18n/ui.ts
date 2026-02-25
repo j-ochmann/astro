@@ -33,7 +33,7 @@ export const uiStrings = {
 
    "countries.title": "Countries",
    "countries.search": "Search country, capital, code...",
-   "world.stats.code": "ISO Code",
+   "world.stats.code": "CC", //"Code","CC2"
    "world.stats.name": "Name",
    "world.stats.phone": "Calling Code",
 }, cs: {
@@ -67,7 +67,7 @@ export const uiStrings = {
    "world.table.code": "Kód",
    "world.table.countries": "Země",
    "world.table.count": "Počet zemí",
-   "world.stats.code": "ISO Kód",
+   "world.stats.code": "Kód",
    "world.stats.name": "Název",
    "world.stats.phone": "Předvolba",
 }, sk: {

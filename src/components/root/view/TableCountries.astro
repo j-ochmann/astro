@@ -1,0 +1,63 @@
+---
+import BaseTable from './Table.astro';
+import type { Column } from './Table.astro';
+
+interface CountryItem {
+  code: string;
+  name: string;
+  continent: string;
+  continentColor: string;
+  [key: string]: any;
+}
+
+interface Props {
+  data: CountryItem[];
+  columns: Column[];
+  basePath: string;
+  lang: string;
+}
+
+const { data, columns, basePath, lang } = Astro.props;
+const dynamicColumns = columns.filter(col => col.key !== 'code' && col.key !== 'name');
+---
+
+<BaseTable id="countriesTable" columns={columns}>
+  {data.map((item: CountryItem, index: number) => (
+    <tr 
+      class="item-row table-row" 
+      data-json={JSON.stringify(item)} 
+      data-category={item.continent?.toLowerCase() || ""}
+    >
+      <td class="num-col index-cell">{index + 1}</td>
+      <td class="mono">{item.code}</td>
+      <td>
+        <a href={`${basePath}/${item.code?.toLowerCase()}/`} class="item-link">
+          <span class:list={['fi', `fi-${item.code.toLowerCase()}`, 'table-flag']}></span>
+          {item.name}
+        </a>
+      </td>
+      {dynamicColumns.map((col: Column) => (
+        <td class:list={[{ 'mono': col.isMono, 'text-right': col.isNumeric }]}>
+          {col.key === 'continent' ? (
+            <div class="group-cell">
+              <span class="dot" style={`background-color: ${item.continentColor}`}></span>
+              <span>{item[col.key]}</span>
+            </div>
+          ) : (
+            col.isNumeric && typeof item[col.key] === 'number' 
+              ? item[col.key].toLocaleString(lang) 
+              : item[col.key]
+          )}
+        </td>
+      ))}
+    </tr>
+  ))}
+</BaseTable>
+
+<style>
+  .table-flag { 
+    width: 1.2rem; height: 0.9rem; border-radius: 2px; 
+    margin-right: 0.6rem; vertical-align: middle;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+</style>

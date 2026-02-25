@@ -1,7 +1,7 @@
 ---
 // src/pages/[lang]/market/pyth/index.astro
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import SearchFilterBar from '@/components/root/SearchFilterBar.astro';
+import PageBar from '@/components/root/bar/PageBar.astro';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PATHS } from '../../../../scripts/fetch/fetch.config.ts'; 
@@ -93,7 +93,7 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
         </div>
       </div>
 
-      <SearchFilterBar 
+      <PageBar 
         searchPlaceholder="Search symbol or description..." 
         filterLabel="Asset Type"
         filterOptions={categories}
@@ -179,7 +179,7 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
       return;
     }
 
-    // Capture Export Clicks from SearchFilterBar
+    // Capture Export Clicks from PageBar
     const exportItem = e.target.closest('.export-item');
     if (exportItem) {
       const format = exportItem.getAttribute('data-export');
@@ -365,7 +365,7 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
 </style>
 
 <style>
-  .explorer-content { /* Přebarvení SearchFilterBar pro Pyth Network */
+  .explorer-content { /* Přebarvení PageBar pro Pyth Network */
     --filter-accent-color: #9d7cfd;
     --filter-accent-bg: rgba(157, 124, 253, 0.15);
     --filter-accent-border: rgba(157, 124, 253, 0.4);
