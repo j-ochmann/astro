@@ -28,6 +28,8 @@ export interface Props {
   downloadLabel?: string;
   viewOptions?: ViewOption[];
   exportOptions?: ExportOption[];
+  allLabel?: string;
+  mainIcon?: string;
 }
 
 const { 
@@ -310,75 +312,3 @@ const isFontAwesome = (icon: string) => icon.includes(' ');
 
   @media (max-width: 900px) { .btn-text { display: none; } }
 </style>
-
-<script>
-  function initTableSort() {
-    const tables = document.querySelectorAll('table[id]');
-    
-    tables.forEach(table => {
-      const headers = table.querySelectorAll('th[data-sort]');
-      const tbody = table.querySelector('tbody');
-      if (!tbody) return;
-
-      headers.forEach(header => {
-        header.addEventListener('click', () => {
-          const colKey = (header as HTMLElement).dataset.sort;
-          const isNumeric = (header as HTMLElement).dataset.type === 'number';
-          const currentOrder = header.classList.contains('asc') ? 'desc' : 'asc';
-
-          // Reset ostatních hlaviček
-          headers.forEach(h => h.classList.remove('asc', 'desc'));
-          header.classList.add(currentOrder);
-
-          // Získání řádků a jejich seřazení
-          const rows = Array.from(tbody.querySelectorAll('.table-row'));
-          
-          rows.sort((a, b) => {
-            const dataA = JSON.parse((a as HTMLElement).dataset.json || '{}');
-            const dataB = JSON.parse((b as HTMLElement).dataset.json || '{}');
-            
-            let valA = dataA[colKey!];
-            let valB = dataB[colKey!];
-
-            // Ošetření null/undefined
-            if (valA === null || valA === undefined) valA = isNumeric ? -1 : '';
-            if (valB === null || valB === undefined) valB = isNumeric ? -1 : '';
-
-            if (isNumeric) {
-              return currentOrder === 'asc' ? valA - valB : valB - valA;
-            } else {
-              // localeCompare pro správnou češtinu (diakritika)
-              return currentOrder === 'asc' 
-                ? String(valA).localeCompare(String(valB))
-                : String(valB).localeCompare(String(valA));
-            }
-          });
-
-          // Znovupřidání řádků v novém pořadí
-          rows.forEach((row, index) => {
-            tbody.appendChild(row);
-            // Přepočet indexu (#) pokud řádek není skrytý filtrem
-            if (row.style.display !== 'none') {
-               // Indexy pořeší spíše PageBar při filtrování, 
-               // ale pro čisté řazení bez filtru je dobré je nechat v pořadí.
-            }
-          });
-          
-          // Pokud je aktivní PageBar, musíme po seřazení přepočítat indexy viditelných řádků
-          let visibleIdx = 0;
-          tbody.querySelectorAll('.table-row').forEach(r => {
-            if ((r as HTMLElement).style.display !== 'none') {
-              visibleIdx++;
-              const idxCell = r.querySelector('.index-cell');
-              if (idxCell) idxCell.textContent = visibleIdx.toString();
-            }
-          });
-        });
-      });
-    });
-  }
-
-  // Astro Lifecycle
-  initTableSort();
-  document.addEventListener('astro:after-swap', initTableSort);
-</script>

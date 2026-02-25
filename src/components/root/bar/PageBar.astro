@@ -4,13 +4,10 @@ import BasePageBar, { type Props as BaseProps } from './BasePageBar.astro';
 
 interface Props extends BaseProps {
   accentColor?: string;
-  allLabel?: string;
-  mainIcon?: string;
 }
 
 const { accentColor, ...rest } = Astro.props;
 
-// Příprava inline stylu pro barvy
 const customStyle = accentColor ? `
   --filter-accent-color: ${accentColor}; 
   --filter-accent-bg: ${accentColor}22; 
@@ -36,22 +33,20 @@ const customStyle = accentColor ? `
     const dlBtn = document.getElementById('dlBtn');
     const dlMenu = document.getElementById('dlMenu');
 
-    // 1. Obsluha Dropdownů
-    const toggleDropdown = (btn: HTMLElement | null, menu: HTMLElement | null) => {
+    // 1. Dropdown logika
+    const setupDropdown = (btn: HTMLElement | null, menu: HTMLElement | null) => {
       if (!btn || !menu) return;
       btn.onclick = (e) => {
         e.stopPropagation();
         const isOpen = menu.classList.contains('show');
-        // Zavřít všechny ostatní
         document.querySelectorAll('.dropdown-content').forEach(m => m.classList.remove('show'));
-        // Pokud nebyl otevřený, otevřít ho
         if (!isOpen) menu.classList.add('show');
       };
     };
 
-    toggleDropdown(catBtn, catMenu);
-    toggleDropdown(viewBtn, viewMenu);
-    toggleDropdown(dlBtn, dlMenu);
+    setupDropdown(catBtn, catMenu);
+    setupDropdown(viewBtn, viewMenu);
+    setupDropdown(dlBtn, dlMenu);
 
     document.addEventListener('click', () => {
       document.querySelectorAll('.dropdown-content').forEach(m => m.classList.remove('show'));
@@ -63,13 +58,13 @@ const customStyle = accentColor ? `
       const activeCatBtn = catMenu?.querySelector('.cat-item.active') as HTMLElement;
       const category = activeCatBtn?.dataset.cat?.toLowerCase() || "";
       
-      const rows = document.querySelectorAll('.table-row');
+      // OPRAVA: Přetypování na NodeListOf<HTMLElement>
+      const rows = document.querySelectorAll('.table-row') as NodeListOf<HTMLElement>;
       let visibleIdx = 0;
 
       rows.forEach(row => {
-        const htmlRow = row as HTMLElement;
-        const rowData = JSON.parse(htmlRow.dataset.json || '{}');
-        const rowCategory = htmlRow.dataset.category?.toLowerCase() || "";
+        const rowData = JSON.parse(row.dataset.json || '{}');
+        const rowCategory = (row.dataset.category || "").toLowerCase();
         
         const contentString = Object.values(rowData).join(" ").toLowerCase();
         
@@ -77,12 +72,12 @@ const customStyle = accentColor ? `
         const matchCat = category === "" || rowCategory === category;
 
         if (matchSearch && matchCat) {
-          htmlRow.style.display = ""; 
+          row.style.display = ""; // Teď už TS ví, že row má .style
           visibleIdx++;
-          const idxCell = htmlRow.querySelector('.index-cell');
+          const idxCell = row.querySelector('.index-cell');
           if (idxCell) idxCell.textContent = visibleIdx.toString();
         } else {
-          htmlRow.style.display = "none";
+          row.style.display = "none";
         }
       });
     };
@@ -90,7 +85,8 @@ const customStyle = accentColor ? `
     searchInput?.addEventListener('input', runFilter);
 
     // 3. Klikání na kategorie
-    catMenu?.querySelectorAll('.cat-item').forEach(btn => {
+    catMenu?.querySelectorAll('.cat-item').forEach(el => {
+      const btn = el as HTMLElement; // Oprava typu pro přístup k dataset a classList
       btn.addEventListener('click', () => {
         catMenu.querySelectorAll('.cat-item').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -106,13 +102,11 @@ const customStyle = accentColor ? `
     });
   }
 
-  // Inicializace
   initPageBarLogic();
   document.addEventListener('astro:after-swap', initPageBarLogic);
 </script>
 
 <style is:global>
-  /* Musí být global, aby to přebilo styl z BasePageBar */
   .dropdown-content.show { 
     display: flex !important; 
   }

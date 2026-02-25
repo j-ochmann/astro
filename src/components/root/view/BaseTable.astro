@@ -114,3 +114,70 @@ const { id, columns, accentColor = 'var(--sl-color-accent-high)' } = Astro.props
   .sort-icon { width: 12px; height: 12px; opacity: 0.4; }
   th.asc .sort-icon, th.desc .sort-icon { opacity: 1; color: var(--local-accent); }
 </style>
+
+<script>
+  function initTableSort() {
+    const tables = document.querySelectorAll('table[id]');
+    
+    tables.forEach(table => {
+      // Přetypování na HTMLTableElement
+      const htmlTable = table as HTMLTableElement;
+      const headers = htmlTable.querySelectorAll('th[data-sort]');
+      const tbody = htmlTable.querySelector('tbody');
+      if (!tbody) return;
+
+      headers.forEach(header => {
+        header.addEventListener('click', () => {
+          const h = header as HTMLElement;
+          const colKey = h.dataset.sort;
+          const isNumeric = h.dataset.type === 'number';
+          const currentOrder = h.classList.contains('asc') ? 'desc' : 'asc';
+
+          // Reset ostatních hlaviček
+          headers.forEach(head => head.classList.remove('asc', 'desc'));
+          h.classList.add(currentOrder);
+
+          // Získání řádků
+          const rows = Array.from(tbody.querySelectorAll('.table-row')) as HTMLElement[];
+          
+          rows.sort((a, b) => {
+          const dataA = JSON.parse(a.dataset.json || '{}');
+          const dataB = JSON.parse(b.dataset.json || '{}');
+          
+          let valA = dataA[colKey!];
+          let valB = dataB[colKey!];
+
+          if (isNumeric) {
+            // EXPLICITNÍ PŘEVOD NA ČÍSLO
+            // parseFloat odstraní i případné mezery nebo nečistoty v datech
+            const numA = parseFloat(valA) || 0;
+            const numB = parseFloat(valB) || 0;
+            
+            return currentOrder === 'asc' ? numA - numB : numB - numA;
+          } else {
+            // Klasické abecední řazení pro zbytek
+            return currentOrder === 'asc' 
+              ? String(valA).localeCompare(String(valB))
+              : String(valB).localeCompare(String(valA));
+          }
+          });
+
+          // Znovupřidání řádků a přepočet indexů
+          let visibleIdx = 0;
+          rows.forEach((row) => {
+            tbody.appendChild(row);
+            // Tady byla ta chyba - row je nyní HTMLElement, takže style existuje
+            if (row.style.display !== 'none') {
+              visibleIdx++;
+              const idxCell = row.querySelector('.index-cell');
+              if (idxCell) idxCell.textContent = visibleIdx.toString();
+            }
+          });
+        });
+      });
+    });
+  }
+
+  initTableSort();
+  document.addEventListener('astro:after-swap', initTableSort);
+</script>
