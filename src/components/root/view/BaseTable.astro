@@ -2,28 +2,41 @@
 // src/components/root/view/BaseTable.astro
 import { Icon } from 'astro-icon/components';
 
-// Definice rozhraní pro sloupec, aby TS věděl, co 'col' obsahuje
-interface Column {
+export interface Column {
   key: string;
   label: string;
   isNumeric?: boolean;
+  [key: string]: any;
 }
 
 interface Props {
   id: string;
   columns: Column[];
+  accentColor?: string;
 }
 
-const { id, columns } = Astro.props;
+const { id, columns, accentColor = 'var(--sl-color-accent-high)' } = Astro.props;
 ---
-<div class="table-container glass-panel shadow-unified">
+
+<div 
+  class="table-container glass-panel shadow-unified" 
+  style={`--local-accent: ${accentColor}; --local-accent-bg: ${accentColor}15;`}
+>
   <table id={id}>
     <thead>
       <tr>
         <th class="num-col">#</th>
         {columns.map((col: Column) => (
-          <th data-sort={col.key} class:list={[{ 'text-right': col.isNumeric }]}>
-            <div class="th-content">
+          <th 
+            data-sort={col.key} 
+            class:list={[
+              { 'text-right': col.isNumeric },
+              col.key === 'code' ? 'code-col' : '',
+              col.key === 'name' ? 'name-col' : '',
+              col.key === 'continent' ? 'group-col' : ''
+            ]}
+          >
+            <div class="th-content" style={col.isNumeric ? "justify-content: flex-end;" : ""}>
               <span>{col.label}</span>
               <Icon name="lucide:arrow-up-down" class="sort-icon" />
             </div>
@@ -39,44 +52,65 @@ const { id, columns } = Astro.props;
 
 <style is:global>
   .table-container { overflow-x: auto; width: 100%; margin-top: 1rem; }
-  table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: auto; }
   
   th { 
-    background: var(--sl-color-gray-6) !important; 
-    color: var(--sl-color-gray-2) !important; 
+    background: var(--local-accent-bg) !important; 
+    color: var(--local-accent) !important; 
     padding: 0.75rem; text-align: left; cursor: pointer; 
     font-size: 0.7rem; text-transform: uppercase; 
-    border-bottom: 2px solid var(--sl-color-gray-5);
+    border-bottom: 2px solid var(--sl-color-gray-5); 
+    white-space: nowrap;
   }
 
   td { 
-    padding: 0.75rem 0.6rem; border-bottom: 1px solid var(--sl-color-gray-6); 
-    font-size: 0.85rem; vertical-align: middle; color: var(--sl-color-white);
+    padding: 0.75rem 0.6rem; 
+    border-bottom: 1px solid var(--sl-color-gray-6); 
+    font-size: 0.85rem; vertical-align: middle;
+    color: var(--sl-color-white);
   }
-  :global([data-theme='light']) td { color: var(--sl-color-black); }
+  :global([data-theme='light']) td { color: var(--sl-color-black); border-bottom-color: var(--sl-color-gray-5); }
+  
+  tbody tr:hover { background: var(--local-accent-bg) !important; }
 
-  tr:hover { background: var(--sl-color-gray-6) !important; }
+  .text-right { text-align: right !important; }
 
-  /* Elementy buněk */
-  .mono { font-family: var(--sl-font-mono); font-weight: 600; color: var(--sl-color-accent-high); }
-  .item-link { text-decoration: none !important; color: inherit !important; font-weight: 600; }
-  tr:hover .item-link { color: var(--sl-color-accent-high) !important; }
+  /* ZÁKLADNÍ MONO (pro Native name) - Systémová barva */
+  .mono { 
+    font-family: var(--sl-font-mono); 
+    font-weight: 500;
+  }
 
-  .group-cell { display: flex; align-items: center; gap: 0.5rem; }
+  /* AKCENTNÍ MONO (pouze pro kód státu/měny) */
+  .accent-mono { 
+    color: var(--local-accent) !important;
+    font-weight: 600;
+  }
+
+  /* NAME i NATIVE sdílejí stejnou barvu písma */
+  .display-name, .standard-text, .mono:not(.accent-mono) { 
+    color: var(--sl-color-white) !important;
+  }
+  :global([data-theme='light']) .display-name, 
+  :global([data-theme='light']) .standard-text,
+  :global([data-theme='light']) .mono:not(.accent-mono) { 
+    color: var(--sl-color-black) !important; 
+  }
+
+  .display-name { font-weight: 700; }
+  .standard-text { font-weight: 400; }
+
+  .item-link { text-decoration: none !important; color: inherit !important; }
+  
+  .num-col { width: 1%; text-align: center; color: var(--sl-color-gray-4); font-size: 0.75rem; }
+  .code-col { width: 1%; min-width: 80px; }
+  .name-col { width: 20%; min-width: 150px; }
+  .group-col { width: 1%; min-width: 130px; }
+
+  .group-cell { display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   
-  .usage-badge { 
-    font-family: var(--sl-font-mono); font-weight: 700; 
-    background: var(--sl-color-gray-5); color: var(--sl-color-gray-2);
-    padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;
-  }
-
-  .fi { width: 1.2rem; height: 0.9rem; border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-  .table-flag { margin-right: 0.5rem; vertical-align: middle; }
-
-  .num-col { width: 1%; text-align: center; color: var(--sl-color-gray-4); font-size: 0.7rem; }
   .th-content { display: flex; align-items: center; gap: 0.4rem; }
-  .sort-icon { width: 12px; height: 12px; opacity: 0.3; }
-  
-  .table-row.hidden { display: none; }
+  .sort-icon { width: 12px; height: 12px; opacity: 0.4; }
+  th.asc .sort-icon, th.desc .sort-icon { opacity: 1; color: var(--local-accent); }
 </style>

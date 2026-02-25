@@ -72,15 +72,6 @@ const enrichedData = data.map(item => ({
   continentColor: continentColors[item.continent] || "#ccc"
 }));
 
-const columns = [
-  { key: 'code',      label: t('world.stats.code'),      type: 'code' },
-  { key: 'name',      label: t('world.stats.name'),      type: 'country' },
-  { key: 'native',    label: t('world.stats.native'),    type: 'text', isMono: true },
-  { key: 'capital',   label: t('world.stats.capital'),   type: 'text' },
-  { key: 'continent', label: t('world.stats.continent'), type: 'continent' },
-  { key: 'population',label: t('world.stats.population'), isNumeric: true }
-];
-
 // Možnosti filtru (Kontinenty)
 const filterOptions = Array.from(new Set(data.map(c => c.continent))).sort().map(f => ({
   label: f,
@@ -105,6 +96,15 @@ const exportOptions = [
     { id: 'yaml', label: 'YAML Config', extension: '.yaml', icon: 'fa-solid fa-file-lines' },
     { id: 'csv',  label: 'CSV  Config', extension: '.yaml', icon: 'fa-solid fa-file-csv' }
 ];
+
+const columns = [
+  { key: 'code',      label: t('world.stats.code'),      type: 'code' as const },
+  { key: 'name',      label: t('world.stats.name'),      type: 'country' as const },
+  { key: 'native',    label: t('world.stats.native'),    type: 'text' as const, isMono: true },
+  { key: 'capital',   label: t('world.stats.capital'),   type: 'text' as const },
+  { key: 'continent', label: t('world.stats.continent'), type: 'continent' as const },
+  { key: 'population',label: t('world.stats.population'), isNumeric: true }
+];
 ---
 
 <WideLayout 
@@ -122,10 +122,11 @@ const exportOptions = [
 <ViewNet slot="net" graphData={{nodes: enrichedData, links}} basePath={basePath} />
 <ViewTable 
   id="countriesTable"
+  accentColor="#10b981" 
   data={enrichedData}
   columns={columns}
   basePath={basePath}
-  lang={lang} 
+  lang={lang}
   slot="table"
 />
 
