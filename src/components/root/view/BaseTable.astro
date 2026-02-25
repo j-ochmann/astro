@@ -29,6 +29,7 @@ const { id, columns, accentColor = 'var(--sl-color-accent-high)' } = Astro.props
         {columns.map((col: Column) => (
           <th 
             data-sort={col.key} 
+            data-type={col.isNumeric ? 'number' : 'string'} 
             class:list={[
               { 'text-right': col.isNumeric },
               col.key === 'code' ? 'code-col' : '',
@@ -49,6 +50,67 @@ const { id, columns, accentColor = 'var(--sl-color-accent-high)' } = Astro.props
     </tbody>
   </table>
 </div>
+
+<script>
+  function initTableSort() {
+    const tables = document.querySelectorAll('table[id]');
+    
+    tables.forEach(table => {
+      const htmlTable = table as HTMLTableElement;
+      const headers = htmlTable.querySelectorAll('th[data-sort]');
+      const tbody = htmlTable.querySelector('tbody');
+      if (!tbody) return;
+
+      headers.forEach(header => {
+        header.addEventListener('click', () => {
+          const h = header as HTMLElement;
+          const colKey = h.dataset.sort;
+          // TADY byla chyba - chybělo data-type v HTML, takže toto bylo vždy false
+          const isNumeric = h.dataset.type === 'number';
+          const currentOrder = h.classList.contains('asc') ? 'desc' : 'asc';
+
+          headers.forEach(head => head.classList.remove('asc', 'desc'));
+          h.classList.add(currentOrder);
+
+          const rows = Array.from(tbody.querySelectorAll('.table-row')) as HTMLElement[];
+          
+          rows.sort((a, b) => {
+            const dataA = JSON.parse(a.dataset.json || '{}');
+            const dataB = JSON.parse(b.dataset.json || '{}');
+            
+            let valA = dataA[colKey!];
+            let valB = dataB[colKey!];
+
+            if (isNumeric) {
+              // Číselné řazení - parseFloat odstraní případné nečistoty
+              const numA = parseFloat(valA) || 0;
+              const numB = parseFloat(valB) || 0;
+              return currentOrder === 'asc' ? numA - numB : numB - numA;
+            } else {
+              // Abecední řazení (česká lokalizace)
+              return currentOrder === 'asc' 
+                ? String(valA || '').localeCompare(String(valB || ''), 'cs')
+                : String(valB || '').localeCompare(String(valA || ''), 'cs');
+            }
+          });
+
+          let visibleIdx = 0;
+          rows.forEach((row) => {
+            tbody.appendChild(row);
+            if (row.style.display !== 'none') {
+              visibleIdx++;
+              const idxCell = row.querySelector('.index-cell');
+              if (idxCell) idxCell.textContent = visibleIdx.toString();
+            }
+          });
+        });
+      });
+    });
+  }
+
+  initTableSort();
+  document.addEventListener('astro:after-swap', initTableSort);
+</script>
 
 <style is:global>
   .table-container { overflow-x: auto; width: 100%; margin-top: 1rem; }
@@ -114,70 +176,3 @@ const { id, columns, accentColor = 'var(--sl-color-accent-high)' } = Astro.props
   .sort-icon { width: 12px; height: 12px; opacity: 0.4; }
   th.asc .sort-icon, th.desc .sort-icon { opacity: 1; color: var(--local-accent); }
 </style>
-
-<script>
-  function initTableSort() {
-    const tables = document.querySelectorAll('table[id]');
-    
-    tables.forEach(table => {
-      // Přetypování na HTMLTableElement
-      const htmlTable = table as HTMLTableElement;
-      const headers = htmlTable.querySelectorAll('th[data-sort]');
-      const tbody = htmlTable.querySelector('tbody');
-      if (!tbody) return;
-
-      headers.forEach(header => {
-        header.addEventListener('click', () => {
-          const h = header as HTMLElement;
-          const colKey = h.dataset.sort;
-          const isNumeric = h.dataset.type === 'number';
-          const currentOrder = h.classList.contains('asc') ? 'desc' : 'asc';
-
-          // Reset ostatních hlaviček
-          headers.forEach(head => head.classList.remove('asc', 'desc'));
-          h.classList.add(currentOrder);
-
-          // Získání řádků
-          const rows = Array.from(tbody.querySelectorAll('.table-row')) as HTMLElement[];
-          
-          rows.sort((a, b) => {
-          const dataA = JSON.parse(a.dataset.json || '{}');
-          const dataB = JSON.parse(b.dataset.json || '{}');
-          
-          let valA = dataA[colKey!];
-          let valB = dataB[colKey!];
-
-          if (isNumeric) {
-            // EXPLICITNÍ PŘEVOD NA ČÍSLO
-            // parseFloat odstraní i případné mezery nebo nečistoty v datech
-            const numA = parseFloat(valA) || 0;
-            const numB = parseFloat(valB) || 0;
-            
-            return currentOrder === 'asc' ? numA - numB : numB - numA;
-          } else {
-            // Klasické abecední řazení pro zbytek
-            return currentOrder === 'asc' 
-              ? String(valA).localeCompare(String(valB))
-              : String(valB).localeCompare(String(valA));
-          }
-          });
-
-          // Znovupřidání řádků a přepočet indexů
-          let visibleIdx = 0;
-          rows.forEach((row) => {
-            tbody.appendChild(row);
-            // Tady byla ta chyba - row je nyní HTMLElement, takže style existuje
-            if (row.style.display !== 'none') {
-              visibleIdx++;
-              const idxCell = row.querySelector('.index-cell');
-              if (idxCell) idxCell.textContent = visibleIdx.toString();
-            }
-          });
-        });
-      });
-    });
-  }
-
-  initTableSort();
-  document.addEventListener('astro:after-swap', initTableSort);
-</script>
