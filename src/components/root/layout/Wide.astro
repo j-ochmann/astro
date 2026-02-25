@@ -16,10 +16,10 @@ interface Props {
 
 const { 
   title, 
-  accentColor = "#9d7cfd",
+  accentColor,
   searchPlaceholder, 
   filterLabel,
-  allLabel,               // PŘIDÁNO
+  allLabel,
   mainIcon,
   filterOptions,
   viewOptions,
@@ -36,10 +36,11 @@ const {
   >
     <div class="controls-row dynamic-accent">
       <PageBar 
-        searchPlaceholder={searchPlaceholder}
-        filterLabel={filterLabel}
+        accentColor={accentColor}
         allLabel={allLabel}
         mainIcon={mainIcon}
+        searchPlaceholder={searchPlaceholder}
+        filterLabel={filterLabel}
         filterOptions={filterOptions}
         viewLabel="View"
         downloadLabel="Export"

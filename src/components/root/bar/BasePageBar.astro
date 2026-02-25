@@ -1,0 +1,384 @@
+---
+// src/components/root/bar/BasePageBar.astro
+export interface FilterOption {
+  label: string;
+  value: string;
+  count?: number;
+  color?: string;
+}
+
+export interface ViewOption {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+export interface ExportOption {
+  id: string;
+  label: string;
+  extension: string;
+  icon: string;
+}
+
+export interface Props {
+  searchPlaceholder?: string;
+  filterLabel?: string;
+  filterOptions?: FilterOption[];
+  viewLabel?: string;
+  downloadLabel?: string;
+  viewOptions?: ViewOption[];
+  exportOptions?: ExportOption[];
+}
+
+const { 
+  searchPlaceholder = "Search...", 
+  filterLabel = "Type",
+  filterOptions = [],
+  viewLabel = "View",
+  downloadLabel = "Download",
+  viewOptions = [
+    { id: 'table', label: 'Table', icon: 'fa-solid fa-table' },
+    { id: 'grid', label: 'Grid', icon: 'fa-solid fa-grip' }
+  ],
+  exportOptions = [
+    { id: 'json', label: 'JSON', extension: '.json', icon: 'fa-solid fa-file-code'   },
+    { id: 'xml',  label: 'XML',  extension: '.xml',  icon: 'fa-solid fa-file-export' },
+    { id: 'yaml', label: 'YAML', extension: '.yaml', icon: 'fa-solid fa-file-lines'  },
+    { id: 'csv',  label: 'CSV',  extension: '.csv',  icon: 'fa-solid fa-file-csv'    },
+
+  ]
+} = Astro.props;
+
+const totalTypesCount = filterOptions.length;
+const totalItemsSum = filterOptions.reduce((acc, opt) => acc + (opt.count || 0), 0);
+const isFontAwesome = (icon: string) => icon.includes(' ');
+---
+
+<div class="controls-row dynamic-accent">
+  <div class="search-container">
+    <div class="search-icon-inside">
+      <iconify-icon icon="lucide:search" style="font-size: 1.1rem;"></iconify-icon>
+    </div>
+    <input
+      type="text"
+      id="searchTab"
+      class="glass-panel main-input"
+      placeholder={searchPlaceholder}
+      autocomplete="off"
+    />
+  </div>
+
+  <div class="export-group">
+    <div class="dropdown-wrapper">
+      {totalTypesCount > 0 && (
+        <div class="dropdown">
+          <button class="glass-btn glass-panel" id="catBtn">
+            <i class="fa-solid fa-layer-group fa-fw"></i>
+            <span class="btn-text">{filterLabel}</span>
+            <span class="badge-count">{totalTypesCount}</span>
+          </button>
+          <div class="dropdown-content glass-panel" id="catMenu">
+            <button class="cat-item menu-btn active" data-cat="">
+              <span class="item-label">All Items</span>
+              <span class="badge-cat">{totalItemsSum}</span>
+            </button>
+            <div class="menu-divider"></div>
+            {filterOptions.map(opt => (
+              <button class="cat-item menu-btn" data-cat={opt.value}>
+                <span class="item-label">{opt.label}</span>
+                {opt.count !== undefined && (
+                  <span 
+                    class="badge-cat" 
+                    style={opt.color ? `background-color: ${opt.color}22 !important; color: ${opt.color} !important; border-color: ${opt.color}44 !important; border-width: 1px; border-style: solid;` : ""}
+                  >
+                    {opt.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+
+    <div class="dropdown">
+      <button class="glass-btn glass-panel" id="viewBtn">
+        <i class="fa-solid fa-table-cells-large fa-fw"></i>
+        <span class="btn-text">{viewLabel}</span>
+      </button>
+      <div class="dropdown-content glass-panel" id="viewMenu">
+        {viewOptions.map((view, index) => (
+          <button class:list={["view-item menu-btn", { active: index === 0 }]} data-view={view.id}>
+            <span class="view-inner">
+              {isFontAwesome(view.icon) ? (
+                <i class:list={[view.icon, "fa-fw"]}></i>
+              ) : (
+                <iconify-icon icon={view.icon} style="font-size: 1rem;"></iconify-icon>
+              )}
+              <span>{view.label}</span>
+            </span>
+            <iconify-icon icon="lucide:chevron-right" class="active-indicator" style="font-size: 0.8rem;"></iconify-icon>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div class="dropdown">
+      <button class="glass-btn glass-panel icon-only" id="dlBtn" title={downloadLabel}>
+        <i class="fa-solid fa-download"></i>
+      </button>
+      <div class="dropdown-content glass-panel dl-menu" id="dlMenu">
+        {exportOptions.map(exp => (
+          <button class="menu-btn export-item" data-export={exp.id}>
+            <span class="view-inner">
+              {isFontAwesome(exp.icon) ? (
+                <i class:list={[exp.icon, "fa-fw"]}></i>
+              ) : (
+                <iconify-icon icon={exp.icon} style="font-size: 1rem; color: var(--accent-color);"></iconify-icon>
+              )}
+              <span>{exp.label}</span>
+            </span>
+            <span class="ext-tag">{exp.extension}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .dynamic-accent {
+    --accent-color: var(--filter-accent-color);
+    --accent-bg: var(--filter-accent-bg);
+    --accent-border: var(--filter-accent-border);
+  }
+
+  .controls-row, .search-container, .export-group, .dropdown-wrapper, .dropdown {
+    display: flex !important;
+    align-items: center !important;
+    height: 44px !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+
+  .controls-row {
+    width: 100%;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem !important;
+    position: relative;
+  }
+
+  .search-container { flex: 1; position: relative; }
+  .export-group { gap: 0.5rem; }
+
+  .glass-panel.glass-panel {
+    background: rgba(20, 20, 25, 0.5) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    color: #ffffff !important;
+    border-radius: 0.75rem !important;
+    transition: all 0.2s ease;
+  }
+
+  :global([data-theme="light"]) .glass-panel.glass-panel {
+    background: rgba(255, 255, 255, 0.4) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: var(--sl-color-gray-1) !important;
+  }
+
+  .main-input:focus {
+    border-color: var(--accent-color) !important;
+  }
+
+  :global([data-theme="light"]) .main-input:focus,
+  :global([data-theme="light"]) .glass-btn:hover {
+    border-color: var(--accent-color) !important;
+  }
+
+  .main-input.main-input {
+    width: 100%;
+    height: 44px !important;
+    padding: 0 1rem 0 3.2rem !important;
+    font-size: 0.9rem;
+    outline: none !important;
+  }
+
+  .search-icon-inside {
+    position: absolute;
+    left: 1.2rem;
+    z-index: 10;
+    color: var(--sl-color-gray-3);
+    display: flex;
+    align-items: center;
+  }
+
+  .search-container:focus-within .search-icon-inside {
+    color: var(--accent-color);
+  }
+
+  .glass-btn.glass-btn {
+    height: 44px !important;
+    padding: 0 1.1rem !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.7rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .glass-btn i, .glass-btn iconify-icon { color: var(--accent-color) !important; }
+  .glass-btn:hover { border-color: var(--accent-color) !important; }
+
+  .badge-count.badge-count {
+    background: var(--accent-bg) !important;
+    color: var(--accent-color) !important;
+    border: 1px solid var(--accent-border) !important;
+    min-width: 1.6rem;
+    height: 1.3rem;
+    border-radius: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.2rem;
+  }
+
+  .dropdown-content.glass-panel {
+    display: none;
+    position: absolute;
+    top: 54px;
+    right: 0;
+    min-width: 240px;
+    z-index: 1000;
+    padding: 0.6rem !important;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .dropdown-content.show { display: flex; }
+
+  .menu-btn.menu-btn {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.7) !important;
+    white-space: nowrap;
+  }
+
+  :global([data-theme="light"]) .menu-btn { color: var(--sl-color-gray-2) !important; }
+
+  .menu-btn.active { 
+    background: var(--accent-bg) !important; 
+    color: var(--accent-color) !important; 
+    font-weight: 700; 
+  }
+
+  .badge-cat {
+    font-size: 0.7rem;
+    background: var(--accent-bg) !important;
+    color: var(--accent-color) !important;
+    padding: 1px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--accent-border) !important;
+  }
+
+  .view-inner { display: flex; align-items: center; gap: 0.75rem; }
+  .active-indicator { opacity: 0; color: var(--accent-color); }
+  .active .active-indicator { opacity: 1; }
+
+  .ext-tag {
+    font-size: 0.6rem;
+    opacity: 0.6;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+
+  .menu-divider { height: 1px; background: var(--sl-color-gray-6); margin: 0.3rem 0; opacity: 0.5; }
+
+  @media (max-width: 900px) { .btn-text { display: none; } }
+</style>
+
+<script>
+  function initTableSort() {
+    const tables = document.querySelectorAll('table[id]');
+    
+    tables.forEach(table => {
+      const headers = table.querySelectorAll('th[data-sort]');
+      const tbody = table.querySelector('tbody');
+      if (!tbody) return;
+
+      headers.forEach(header => {
+        header.addEventListener('click', () => {
+          const colKey = (header as HTMLElement).dataset.sort;
+          const isNumeric = (header as HTMLElement).dataset.type === 'number';
+          const currentOrder = header.classList.contains('asc') ? 'desc' : 'asc';
+
+          // Reset ostatních hlaviček
+          headers.forEach(h => h.classList.remove('asc', 'desc'));
+          header.classList.add(currentOrder);
+
+          // Získání řádků a jejich seřazení
+          const rows = Array.from(tbody.querySelectorAll('.table-row'));
+          
+          rows.sort((a, b) => {
+            const dataA = JSON.parse((a as HTMLElement).dataset.json || '{}');
+            const dataB = JSON.parse((b as HTMLElement).dataset.json || '{}');
+            
+            let valA = dataA[colKey!];
+            let valB = dataB[colKey!];
+
+            // Ošetření null/undefined
+            if (valA === null || valA === undefined) valA = isNumeric ? -1 : '';
+            if (valB === null || valB === undefined) valB = isNumeric ? -1 : '';
+
+            if (isNumeric) {
+              return currentOrder === 'asc' ? valA - valB : valB - valA;
+            } else {
+              // localeCompare pro správnou češtinu (diakritika)
+              return currentOrder === 'asc' 
+                ? String(valA).localeCompare(String(valB))
+                : String(valB).localeCompare(String(valA));
+            }
+          });
+
+          // Znovupřidání řádků v novém pořadí
+          rows.forEach((row, index) => {
+            tbody.appendChild(row);
+            // Přepočet indexu (#) pokud řádek není skrytý filtrem
+            if (row.style.display !== 'none') {
+               // Indexy pořeší spíše PageBar při filtrování, 
+               // ale pro čisté řazení bez filtru je dobré je nechat v pořadí.
+            }
+          });
+          
+          // Pokud je aktivní PageBar, musíme po seřazení přepočítat indexy viditelných řádků
+          let visibleIdx = 0;
+          tbody.querySelectorAll('.table-row').forEach(r => {
+            if ((r as HTMLElement).style.display !== 'none') {
+              visibleIdx++;
+              const idxCell = r.querySelector('.index-cell');
+              if (idxCell) idxCell.textContent = visibleIdx.toString();
+            }
+          });
+        });
+      });
+    });
+  }
+
+  // Astro Lifecycle
+  initTableSort();
+  document.addEventListener('astro:after-swap', initTableSort);
+</script>
