@@ -1,5 +1,6 @@
 ---
 title: Discussion of Structural Patterns
+tableOfContents: false
 sidebar:
   label: Discussion
   order: 13

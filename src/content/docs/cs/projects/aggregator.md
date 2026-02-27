@@ -6,11 +6,11 @@ translation_status: original
 
 - PostgreSQL / TimescaleDB
 
-## 1️⃣ Hlavní entity
+## 1️⃣ Hlavní SQL DB entity
 
-1. `assets` nebo `pairs`
+1. `assets` (páry)
 
-    - Každý obchodní pár / měnový pár / asset.
+    - Každý obchodní/měnový pár jako asset.
 
     ```sql
     CREATE TYPE asset_type AS ENUM ('fx', 'commodity');
@@ -34,7 +34,7 @@ translation_status: original
 
 2. `institutions`
 
-    - Kdo poskytuje cenu: Pyth, Chainlink, ČNB, burza, banka, fintech.
+    - Kdo poskytuje cenu: Pyth, Chainlink, ČNB, FED, IMF, UN burza, banka, fintech.
 
     ```sql
     CREATE TYPE institution_type AS ENUM ('oracle', 'bank', 'exchange');
@@ -103,21 +103,22 @@ translation_status: original
     ```
 
     **Poznámky k architektuře**
-    - Timestamp: Doporučuji v DB používat TIMESTAMPTZ. TimescaleDB s ním pracuje lépe při časových agregacích (time_bucket). V TypeScriptu/API ho pak klidně převádějte na Unix Unix milisekundy/sekundy.
-    - Continuous Aggregates: TimescaleDB umožňuje vytvořit "Materialized Views", které se samy aktualizují. To je ideální pro váš endpoint /api/history (např. automatické předpočítání 5m, 1h svíček).
+    - **TimescaleDB** pracuje při časových agregacích (time_bucket) lépe s **TIMESTAMPTZ**. V TypeScript/API převod na Unix milisekundy/sekundy.
+    - **Continuous Aggregates:** TimescaleDB umožňuje vytvořit **"Materialized Views"**, které se samy aktualizují. To je ideální pro endpoint /api/history (např. automatické předpočítání 5m, 1h svíček).
 
 5. Finální verze
 
 ```sql
+-- v1
 -- ===============================
--- 1️⃣ Typy
+-- 1.Typy
 -- ===============================
 
 CREATE TYPE asset_type AS ENUM ('fx', 'crypto', 'equity', 'commodity', 'derivative');
 CREATE TYPE institution_type AS ENUM ('oracle', 'bank', 'exchange', 'fintech');
 
 -- ===============================
--- 2️⃣ Assets
+-- 2.Assets
 -- ===============================
 
 CREATE TABLE assets (
@@ -130,7 +131,7 @@ CREATE TABLE assets (
 );
 
 -- ===============================
--- 3️⃣ Institutions
+-- 3.Institutions
 -- ===============================
 
 CREATE TABLE institutions (
@@ -142,7 +143,7 @@ CREATE TABLE institutions (
 );
 
 -- ===============================
--- 4️⃣ Quotes (historická data)
+-- 4.Quotes (historická data)
 -- ===============================
 
 CREATE TABLE quotes (
@@ -172,7 +173,7 @@ ALTER TABLE quotes SET (
 SELECT add_compression_policy('quotes', INTERVAL '7 days');
 
 -- ===============================
--- 5️⃣ Arbitrage Opportunities (cache)
+-- 5.Arbitrage Opportunities (cache)
 -- ===============================
 
 CREATE TABLE arbitrage_opportunity (
@@ -189,15 +190,16 @@ CREATE TABLE arbitrage_opportunity (
 ```
 
 ```sql
+-- v2
 -- ===============================
--- 1️⃣ Enums
+-- 1.Enums
 -- ===============================
 
 CREATE TYPE asset_type AS ENUM ('fx', 'crypto', 'equity', 'commodity', 'derivative');
 CREATE TYPE institution_type AS ENUM ('oracle', 'bank', 'exchange', 'fintech');
 
 -- ===============================
--- 2️⃣ Assets
+-- 2.Assets
 -- ===============================
 
 CREATE TABLE assets (
@@ -210,7 +212,7 @@ CREATE TABLE assets (
 );
 
 -- ===============================
--- 3️⃣ Institutions
+-- 3.Institutions
 -- ===============================
 
 CREATE TABLE institutions (
@@ -222,7 +224,7 @@ CREATE TABLE institutions (
 );
 
 -- ===============================
--- 4️⃣ Quotes (Time-series data)
+-- 4.Quotes (Time-series data)
 -- ===============================
 
 CREATE TABLE quotes (
@@ -241,7 +243,7 @@ CREATE INDEX idx_quotes_lookup ON quotes (asset_id, timestamp DESC);
 CREATE INDEX idx_quotes_institution ON quotes (institution_id, timestamp DESC);
 
 -- ===============================
--- 5️⃣ Arbitrage Opportunities
+-- 5.Arbitrage Opportunities
 -- ===============================
 
 CREATE TABLE arbitrage_opportunity (
@@ -258,7 +260,7 @@ CREATE TABLE arbitrage_opportunity (
 SELECT create_hypertable('arbitrage_opportunity', 'timestamp', chunk_time_interval => interval '1 month');
 ```
 
-### 2️⃣ Cache / live layer
+## 2️⃣ Cache / live layer
 
 - Redis / Memcached:
 
@@ -266,9 +268,9 @@ SELECT create_hypertable('arbitrage_opportunity', 'timestamp', chunk_time_interv
   - TTL = 5–10s pro live feed
   - API endpointy používají cache, DB jen pro historická data
 
-### 3️⃣ REST API
+## 3️⃣ REST API
 
-#### Endpointy pro frontend
+### Endpointy pro frontend
 
 - `/api/latest?pair=ETH/USD` → vrátí poslední snapshot pro všechny instituce
 - `/api/history?pair=ETH/USD&from=timestamp&to=timestamp&interval=5m` → agregovaná data
@@ -276,14 +278,14 @@ SELECT create_hypertable('arbitrage_opportunity', 'timestamp', chunk_time_interv
 - `/api/pairs` → seznam všech párů
 - `/api/institutions` → seznam všech institucí + affiliate linků
 
-#### Node.js stack
+### Node.js stack
 
 - Express / Fastify
 - Middleware pro cache (Redis)
 - ORM: Prisma / TypeORM / Sequelize
 - Deployment: Docker + reverse proxy (Nginx / Caddy / Traefik) + SSL
 
-### 4️⃣ Frontend (Astro / statický web)
+## 4️⃣ Frontend (Astro / statický web)
 
 - Statická stránka:
   - Live table → fetch /api/latest každých 3–5s
@@ -292,7 +294,7 @@ SELECT create_hypertable('arbitrage_opportunity', 'timestamp', chunk_time_interv
 - Nepotřebuje plnou databázi na GitHub Pages, jen API endpointy
 - Affiliate monetizace → přímo v institution.affiliate_url
 
-### 5️⃣ Výhody architektury
+## 5️⃣ Výhody architektury
 
 |Vrstva|Výhody|
 |------|------|
@@ -301,7 +303,7 @@ SELECT create_hypertable('arbitrage_opportunity', 'timestamp', chunk_time_interv
 |REST API (Node)|Jednotný interface pro frontend i 3rd-party integrace|
 |Frontend (Astro)|Statický, škálovatelný, bezpečný (API přes rate limit)|
 
-## Domain model (TypeScript)
+## 6️⃣ FrontendDomain model (TypeScript)
 
 ```typescript
 export type AssetType = 'fx' | 'crypto' | 'equity' | 'commodity' | 'derivative';

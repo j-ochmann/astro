@@ -1,5 +1,6 @@
 ---
 title: Structural Patterns
+tableOfContents: false
 sidebar:
   label: Overview
   order: 2

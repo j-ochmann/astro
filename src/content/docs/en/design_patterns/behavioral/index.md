@@ -1,5 +1,6 @@
 ---
 title: Behavioral Patterns
+tableOfContents: false
 sidebar:
   label: Overview
   order: 0

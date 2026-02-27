@@ -1,5 +1,6 @@
 ---
 title: Discussion of Behavioral Patterns
+tableOfContents: false
 sidebar:
   label: Discussion
   order: 24
