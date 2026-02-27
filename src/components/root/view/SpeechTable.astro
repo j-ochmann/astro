@@ -1,0 +1,129 @@
+---
+// src/components/root/view/SpeechTable.astro
+import UniversalTable from './UniversalTable.astro';
+import type { Column } from './BaseTable.astro';
+
+interface Props {
+  data: any[];
+  lang: string;
+  basePath: string;
+  accentColor?: string;
+  isAudit?: boolean;
+}
+
+const { data, lang, basePath, accentColor, isAudit = false } = Astro.props;
+
+const speechColumns: Column[] = [
+  { key: 'code', label: 'ISO', type: 'code' as any },
+  { key: 'nameEn', label: lang === 'cs' ? 'Jazyk' : 'Language', type: 'language-name' as any },
+  { key: 'native', label: lang === 'cs' ? 'Nativně' : 'Native' },
+  { key: 'type', label: lang === 'cs' ? 'Kategorie' : 'Category', type: 'continent' as any },
+  { key: 'usageCount', label: lang === 'cs' ? 'Státy' : 'States', type: 'flags' as any, isNumeric: true }
+];
+
+if (isAudit) {
+  speechColumns.push(
+    { key: 'status', label: 'Status', type: 'status' as any },
+    { key: 'test', label: 'Test', type: 'test' as any }
+  );
+}
+
+const playIcon = `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+---
+
+<div class="speech-enhancement" style={accentColor ? `--local-accent: ${accentColor}` : ''}>
+  <UniversalTable 
+    id={isAudit ? "speechTable" : "languageTable"}
+    data={data}
+    columns={speechColumns}
+    basePath={basePath}
+    lang={lang}
+    accentColor={accentColor}
+  />
+</div>
+
+<style is:global>
+  .status-ok { color: #22c55e !important; font-weight: bold; }
+  .status-err { color: #ef4444 !important; font-weight: bold; }
+  
+  .play-btn-circle { 
+    background: var(--local-accent, var(--sl-color-accent)) !important; 
+    color: white !important; border: none !important; border-radius: 50% !important; 
+    width: 32px !important; height: 32px !important; display: flex !important; 
+    align-items: center !important; justify-content: center !important; 
+    cursor: pointer !important; transition: all 0.2s; padding: 0 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .play-btn-circle:disabled { opacity: 0.2 !important; cursor: not-allowed !important; }
+  .play-btn-circle:hover:not(:disabled) { transform: scale(1.1); filter: brightness(1.1); }
+</style>
+
+<script define:vars={{ playIcon }}>
+  function initSpeech() {
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+
+    const updateUI = () => {
+      const voices = synth.getVoices();
+      // Pokračujeme, i když voices jsou [] - zkusíme to znovu za chvíli
+      
+      const rows = document.querySelectorAll('.table-row');
+      rows.forEach(row => {
+        const code = row.dataset.code?.toLowerCase().split('-')[0];
+        const voice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(code));
+        
+        // Update Status
+        const statusCell = row.querySelector('.status-cell');
+        if (statusCell) {
+          statusCell.innerHTML = voice 
+            ? '<span class="status-ok">OK</span>' 
+            : '<span class="status-err">NE</span>';
+        }
+
+        // Update Test Slot (Play Button)
+        const testSlot = row.querySelector('.test-slot');
+        if (testSlot && !testSlot.querySelector('.play-btn-circle')) {
+          const btn = document.createElement('button');
+          btn.className = 'play-btn-circle';
+          btn.innerHTML = playIcon;
+          
+          const rawData = JSON.parse(row.dataset.json || '{}');
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            synth.cancel();
+            const ut = new SpeechSynthesisUtterance(rawData.native || rawData.nameEn);
+            // Najdeme nejlepší hlas znovu při kliknutí
+            const currentVoices = synth.getVoices();
+            const currentVoice = currentVoices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(code));
+            if (currentVoice) ut.voice = currentVoice;
+            synth.speak(ut);
+          };
+          
+          testSlot.appendChild(btn);
+        }
+
+        // Enable/Disable button based on voice availability
+        const btn = row.querySelector('.play-btn-circle');
+        if (btn) btn.disabled = !voice;
+      });
+    };
+
+    // Chrome vyžaduje onvoiceschanged, Safari ne
+    if ('onvoiceschanged' in synth) {
+      synth.onvoiceschanged = updateUI;
+    }
+    
+    updateUI();
+    // Periodická kontrola, dokud se hlasy nenačtou (někdy to trvá)
+    const timer = setInterval(() => {
+      if (synth.getVoices().length > 0) {
+        updateUI();
+        clearInterval(timer);
+      }
+    }, 500);
+  }
+
+  // Inicializace
+  initSpeech();
+  document.addEventListener('astro:after-swap', initSpeech);
+</script>

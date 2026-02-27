@@ -93,12 +93,24 @@ const timeOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-di
         </div>
       </div>
 
-      <PageBar 
+      <PageBar
+        accentColor={"#9d7cfd"}
         searchPlaceholder="Search symbol or description..." 
         filterLabel="Asset Type"
         filterOptions={categories}
       />
-
+      <!-- <PageBar 
+        accentColor={accentColor}
+        allLabel={allLabel}
+        mainIcon={mainIcon}
+        searchPlaceholder={searchPlaceholder}
+        filterLabel={filterLabel}
+        filterOptions={filterOptions}
+        viewLabel="View"
+        downloadLabel="Export"
+        viewOptions={viewOptions}
+        exportOptions={exportOptions}
+      /> -->
       <div class="table-container glass-panel" id="mainViewContainer">
         <table id="oracleTable">
           <thead>

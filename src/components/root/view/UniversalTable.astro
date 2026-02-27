@@ -16,17 +16,21 @@ const { id, data, columns, basePath, lang, accentColor } = Astro.props;
 
 <BaseTable id={id} columns={columns} accentColor={accentColor}>
   {data.map((item: any, index: number) => (
-    <tr class="table-row" data-json={JSON.stringify(item)} data-category={item.continent?.toLowerCase() || ""}>
+    <tr 
+      class="table-row data-item" 
+      data-json={JSON.stringify(item)} 
+      data-category={item.type?.toLowerCase() || ""}
+      data-code={item.code} 
+    >
       <td class="num-col index-cell">{index + 1}</td>
       {columns.map((col: Column) => (
         <td class:list={[{ 'text-right': col.isNumeric }]}>
           {(() => {
             switch(col.type) {
-              case 'country':
+              case 'language-name':
                 return (
                   <a href={`${basePath}/${item.code?.toLowerCase()}/`} class="item-link">
-                    <span class:list={['fi', `fi-${item.code?.toLowerCase()}`, 'table-flag']}></span>
-                    <span class="display-name">{item[col.key]}</span>
+                    <strong class="display-name">{item[col.key]}</strong>
                   </a>
                 );
               case 'code':
@@ -34,15 +38,31 @@ const { id, data, columns, basePath, lang, accentColor } = Astro.props;
               case 'continent':
                 return (
                   <div class="group-cell">
-                    <span class="dot" style={`background-color: ${item.continentColor}`}></span>
+                    <span class="dot" style={`background-color: ${item.typeColor || "#94a3b8"}`}></span>
                     <span class="standard-text">{item[col.key]}</span>
                   </div>
                 );
+              case 'flags':
+                return (
+                  <div class="states-wrapper">
+                    <span class="usage-badge">{item.usageCount || 0}</span>
+                    <div class="flag-wrap">
+                      {item.flags?.slice(0, 6).map((f: string) => (
+                        <span class:list={['fi', `fi-${f.toLowerCase()}`, 'mini-flag']} title={f.toUpperCase()}></span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              case 'status':
+                return <div class="status-cell mono" style="min-width: 50px;">---</div>;
+              case 'test':
+                return <div class="test-slot" style="min-width: 40px; display: flex; justify-content: center;"></div>; 
               default:
                 return (
                   <span class:list={[
                     { 'mono': col.isMono }, 
-                    { 'standard-text': !col.isMono && col.type !== 'country' }
+                    { 'standard-text': !col.isMono },
+                    { 'opacity-60 italic': col.key === 'native' }
                   ]}>
                     {col.isNumeric && typeof item[col.key] === 'number' 
                       ? item[col.key].toLocaleString(lang) 
@@ -56,3 +76,13 @@ const { id, data, columns, basePath, lang, accentColor } = Astro.props;
     </tr>
   ))}
 </BaseTable>
+
+<style is:global>
+  .mini-flag { width: 14px; height: 10px; border-radius: 1px; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+  .states-wrapper { display: flex; align-items: center; gap: 0.5rem; }
+  .usage-badge { 
+    font-family: var(--sl-font-mono); font-weight: 700; background: var(--sl-color-gray-6);
+    color: var(--sl-color-gray-2); padding: 1px 5px; border-radius: 4px; font-size: 0.7rem; min-width: 22px; text-align: center;
+  }
+  .flag-wrap { display: flex; gap: 3px; flex-wrap: wrap; }
+</style>

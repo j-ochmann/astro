@@ -1,8 +1,8 @@
 ---
+// src/pages/[lang]/languages/index.astro
 import WideLayout from '@/components/root/layout/Wide.astro';
-import ViewTable from '@/components/root/view/TableLanguages.astro';
 import ViewGrid from '@/components/root/view/Grid.astro';
-import ViewSpeech from '@/components/root/view/Speech.astro';
+import ViewSpeech from '@/components/root/view/SpeechTable.astro';
 import { 
   getI18nPaths, 
   useTranslations,
@@ -56,10 +56,10 @@ const data = ([...usedLangs, ...unusedLangs] as any[]).map(l => {
   };
 }).sort((a, b) => b.usageCount - a.usageCount || a.nameEn.localeCompare(b.nameEn));
 
+// Definice sloupců pro Grid (SpeechTable si je definuje sám interně)
 const columns = [
   { key: 'code', label: 'ISO', isMono: true },
   { key: 'nameEn', label: lang === 'cs' ? 'Jazyk' : 'Language' },
-  { key: 'native', label: lang === 'cs' ? 'Nativně' : 'Native', isNative: true },
   { key: 'type', label: lang === 'cs' ? 'Kategorie' : 'Category' },
   { key: 'usageCount', label: lang === 'cs' ? 'Státy' : 'States', isNumeric: true }
 ];
@@ -85,14 +85,35 @@ const exportOptions = [
 
 <WideLayout 
   title={lang === 'cs' ? "Světové jazyky" : "World Languages"}
+  accentColor="#3b82f6"
   searchPlaceholder={lang === 'cs' ? "Hledat jazyk..." : "Search language..."}
   filterLabel={lang === 'cs' ? "Kategorie" : "Category"}
   filterOptions={filterOptions}
   viewOptions={viewOptions}
   exportOptions={exportOptions}
-  accentColor="#3b82f6"
 >
-  <ViewTable slot="table" data={data} columns={columns} basePath={basePath} lang={lang} />
-  <ViewGrid slot="grid" data={data} columns={columns} basePath={basePath} />
-  <ViewSpeech slot="speech" data={data} lang={lang} />
+  <ViewSpeech 
+    slot="table" 
+    data={data} 
+    basePath={basePath} 
+    lang={lang} 
+    accentColor="#3b82f6" 
+    isAudit={false} 
+  />
+
+  <ViewGrid 
+    slot="grid" 
+    data={data} 
+    columns={columns} 
+    basePath={basePath} 
+  />
+
+  <ViewSpeech 
+    slot="speech" 
+    data={data} 
+    basePath={basePath} 
+    lang={lang} 
+    accentColor="#3b82f6" 
+    isAudit={true} 
+  />
 </WideLayout>
