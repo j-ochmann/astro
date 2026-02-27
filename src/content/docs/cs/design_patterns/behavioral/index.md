@@ -1,7 +1,8 @@
 ---
-title: Behavioral Patterns
+title: Behaviorální vzory
+tableOfContents: false
 sidebar:
-  label: Overview
+  label: Behaviorální vzory
   order: 0
 category: design_patterns
 content_hash: 89363f9073676de8ff7d8475ca85846a

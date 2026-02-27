@@ -1,7 +1,8 @@
 ---
 title: Discussion of Structural Patterns
+tableOfContents: false
 sidebar:
-  label: Discussion
+  label: Diskuze
   order: 13
 category: Structural
 content_hash: a8dfd25b669a40d8fb164c7c4bbd2447

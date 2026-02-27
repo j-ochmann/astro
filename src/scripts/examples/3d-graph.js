@@ -74,7 +74,8 @@ const initGraph = () => {
   // Initialize Graph
   const Graph = ForceGraph3D()(container)
     .graphData(gData)
-    .backgroundColor('#000003')
+    .showNavInfo(false) 
+    .backgroundColor('#000000')
     .nodeLabel('id')
     .nodeThreeObject(node => { // Create the sphere
       const sphereMaterial = new THREE.MeshStandardMaterial({

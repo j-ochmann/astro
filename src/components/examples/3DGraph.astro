@@ -1,6 +1,90 @@
 ---
+import Pagination from '@astrojs/starlight/components/Pagination.astro';
 ---
-<div id="3d-graph" style="position:fixed; inset:0"></div>
+
+<style is:global>
+  /* 1. RESET CELÉHO STARLIGHT LAYOUTU */
+  :root {
+    --sl-content-pad-x: 0 !important;
+    --sl-content-width: 100% !important;
+  }
+
+  /* Zrušíme bílé proužky a zajistíme tmavé pozadí všude */
+  html, body, .page, .main-frame, main, .content-panel {
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #000003 !important;
+  }
+
+  /* 2. OPRAVA POZICE GRAFU (Musí ignorovat sidebar) */
+  #3d-graph {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+  }
+
+  /* 3. SKLENĚNÉ H1 NEBO SKRYTÍ */
+  /* Pokud ho chcete úplně pryč, odkomentujte display: none */
+  header.sl-flex h1 {
+    /* display: none !important; */
+    position: fixed;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    margin: 0;
+    padding: 0.5rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 99px;
+    color: white !important;
+    font-size: 1.2rem !important;
+    white-space: nowrap;
+  }
+
+  /* 4. OPRAVA TLAČÍTEK (Posun od sidebaru) */
+  .pagination-links {
+    position: fixed !important;
+    bottom: 2rem !important;
+    /* Tento výpočet zajistí, že tlačítka nebudou pod sidebarem */
+    left: calc(var(--sl-sidebar-width) + 2rem) !important;
+    right: 2rem !important;
+    width: auto !important;
+    z-index: 100 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 1rem;
+    border: none !important;
+  }
+
+  /* Stylování samotných Starlight odkazů */
+  .pagination-links a {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    padding: 1rem 1.5rem !important;
+    color: white !important;
+    text-decoration: none !important;
+    flex: 0 1 auto !important;
+  }
+
+  /* Skrytí labelu "Předchozí/Další" pokud je tam moc textu */
+  .pagination-links .rel-label {
+    color: rgba(255, 255, 255, 0.5) !important;
+  }
+</style>
+
+<div id="3d-graph"></div>
+
+<!-- Obalíme pagination, abychom ho mohli snadno cílit -->
+<div class="pagination-wrapper">
+  <Pagination {...Astro.props} />
+</div>
 
 <script>
   import '@/scripts/examples/3d-graph.js';

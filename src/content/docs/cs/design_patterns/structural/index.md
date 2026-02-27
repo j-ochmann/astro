@@ -1,8 +1,8 @@
 ---
-title: Structural Patterns
+title: Strukturální vzory
 tableOfContents: false
 sidebar:
-  label: Overview
+  label: Strukturální vzory
   order: 2
 category: design_patterns
 content_hash: f78dcbaf116416c19c2f7c8e1f08fe9d
