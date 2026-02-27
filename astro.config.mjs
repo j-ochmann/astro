@@ -118,10 +118,25 @@ export default defineConfig({
             { label: 'Markdown',
               autogenerate: { directory: 'Markdown/' },
               collapsed: true },
+            // { label: 'Examples',
+            //   translations: { cs: 'Ukázky' },
+            //   autogenerate: { directory: 'examples/' },
+            //   collapsed: true }
             { label: 'Examples',
               translations: { cs: 'Ukázky' },
-              autogenerate: { directory: 'examples/' },
-              collapsed: true }
+              collapsed: true,
+              items: [
+                { label: '3D Graph', 
+                  translations: { cs: '3D Graf' }, 
+                  link: '/examples/graph3d/' },
+                { 
+                  label: 'Other',
+                  translations: { cs: 'Ostatní' },
+                  autogenerate: { directory: 'examples/' },
+                  collapsed: true
+                }
+              ]
+            }
           ],
         },
         { 

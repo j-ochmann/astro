@@ -1,7 +1,7 @@
 ---
-title: Webové stránky GitHub
+title: GitHub Pages
 sidebar:
-  label: Stránky GitHub
+  label: GitHub Pages
   order: 2
 translation_status: original
 ---
@@ -80,21 +80,26 @@ téma: jekyll-theme-hacker
 
 Commit → push → hotovo.
 
-Několik použitelných témat: `jekyll-theme-minimal/hacker/cayman/midnight/slate/dinky`
+Několik použitelných témat:
 
-👉 [Dokončeno seznam]("https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/adding-a-theme-to-your-github-pages-site-using-jekyll?versionId=free-pr o-team%40latest&productId=pages&restPage=getting-started-with-github-pages%2Cconfiguring-a-publishing-source-for-your-github-pages-site#supported-themes")
+```txt
+jekyll-theme-minimal
+jekyll-theme-hacker
+jekyll-theme-cayman
+jekyll-theme-midnight
+jekyll-theme-slate
+jekyll-theme-dinky
+```
 
-## Jak OVLIVNIT OBSAH (strukturu)
+## Obsah
 
 Doporučená struktura:
 
 ```text
-dokumenty/
+docs/
 ├── _config.yml
 ├── index.md
-├── o.md
-├── projekty.md
-├── aktiva/
+├── assets/
 │ └── img/
 └── _layouts/
 ```
@@ -115,7 +120,7 @@ Jmenuji se **Jindřich Ochmann**
 - experimenty
 ```
 
->⚠️ Ten blok YAML (---) je důležitý
+>⚠️ **YAML** blok **`---`** je důležitý!
 
 ## Navigace (horní nabídka)
 
@@ -161,8 +166,4 @@ h1 {
 }
 ```
 
-Stránky GitHub:
-
-- rozpozná SCSS
-- překládá to
-- přepíše výchozí styl motivu
+GitHub Pages rozpozná SCSS a přepíše výchozí styl motivu

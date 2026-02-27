@@ -1,0 +1,29 @@
+---
+// src/pages/[lang]/examples/graph3d.astro
+import G3D from '@/components/examples/Graph3D.astro';
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+
+// TATO FUNKCE JE KLÍČOVÁ - DEFINUJE DOSTUPNÉ JAZYKY
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'en' } },
+    { params: { lang: 'cs' } }
+  ];
+}
+
+// Získání aktuálního jazyka z URL
+const { lang } = Astro.params;
+
+const pageFrontmatter = {
+  title: lang === 'cs' ? "3D Graf" : "3D Graph",
+  tableOfContents: false,
+  prev: undefined,
+  next: undefined,
+  // 'splash' layout zajistí, že graf bude mít víc místa
+  // template: 'splash' as const,
+} as any;
+---
+
+<StarlightPage frontmatter={pageFrontmatter} lang={lang}>
+  <G3D />
+</StarlightPage>
