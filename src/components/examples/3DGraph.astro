@@ -11,17 +11,15 @@ import Pagination from '@astrojs/starlight/components/Pagination.astro';
     --sl-nav-height: 0px !important;
   }
 
-  /* Vynutíme, aby žádný prvek nevytvářel scrollbar */
   html, body {
     margin: 0 !important;
     padding: 0 !important;
-    overflow: hidden !important; /* ZABRANUJE POSUVNÍKŮM */
+    overflow: hidden !important;
     height: 100vh !important;
     width: 100vw !important;
     background-color: #000003 !important;
   }
 
-  /* Starlight wrappery, které často drží padding/margin a způsobují proužek */
   .page, .main-frame, main, .content-panel, .sl-container, .sl-markdown-content {
     margin: 0 !important;
     padding: 0 !important;
@@ -43,33 +41,27 @@ import Pagination from '@astrojs/starlight/components/Pagination.astro';
     z-index: 1;
   }
 
-  /* 3. SKLENĚNÉ H1 - Sjednoceno s tlačítky */
+  /* 3. SKLENĚNÉ H1 - RESPONZIVNÍ PÍSMO */
   h1 {
     position: fixed !important;
     top: 2rem !important;
-    /* Dynamické centrování vůči zbývající ploše vedle sidebaru */
-    left: calc(var(--sl-sidebar-width) / 2 + 50%) !important; 
+    left: calc(var(--sl-sidebar-width) / 2 + 50%) !important;
     transform: translateX(-50%) !important;
     z-index: 100 !important;
-    
     margin: 0 !important;
-    padding: 0.8rem 1.5rem !important; /* Sladěno s paddingem tlačítek */
-    
-    /* Vizuální styl identický s tlačítky */
+    padding: 0.5rem 1.5rem !important;
     background: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Zvýšena viditelnost rámečku */
-    border-radius: 12px !important; /* Změněno z 99px na 12px pro shodu s tlačítky */
-    
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
     color: white !important;
-    font-size: 1.1rem !important; /* Mírně zmenšeno pro elegantnější vzhled */
-    font-weight: 600 !important;
+    /* Plynulé zmenšení z 1.2rem na 0.9rem podle šířky okna */
+    font-size: clamp(0.9rem, 2vw, 1.2rem) !important;
     white-space: nowrap;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important; /* Sjednocený stín */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
   }
 
-
-  /* 4. TLAČÍTKA PAGINACE */
+  /* 4. TLAČÍTKA PAGINACE - RESPONZIVNÍ PÍSMO */
   .pagination-links {
     position: fixed !important;
     bottom: 2rem !important;
@@ -79,6 +71,7 @@ import Pagination from '@astrojs/starlight/components/Pagination.astro';
     display: flex !important;
     justify-content: space-between !important;
     border: none !important;
+    gap: 1rem;
   }
 
   .pagination-links a {
@@ -87,12 +80,17 @@ import Pagination from '@astrojs/starlight/components/Pagination.astro';
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
     border-radius: 12px !important;
     padding: 0.8rem 1.2rem !important;
-    color: white !important; /* Základní barva */
+    color: white !important;
     text-decoration: none !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    /* Plynulé zmenšení písma v tlačítkách */
+    font-size: clamp(0.8rem, 1.5vw, 1rem) !important;
+    flex: 1;
+    min-width: 0;
+    max-width: 450px;
   }
 
-  /* VYNUCENÍ BÍLÉ PRO VNITŘNÍ TEXTY (LABEL A NÁZEV) A ŠIPKY */
+  /* Vynucení bílé pro vnitřní texty (label a název) a šipky */
   .pagination-links a .link-title,
   .pagination-links a .rel-label,
   .pagination-links a svg {
@@ -101,12 +99,17 @@ import Pagination from '@astrojs/starlight/components/Pagination.astro';
     opacity: 1 !important;
   }
 
-  .pagination-links a:hover {
-    background: rgba(255, 255, 255, 0.15) !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
+  /* Responzivní chování pro velmi malé displeje */
+  @media (max-width: 800px) {
+    .pagination-links {
+      left: 1rem !important;
+      right: 1rem !important;
+    }
+    h1 {
+      top: 1rem !important;
+    }
   }
 
-  /* Skrytí postranních dekoračních čar Starlightu */
   .right-sidebar-panel, .sidebar-pane {
     border: none !important;
   }
@@ -118,3 +121,4 @@ import Pagination from '@astrojs/starlight/components/Pagination.astro';
 <script>
   import '@/scripts/examples/3d-graph.js';
 </script>
+
