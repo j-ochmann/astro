@@ -3,88 +3,117 @@ import Pagination from '@astrojs/starlight/components/Pagination.astro';
 ---
 
 <style is:global>
-  /* 1. RESET CELÉHO STARLIGHT LAYOUTU */
+  /* 1. TOTÁLNÍ RESET STARLIGHT STRUKTURY */
   :root {
     --sl-content-pad-x: 0 !important;
+    --sl-content-pad-y: 0 !important;
     --sl-content-width: 100% !important;
+    --sl-nav-height: 0px !important;
   }
 
-  /* Zrušíme bílé proužky a zajistíme tmavé pozadí všude */
-  html, body, .page, .main-frame, main, .content-panel {
+  /* Vynutíme, aby žádný prvek nevytvářel scrollbar */
+  html, body {
     margin: 0 !important;
     padding: 0 !important;
+    overflow: hidden !important; /* ZABRANUJE POSUVNÍKŮM */
+    height: 100vh !important;
+    width: 100vw !important;
     background-color: #000003 !important;
   }
 
-  /* 2. OPRAVA POZICE GRAFU (Musí ignorovat sidebar) */
+  /* Starlight wrappery, které často drží padding/margin a způsobují proužek */
+  .page, .main-frame, main, .content-panel, .sl-container, .sl-markdown-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+
+  .content-panel {
+    margin-top: -20px !important;
+    margin-bottom: -20px !important;
+  }
+
+  /* 2. FIXNÍ GRAF NA CELÉ OKNO */
   #3d-graph {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
     z-index: 1;
   }
 
-  /* 3. SKLENĚNÉ H1 NEBO SKRYTÍ */
-  /* Pokud ho chcete úplně pryč, odkomentujte display: none */
-  header.sl-flex h1 {
-    /* display: none !important; */
-    position: fixed;
-    top: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
-    margin: 0;
-    padding: 0.5rem 1.5rem;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 99px;
+  /* 3. SKLENĚNÉ H1 - Sjednoceno s tlačítky */
+  h1 {
+    position: fixed !important;
+    top: 2rem !important;
+    /* Dynamické centrování vůči zbývající ploše vedle sidebaru */
+    left: calc(var(--sl-sidebar-width) / 2 + 50%) !important; 
+    transform: translateX(-50%) !important;
+    z-index: 100 !important;
+    
+    margin: 0 !important;
+    padding: 0.8rem 1.5rem !important; /* Sladěno s paddingem tlačítek */
+    
+    /* Vizuální styl identický s tlačítky */
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Zvýšena viditelnost rámečku */
+    border-radius: 12px !important; /* Změněno z 99px na 12px pro shodu s tlačítky */
+    
     color: white !important;
-    font-size: 1.2rem !important;
+    font-size: 1.1rem !important; /* Mírně zmenšeno pro elegantnější vzhled */
+    font-weight: 600 !important;
     white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important; /* Sjednocený stín */
   }
 
-  /* 4. OPRAVA TLAČÍTEK (Posun od sidebaru) */
+
+  /* 4. TLAČÍTKA PAGINACE */
   .pagination-links {
     position: fixed !important;
     bottom: 2rem !important;
-    /* Tento výpočet zajistí, že tlačítka nebudou pod sidebarem */
     left: calc(var(--sl-sidebar-width) + 2rem) !important;
     right: 2rem !important;
-    width: auto !important;
     z-index: 100 !important;
     display: flex !important;
     justify-content: space-between !important;
-    gap: 1rem;
     border: none !important;
   }
 
-  /* Stylování samotných Starlight odkazů */
   .pagination-links a {
     background: rgba(255, 255, 255, 0.05) !important;
     backdrop-filter: blur(10px) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
     border-radius: 12px !important;
-    padding: 1rem 1.5rem !important;
-    color: white !important;
+    padding: 0.8rem 1.2rem !important;
+    color: white !important; /* Základní barva */
     text-decoration: none !important;
-    flex: 0 1 auto !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   }
 
-  /* Skrytí labelu "Předchozí/Další" pokud je tam moc textu */
-  .pagination-links .rel-label {
-    color: rgba(255, 255, 255, 0.5) !important;
+  /* VYNUCENÍ BÍLÉ PRO VNITŘNÍ TEXTY (LABEL A NÁZEV) A ŠIPKY */
+  .pagination-links a .link-title,
+  .pagination-links a .rel-label,
+  .pagination-links a svg {
+    color: white !important;
+    fill: white !important;
+    opacity: 1 !important;
+  }
+
+  .pagination-links a:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  /* Skrytí postranních dekoračních čar Starlightu */
+  .right-sidebar-panel, .sidebar-pane {
+    border: none !important;
   }
 </style>
 
 <div id="3d-graph"></div>
-
-<!-- Obalíme pagination, abychom ho mohli snadno cílit -->
-<div class="pagination-wrapper">
-  <Pagination {...Astro.props} />
-</div>
+<Pagination {...Astro.props} />
 
 <script>
   import '@/scripts/examples/3d-graph.js';
