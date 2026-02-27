@@ -113,7 +113,7 @@ export default defineConfig({
               autogenerate: { directory: 'git/' },
               collapsed: true },
             { label: 'Markdown',
-              autogenerate: { directory: 'Markdown/' },
+              autogenerate: { directory: 'markdown/' },
               collapsed: true },
             { label: 'Artificial Intelligence',
               translations: { cs: 'Umělá inteligence' },
@@ -125,18 +125,17 @@ export default defineConfig({
               items: [
                 { label: '3D Graph', 
                   translations: { cs: '3D Graf' }, 
-                  link: '/examples/graph3d/' },
-                { 
-                  label: 'Other',
-                  translations: { cs: 'Ostatní' },
-                  autogenerate: { directory: 'examples/' },
-                  collapsed: true
-                }
+                  link: '/examples/graph3d/' }
               ]
+            },
+            { label: 'Other',
+              translations: { cs: 'Ostatní' },
+              autogenerate: { directory: 'other/' },
+              collapsed: true
             }
           ],
         },
-        { 
+        {
           label: 'Market', 
           translations: { cs: 'Trh' },
           collapsed: true,
