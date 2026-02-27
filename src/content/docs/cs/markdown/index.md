@@ -1,10 +1,10 @@
 ---
-title: D2 - Declarative Diagramming
+title: "D2 - Declarative Diagramming"
 tableOfContents: false
 sidebar:
   label: D2
   order: 2
-category: Markdown
+category: markdown
 translation_status: original
 ---
 

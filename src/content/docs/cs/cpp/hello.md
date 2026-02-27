@@ -137,3 +137,13 @@ projekt/
 __*Tip:*__
 >Pro názvy složek používejte vždy malá písmena a místo mezer podtržítka nebo pomlčky,
 >abyste se vyhnuli problémům s kompatibilitou na různých operačních systémech.
+
+### YOLO workflow
+
+vyčištění obrazovky, kompilace s kontrolou a spuštění
+
+```txt
+clear &&
+gcc -Wall -Wextra -Werror hello.c -o hello &&
+./hello
+```

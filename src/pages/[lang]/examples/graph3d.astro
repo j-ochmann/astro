@@ -3,7 +3,6 @@
 import G3D from '@/components/examples/Graph3D.astro';
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 
-// TATO FUNKCE JE KLÍČOVÁ - DEFINUJE DOSTUPNÉ JAZYKY
 export function getStaticPaths() {
   return [
     { params: { lang: 'en' } },
@@ -11,7 +10,6 @@ export function getStaticPaths() {
   ];
 }
 
-// Získání aktuálního jazyka z URL
 const { lang } = Astro.params;
 
 const pageFrontmatter = {
@@ -19,8 +17,6 @@ const pageFrontmatter = {
   tableOfContents: false,
   prev: undefined,
   next: undefined,
-  // 'splash' layout zajistí, že graf bude mít víc místa
-  // template: 'splash' as const,
 } as any;
 ---
 
