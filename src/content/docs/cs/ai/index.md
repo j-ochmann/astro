@@ -1,12 +1,29 @@
 ---
-title: AI - umělá inteligence
+title: D2 - Declarative Diagramming
 sidebar:
-  label: AI
-  order: 0
-category: ai
-content_hash: 8b69f79a1a9d08223703f99b5334916f
+  label: D2
+  order: 2
+category: Markdown
 translation_status: original
 ---
+
+```markdown
+```d2
+informatika: {
+  umělá inteligence: {
+    strojové učení: {
+      hluboké učení
+    }
+  }
+}
+datová věda: {
+  strojové učení: {
+    hluboké učení
+  }
+}
+```
+```
+
 
 ```d2
 informatika: {

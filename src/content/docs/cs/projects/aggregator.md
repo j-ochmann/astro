@@ -1,11 +1,12 @@
 ---
 layout: default
-title: 'Návrh architektury a tabulek'
+title: 'Market Aggregator'
 translation_status: original
 ---
-## PostgreSQL / TimescaleDB
 
-### 1️⃣ Hlavní entity
+- PostgreSQL / TimescaleDB
+
+## 1️⃣ Hlavní entity
 
 1. `assets` nebo `pairs`
 

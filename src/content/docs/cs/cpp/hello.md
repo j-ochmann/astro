@@ -1,6 +1,8 @@
 ---
-title: C Tahák
-content_hash: 8dae22faf08ddbd9b155931bf4aeebbd
+title: "Jak na C v Linuxu: První program krok za krokem"
+sidebar:
+  label: První program
+  order: 1
 translation_status: original
 ---
 
@@ -8,7 +10,7 @@ translation_status: original
 
 Otevřete terminál a zadejte:
 
-```bash
+```txt
 sudo apt update
 sudo apt install build-essential
 ```
@@ -21,7 +23,7 @@ Balík build-essential obsahuje:
   
 Ověřte:
 
-```bash
+```txt
 gcc --version
 ```
 
@@ -29,7 +31,7 @@ gcc --version
 
 Např. soubor hello_world.c:
 
-```bash
+```txt
 nano hello_world.c
 ```
 
@@ -52,9 +54,9 @@ Uložte:
   
 ## 3️⃣ Přeložte program
 
-V tom samém adresáři spusť:
+V tom samém adresáři spusťte:
 
-```bash
+```txt
 gcc hello_world.c -o hello_world
 ```
 
@@ -65,7 +67,7 @@ Co se stalo:
 
 Zkontrolujte:
 
-```bash
+```txt
 ls
 ```
 
@@ -73,13 +75,13 @@ Měl by tam být soubor hello_world
 
 ## 4️⃣ Spusťte program
 
-```bash
+```txt
 ./hello_world
 ```
 
 Výstup:
 
-```bash
+```txt
 Hello, world!
 ```
 
@@ -87,7 +89,7 @@ Hello, world!
 
 Pro správné návyky:
 
-```bash
+```txt
 gcc -Wall -Wextra -Werror hello_world.c -o hello_world
 ```
 
@@ -100,7 +102,7 @@ To Vás donutí psát čistý a bezpečný C kód.
 - `stdio.h` je standardní knihovna pro vstup/výstup
 - `./` říká shellu „spusť soubor z aktuálního adresáře“
 
-```bash
+```txt
 nano read_number.c
 ```
 
@@ -119,24 +121,17 @@ int main (void)
 
 ## Doporučená struktura projektu
 
-Pokud chcete mít projekt profesionálně organizovaný, standardní rozložení vypadá takto:
+Pokud chcete mít projekt organizovaný:
 
 ```text
 projekt/
-├── docs/                # Hlavní dokumentace projektu
-│   ├── tutorials/       # Návody ve formě .md souborů
-│   └── examples_src/    # .md soubory, ze kterých generujete kód
-├── examples/            # Výsledné vygenerované .c soubory (ukázky)
-├── scripts/             # Skripty (Python/Bash), které provádějí generování
-├── external/            # MD4C a další knihovny
 ├── src/             # Váš zdrojový kód (.c, .cpp)
 ├── include/         # Vaše hlavičkové soubory (.h)
 ├── external/        # Cizí knihovny (např. md4c)
 │   └── md4c/
 │       ├── md4c.h
 │       └── md4c.c
-├── build/           # Výstupy kompilace (ignore v gitu)
-└── CMakeLists.txt   # Konfigurace sestavení
+└── build/           # Výstupy kompilace (ignore v gitu)
 ```
 
 __*Tip:*__

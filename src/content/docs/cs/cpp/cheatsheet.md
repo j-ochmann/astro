@@ -1,9 +1,8 @@
 ---
-id: quick_ref_cpp
 title: C++ Rychlý Přehled
 sidebar:
-  label: C++
-  order: 1
+  label: Tahák
+  order: 2
 category: programming
 tags:
   - cpp
