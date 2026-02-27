@@ -1,7 +1,8 @@
 ---
 title: Creational Patterns
+tableOfContents: false
 sidebar:
-  label: Overview
+  label: Creational Patterns
   order: 0
 category: design_patterns
 ---

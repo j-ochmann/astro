@@ -94,8 +94,8 @@ export default defineConfig({
               translations: { cs: 'Návrhové vzory' },
               collapsed: true,
               items: [
-                { label: 'Overview',
-                  translations: { cs: 'Přehled' },
+                { label: 'Introduction',
+                  translations: { cs: 'Úvod' },
                   link: '/design_patterns/' },
                 { label: 'Creational',
                   translations: { cs: 'Tvůrčí' },
