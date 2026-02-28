@@ -8,7 +8,8 @@ Existují tisíce jazyků, ale některé jsou si vzájemně podobné nebo pouhé
 
 Standardizace je překvapivě bídná a záludná.
 
-**ISO 639-1 set 1** „dvoupísmenných zkratek“ obsahuje i typy `Constructed` a `Historical`. Latinu a esperanto pro e-shop nejspíše nepotřebujete. Severní sámština (kód `se`) má okolo 20 tisíc mluvčích. Inuitský jazyk (kód `ik`) na Aljašce s přibližně 2000 mluvčích.
+[**ISO 639-1 set 1**](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes#jv)
+ (183) „dvoupísmenných zkratek“ obsahuje i typy `Constructed` a `Historical`. Latinu a esperanto pro e-shop nejspíše nepotřebujete. Severní sámština (kód `se`) má okolo 20 tisíc mluvčích. Inuitský jazyk (kód `ik`) na Aljašce s přibližně 2000 mluvčích.
 
 Kód `zh` je naprosto nedostatečný pro Čínu, kde je tato „standardní“ čínština pro stovky milionů lidí druhým jazykem a jejich dialekty jsou pro Číňana z Pekingu nesrozumitelné.
 
