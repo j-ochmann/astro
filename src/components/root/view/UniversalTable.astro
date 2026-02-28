@@ -27,7 +27,14 @@ const { id, data, columns, basePath, lang, accentColor } = Astro.props;
         <td class:list={[{ 'text-right': col.isNumeric }]}>
           {(() => {
             switch(col.type) {
-              case 'language-name':
+              case 'country': // PŘIDÁNO: Zpětná podpora pro tabulku států
+                return (
+                  <a href={`${basePath}/${item.code?.toLowerCase()}/`} class="item-link">
+                    <span class:list={['fi', `fi-${item.code?.toLowerCase()}`, 'table-flag']}></span>
+                    <strong class="display-name">{item[col.key]}</strong>
+                  </a>
+                );
+              case 'language-name': // Pro tabulku jazyků
                 return (
                   <a href={`${basePath}/${item.code?.toLowerCase()}/`} class="item-link">
                     <strong class="display-name">{item[col.key]}</strong>
@@ -79,10 +86,26 @@ const { id, data, columns, basePath, lang, accentColor } = Astro.props;
 
 <style is:global>
   .mini-flag { width: 14px; height: 10px; border-radius: 1px; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+  .table-flag { margin-right: 8px; width: 20px; height: 15px; border-radius: 2px; display: inline-block; vertical-align: middle; }
   .states-wrapper { display: flex; align-items: center; gap: 0.5rem; }
   .usage-badge { 
     font-family: var(--sl-font-mono); font-weight: 700; background: var(--sl-color-gray-6);
     color: var(--sl-color-gray-2); padding: 1px 5px; border-radius: 4px; font-size: 0.7rem; min-width: 22px; text-align: center;
   }
   .flag-wrap { display: flex; gap: 3px; flex-wrap: wrap; }
+
+  /* Oprava klikatelnosti */
+  .item-link { 
+    text-decoration: none !important; 
+    display: flex; 
+    align-items: center; 
+    color: inherit;
+  }
+  .display-name { 
+    color: var(--sl-color-accent, #3b82f6); 
+    cursor: pointer;
+  }
+  .item-link:hover .display-name {
+    text-decoration: underline;
+  }
 </style>

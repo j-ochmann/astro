@@ -3,10 +3,15 @@ layout: default
 title: 'Market Aggregator'
 translation_status: original
 ---
+Cíl je propojit informaci o ceně/kurzu aktiva na různých trzích a z různých zdrojů.
 
-- PostgreSQL / TimescaleDB
+- uživatel uvidí kurz/cenu aktiva z Pyth, Chainlink, burz, fintechů, centrálních a komerčních bank, IMF, UN Treasury na jednom místě (filtr v tab.) nebo stránce s detailem kurzu/aktiva/páru.
 
-## 1️⃣ Hlavní SQL DB entity
+- možnost hlídat příležitosti pro arbitráže
+
+## 1️⃣ Hlavní DB entity
+
+- **PostgreSQL / TimescaleDB**
 
 1. `assets` (páry)
 
