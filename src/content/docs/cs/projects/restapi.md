@@ -42,3 +42,19 @@ V Nginx Proxy Manageru vytvoříte nový Proxy Host.
 - **Forward IP:** Název vašeho API kontejneru (pokud jsou ve stejné Docker síti) nebo lokální IP serveru.
 - **Forward Port:** Port, na kterém poběží vaše API (např. 3000).
 
+## Inicializace projektu
+
+1. Nainstalujte Node.js a npm.
+
+Otevřete terminál v prázdné složce, kde chcete mít svůj projekt a zdadejte:
+
+```shell
+# Vytvoření souboru package.json
+npm init -y
+
+# Instalace TypeScriptu a vývojových nástrojů
+npm install typescript ts-node nodemon @types/node --save-dev
+
+# Inicializace konfigurace TypeScriptu (vytvoří tsconfig.json)
+npx tsc --init
+```

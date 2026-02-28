@@ -69,6 +69,9 @@ export default defineConfig({
         MobileTableOfContents: './src/components/starlight/Empty.astro',
         Sidebar: './src/components/starlight/Sidebar.astro'
       },
+      expressiveCode: { defaultProps: {
+        frame: 'none', // Zruší puntíky i záložky u všech bloků
+      }, },
       sidebar: [
         { 
           label: 'Dev',
