@@ -36,9 +36,16 @@ Z `en-AU`, `en-CA`, `en-GB`, `en-US` lze příbuznosti dovodit.
 - **T** „terminological“ založeném na původních „domorodých“ názvech
 - **B** „bibliographic“ vycházející z anglických názvů, ale jen u dvaceti jazyků vč. češtiny (`cze` místo `ces`). U ostatních jazyků se neliší od **T**.
 
+**ISO 639-3** je rozsáhlejší. Obsahuje přes **7000** kódů. **ISO 639-2/T** jich má pouze kolem **480**. Ty se často shodují, ale **ISO 639-2/T** často používá jeden kód pro celou skupinu, zatímco **ISO 639-3** ji rozděluje na konkrétní jazyky.
+
+**Příklad:** V **ISO 639-2/T** je kód `ara` pro arabštinu jako celek. V **ISO 639-3** existuje také (jako makrojazyk), ale k němu přibývá dalších 30 specifických kódů pro jednotlivé varianty, jako je `arb` pro standardní arabštinu.
+
+**Kolektivní kódy: ISO 639-2/T** obsahuje kódy pro skupiny jazyků (např. afa pro afroasijské jazyky), které v **ISO 639-3** zcela chybí, protože ta se zaměřuje výhradně na jednotlivé jazyky. Skupiny jazyků řeší až norma **ISO 639-5**.
+
 Klíč jazyka bych interně skládal z **ISO 639-3**, regionu (ISO 3166-1/UN M.49) a písma, ale uživatelům se snažil zobrazovat kratší a povědomější set 1. Státy s jazyky mají vztah **M:N**. Britská `en-GB` angličtina se používá v cca 65 států. Ale Google TTS rozlišuje AU, NZ, GB, atd. Těžko odhadnout fallbacky pro kreolštiny z ISO set 3. Standartdy jsou ovlivněny politicky (Čína/Taiwan), historickými změnami a lingvistikou, která má jiné priority než velikost trhu.
 
-[**ISO639-3.sil.org**](https://iso639-3.sil.org/code_tables/639/data/all) pokrývá více než 7000 jazyků a dialektů. Tisíce lokalizací webu ovšem nejsou praktické, udržitelné a v TMS systému nebudu logiku prioritizace jazyků pro konkrétní web/projekt řešit, ale snažil bych se použít, co tvořili jiní.
+[**ISO639-3.sil.org**](https://iso639-3.sil.org/code_tables/639/data/all) **/**
+[**ISO 639:2023**](https://www.iso.org/obp/ui/en/#iso:std:iso:639:ed-2:v1:en) pokrývá více než 7000 jazyků a dialektů. Tisíce lokalizací webu ovšem nejsou praktické, udržitelné a v TMS systému nebudu logiku prioritizace jazyků pro konkrétní web/projekt řešit, ale snažil bych se použít, co tvořili jiní.
 
 [**Unicode CLDR (Common Locale Data Repository)**](https://cldr.unicode.org/) na [**GitHub**](https://github.com/unicode-org/cldr) má být údajně spolehlivý průmyslový standard pro lokalizaci.
 
@@ -165,12 +172,39 @@ Cíl je oddělit segment (identitu textu) od verze (zdroje pravdy) a překladu (
 Pro vyřešení priorit, kvality a ochrany před přepsáním musíme zavést koncept „zdroje pravdy“ a úrovně kvality.
 
 ```sql
--- 1. Evidence jazyků s prioritou
-CREATE TABLE languages (
-    code VARCHAR(10) PRIMARY KEY, -- 'cs', 'en', 'zh'
-    priority INTEGER DEFAULT 100,  -- Nižší číslo = vyšší priorita
-    is_active BOOLEAN DEFAULT true
+-- 1. ENUM pro úrovně kvality/stavy
+-- Pevně daný životní cyklus překladu
+CREATE TYPE translation_status AS ENUM (
+    'draft',              -- pracovní verze, nepublikovat
+    'needs_update'        -- změnil se original
+    'original',           -- originální publikovatelný text
+    'machine_translated', -- Automatický výstup (DeepL/Google/Lingva/LibreTranslate)
+    -- 'DeepL',              -- výstup z DeepL
+    -- 'GoogleTranslate',    -- výstup z Google
+    -- 'Lingva',             -- výstup z Lingva
+    -- 'LibreTranslate',     -- výstup z LibreTranslate
+    'human_reviewed',     -- Zkontrolováno člověkem (korektura)
+    'approved'            -- Finální verze, "Source of Truth"
 );
+
+-- 2. Evidence jazyků s podporou fallbacků v JSONB
+CREATE TABLE languages (
+    code VARCHAR(15) PRIMARY KEY,      -- BCP 47 (např. 'sr-Cyrl-RS')
+    -- BCP 47 jako PK dovolí mít en-US i en-GB jako samostatné řádky, 
+    -- které mohou mít iso_639_3 nastaveno na eng.
+    iso_639_1 CHAR(2) NOT NULL,        -- interní technický kód (mapování)
+    iso_639_2T CHAR(3) NOT NULL,       -- interní technický kód (mapování)
+    -- iso_639_2B CHAR(3) NOT NULL,       -- pro 20 jazyků zbytečný soupec
+    iso_639_3 CHAR(3) NOT NULL,        -- interní technický kód
+    name_en VARCHAR(100),              -- anglický název
+    name_native VARCHAR(100),           -- Název v daném jazyce
+    fallbacks JSONB DEFAULT '[]',      -- Např. ["cs", "en"]
+    is_active BOOLEAN DEFAULT true,
+    priority INTEGER DEFAULT 100       -- Nižší číslo = vyšší priorita překladu
+);
+
+-- Index pro rychlé vyhledávání fallbacků v JSONB
+CREATE INDEX idx_languages_fallbacks ON languages USING GIN (fallbacks);
 
 -- 2. Unikátní textové bloky (napříč všemi jazyky)
 CREATE TABLE segments (
@@ -184,7 +218,6 @@ CREATE TABLE translations (
     segment_hash VARCHAR(64) REFERENCES segments(hash) ON DELETE CASCADE,
     language_code VARCHAR(10) REFERENCES languages(code),
     content TEXT NOT NULL,
-    
     -- Metadata kvality
     is_original BOOLEAN DEFAULT false, -- True, pokud je tento jazyk zdrojem pro tento hash
     quality_level INTEGER DEFAULT 0,    -- 0: Raw (vlastní), 1: Premium (DeepL/OpenAI), 2: Human (Verified)
@@ -248,3 +281,61 @@ Systém vždy ví, co je originál (`is_original = true`). Překlady by se měly
 **Level 1 (Premium):** Placený worker vybere segmenty s `quality_level = 0` u prioritních jazyků, přepíše je kvalitnějším textem a nastaví `quality_level = 1`.
 
 **Level 2 (Human):** Rodilý mluvčí v UI editoru upraví text, systém nastaví `is_locked = true` a `quality_level = 2`.
+
+```sql
+-- v2
+-- 1. Definice ENUM pro úrovně kvality/stavy
+-- Výhoda: Pevně daný životní cyklus překladu
+CREATE TYPE translation_status AS ENUM (
+    'draft',              -- Pracovní verze, nepublikovat
+    'machine_translated', -- Automatický výstup (např. DeepL/Google)
+    'human_reviewed',     -- Zkontrolováno člověkem (korektura)
+    'approved'            -- Finální verze, "Source of Truth"
+);
+
+-- 2. Evidence jazyků s podporou fallbacků v JSONB
+CREATE TABLE languages (
+    code VARCHAR(15) PRIMARY KEY,      -- BCP 47 (např. 'sr-Cyrl-RS')
+    iso_639_3 CHAR(3) NOT NULL,        -- Interní technický kód
+    name_local VARCHAR(100),           -- Název v daném jazyce
+    fallbacks JSONB DEFAULT '[]',      -- Např. ["cs", "en"]
+    is_active BOOLEAN DEFAULT true,
+    priority INTEGER DEFAULT 100       -- Pořadí v UI
+);
+
+-- 3. Unikátní identita textu (Segment)
+-- Odděluje "co" říkáme od toho "v jakém jazyce"
+CREATE TABLE segments (
+    id SERIAL PRIMARY KEY,
+    key_name TEXT UNIQUE NOT NULL,      -- Např. 'button.checkout.label'
+    source_context TEXT,               -- Popis pro překladatele
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 4. Samotné překlady (Výstupy)
+CREATE TABLE translations (
+    id SERIAL PRIMARY KEY,
+    segment_id INTEGER REFERENCES segments(id) ON DELETE CASCADE,
+    language_code VARCHAR(15) REFERENCES languages(code),
+    content TEXT NOT NULL,
+    status translation_status DEFAULT 'draft',
+    is_source_of_truth BOOLEAN DEFAULT false, -- Označení originálu
+    updated_at TIMESTAMP DEFAULT NOW(),
+    
+    -- Prevence duplicit: jeden segment může mít v daném jazyce jen jeden aktivní překlad
+    CONSTRAINT unique_translation_per_lang UNIQUE(segment_id, language_code)
+);
+
+-- Index pro rychlé vyhledávání fallbacků v JSONB
+CREATE INDEX idx_languages_fallbacks ON languages USING GIN (fallbacks);
+```
+
+## Proč to takto dává smysl
+
+**JSONB Fallbacks:** Umožňuje do databáze uložit mapu {"sk": ["cs", "en"]}. Při dotazu, kdy chybí slovenština, se jedním JOINem podíváte do pole fallbacks a sáhnete pro první dostupnou alternativu.
+
+**BCP 47 jako PK:** Tabulka languages používá jako primární klíč flexibilní tag. To vám dovolí mít **en-US** i **en-GB** jako samostatné řádky, které ale oba mohou mít **iso_639_3** nastaveno na **eng**.
+
+**Source of Truth:** Příznak `is_source_of_truth` v tabulce translations jasně definuje, ze kterého textu se vycházelo. Pokud se změní "source" text, systém může automaticky degradovat statusy ostatních překladů zpět na `draft` nebo `needs_update`.
+
+**Auditabilita:** Díky `updated_at` a ENUMu můžete snadno reportovat: *„Máme 80% webu v 'approved' kvalitě, 20% je zatím 'machine_translated'.“*
