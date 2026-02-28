@@ -16,7 +16,7 @@ Než to pošlete na server, musíte to rozběhat u sebe:
 
 ## 2. Technologie pro API (Knihovny)
 
-V profesionálním světě TypeScriptu nepište vše od nuly. Doporučuji tento moderní „stack“:
+V TypeScriptu nepište vše od nuly. Doporučuji „stack“:
 
 - **Fastify:** Extrémně rychlý a moderní framework pro Node.js (nástupce Express.js).
 - **Prisma (ORM):** To je ten nejdůležitější kousek. Prisma vám vygeneruje TypeScriptové typy přímo z vaší databáze. Už nikdy nebudete muset hádat, jaké sloupce máte v tabulce.
@@ -44,17 +44,220 @@ V Nginx Proxy Manageru vytvoříte nový Proxy Host.
 
 ## Inicializace projektu
 
-1. Nainstalujte Node.js a npm.
+Otevřete terminál a zadejte: `cd /cesta/k/vasemu/workspace`
 
-Otevřete terminál v prázdné složce, kde chcete mít svůj projekt a zdadejte:
+## Instalace Gitu, Node.js a npm
 
-```shell
-# Vytvoření souboru package.json
-npm init -y
+```bash
+sudo apt update
+sudo apt upgrade
+sudo apt install git nodejs npm
+git --version
+```
+
+## Git Repozitář
+
+- s univerzálním `.gitignore` pro bezpečnost
+
+Tam, kde chcete složku projektu, zadejte:
+
+```bash
+mkdir dockerized-ts-pg   # Vytvoří složku projektu
+cd dockerized-ts-pg      # Přesunete se do složky projektu
+git init                 # Inicializuje Git v projektu
+echo "### Jazyky a frameworky ###
+node_modules/            # Závislosti pro JavaScript/Node.js
+__pycache__/             # Kompilovaný Python kód
+*.py[cod]                # Python soubory
+.venv/                   # Virtuální prostředí Pythonu
+venv/
+target/                  # Buildy pro Rust/Java
+
+### Bezpečnost (NEPUSHLOVAT!) ###
+.env                     # API klíče, hesla a tajné proměnné
+*.env
+*.pem                    # Soukromé klíče
+auth.json                # Autentizační tokeny
+
+### Operační systém a IDE ###
+.DS_Store                # MacOS smetí
+Thumbs.db                # Windows smetí
+.vscode/                 # Nastavení VS Code (pokud ho nechcete sdílet)
+.idea/                   # Nastavení JetBrains (PyCharm, IntelliJ)
+*.swp                    # Dočasné soubory editoru Vim
+dist/                    # Výsledné buildy
+build/
+*.log                    # Logy aplikací
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+
+# Prisma (vygenerované soubory, které se tvoří při buildu)
+/prisma/migrations/" > .gitignore
+cat .gitignore
+```
+
+> **Tip:** Zkontrolujte, že se `.gitignore` vytvořil.
+
+```bash
+git add .      # Přidá všechny soubory do "staging" oblasti
+git commit -m "Počáteční commit projektu"
+
+npm init -y    #vytvoří package.json
 
 # Instalace TypeScriptu a vývojových nástrojů
-npm install typescript ts-node nodemon @types/node --save-dev
+npm install typescript ts-node nodemon @types/node fastify prisma --save-dev
 
-# Inicializace konfigurace TypeScriptu (vytvoří tsconfig.json)
-npx tsc --init
+npx tsc --init  #vytvoří tsconfig.json
+# npx prisma init #vytvoří schema.prisma
+npx prisma init --datasource-provider postgresql
+```
+
+## Dockerfile & compose.yml
+
+```bash
+echo "
+# 1. Build fáze (zkompiluje TS do JS)
+FROM node:20-slim AS builder
+WORKDIR /app
+COPY package*.json ./
+COPY prisma ./prisma/
+RUN npm install
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+# 2. Produkční fáze (lehký obraz pro běh)
+FROM node:20-slim
+WORKDIR /app
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/prisma ./prisma
+
+EXPOSE 3000
+CMD ["npm", "run", "start"]" > Dockerfile
+echo "services:
+  # Tvé TypeScript API
+  api:
+    build: .
+    container_name: dockerized-ts-api
+    restart: always
+    environment:
+      # 'db' je název služby níže, Docker si to přeloží na správnou IP
+      - DATABASE_URL=postgresql://user:password@db:5432/mydb?schema=public
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  # PostgreSQL Databáze
+  db:
+    image: postgres:16-alpine
+    container_name: dockerized-ts-db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    volumes:
+      # Persistentní úložiště pro data (jinak by se při smazání kontejneru smazala i data)
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+" > compose.yml
+cat Dockerfile
+cat compose.yml
+code .
+```
+
+## Dockerfile
+
+```dockerfile
+# 1. Build fáze (zkompiluje TS do JS)
+FROM node:20-slim AS builder
+WORKDIR /app
+COPY package*.json ./
+COPY prisma ./prisma/
+RUN npm install
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+# 2. Produkční fáze (lehký obraz pro běh)
+FROM node:20-slim
+WORKDIR /app
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/prisma ./prisma
+
+EXPOSE 3000
+CMD ["npm", "run", "start"]
+```
+
+## Docker compose.yml
+
+```yaml
+services:
+  # Tvé TypeScript API
+  api:
+    build: .
+    container_name: dockerized-ts-api
+    restart: always
+    environment:
+      # 'db' je název služby níže, Docker si to přeloží na správnou IP
+      - DATABASE_URL=postgresql://user:password@db:5432/mydb?schema=public
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  # PostgreSQL Databáze
+  db:
+    image: postgres:16-alpine
+    container_name: dockerized-ts-db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    volumes:
+      # Persistentní úložiště pro data (jinak by se při smazání kontejneru smazala i data)
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+```
+
+## Poslední kontrola před spuštěním
+
+Aby ti docker-compose up neselhal, ujistěte se, že v package.json máte definované tyto skripty, které Dockerfile volá:
+
+```json
+"scripts": {
+  "build": "tsc",
+  "start": "node dist/index.js",
+  "dev": "nodemon src/index.ts"
+}
+```
+
+## Jak to propojit s Nginx Proxy Managerem (NPM)
+
+V NPM vytvořte nový Proxy Host s domain name např. `api.moje-domena.cz`
+
+**Forward IP:** Zadejte buď lokální IP svého serveru (např. 192.168.1.50), nebo pokud máte NPM ve stejné Docker síti jako projekt, stačí název služby api.
+
+**Forward Port:** 3000
+
+V záložce SSL vygenerujte certifikát přes Let's Encrypt.
+
+## Spuštění
+
+V terminálu ve složce projektu stačí zadat:
+
+```bash
+# Sestaví obraz a spustí vše na pozadí
+docker compose up -d --build
 ```
