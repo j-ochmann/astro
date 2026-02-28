@@ -8,8 +8,8 @@ Existují tisíce jazyků, ale některé jsou si vzájemně podobné nebo pouhé
 
 Standardizace je překvapivě bídná a záludná.
 
-[**ISO 639-1 set 1**](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes#jv)
-(183) „dvoupísmenných zkratek“ obsahuje i typy `Constructed` a `Historical`. Latinu a esperanto pro e-shop nejspíše nepotřebujete. Severní sámština (kód `se`) má okolo 20 tisíc mluvčích. Inuitský jazyk (kód `ik`) na Aljašce s přibližně 2000 mluvčích.
+[**ISO 639-1 (set 1)**](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes#jv)
+obsahuje 183 „dvoupísmenných zkratek“ včetně typů `Constructed` a `Historical`. Latinu a esperanto pro e-shop nejspíše nepotřebujete. Severní sámština (kód `se`) má okolo 20 tisíc mluvčích. Inuitský jazyk (kód `ik`) na Aljašce s přibližně 2000 mluvčích.
 
 Kód `zh` není dostatečný pro Čínu. Standardní čínština je pro stovky milionů lidí druhým jazykem a jejich dialekty jsou pro Číňana z Pekingu nesrozumitelné.
 
@@ -31,21 +31,138 @@ Nepoznáte z něj, že jsou čeština a slovenština vzájemně srozumitelné ja
 
 Z `en-AU`, `en-CA`, `en-GB`, `en-US` lze příbuznosti dovodit.
 
-**ISO 639-1 set 2** se dělí na:
+**ISO 639-2** se dělí na:
 
 - **T** „terminological“ založeném na původních „domorodých“ názvech
 - **B** „bibliographic“ vycházející z anglických názvů, ale jen u dvaceti jazyků vč. češtiny (`cze` místo `ces`). U ostatních jazyků se neliší od **T**.
 
-Klíč jazyka bych interně skládal z **ISO 639-1 set 3**, regionu (ISO 3166-1/UN M.49) a písma, ale uživatelům se snažil zobrazovat kratší a povědomější set 1. Státy s jazyky mají vztah M:N. Britská `en-GB` angličtina se používá v cca 65 států. Ale Google TTS rozlišuje AU, NZ, GB, atd. Těžko odhadnout fallbacky pro kreolštiny z ISO set 3. Standartdy jsou ovlivněny politicky (Čína/Taiwan), historickými změnami a lingvistikou, která má jiné priority než velikost trhu.
+Klíč jazyka bych interně skládal z **ISO 639-3**, regionu (ISO 3166-1/UN M.49) a písma, ale uživatelům se snažil zobrazovat kratší a povědomější set 1. Státy s jazyky mají vztah **M:N**. Britská `en-GB` angličtina se používá v cca 65 států. Ale Google TTS rozlišuje AU, NZ, GB, atd. Těžko odhadnout fallbacky pro kreolštiny z ISO set 3. Standartdy jsou ovlivněny politicky (Čína/Taiwan), historickými změnami a lingvistikou, která má jiné priority než velikost trhu.
 
-**ISO 639-1 set 3** pokrývá více než 7000 jazyků a dialektů. Tisíce lokalizací webu ovšem nejsou praktické, udržitelné a v TMS systému nebudu logiku prioritizace jazyků pro konkrétní web/projekt řešit, ale snažil bych se použít, co tvořili jiní. [Unicode CLDR Project](https://cldr.unicode.org/) a [github.com/unicode-org/cldr](https://github.com/unicode-org/cldr)
+[**ISO639-3.sil.org**](https://iso639-3.sil.org/code_tables/639/data/all) pokrývá více než 7000 jazyků a dialektů. Tisíce lokalizací webu ovšem nejsou praktické, udržitelné a v TMS systému nebudu logiku prioritizace jazyků pro konkrétní web/projekt řešit, ale snažil bych se použít, co tvořili jiní.
+
+[**Unicode CLDR (Common Locale Data Repository)**](https://cldr.unicode.org/) na [**GitHub**](https://github.com/unicode-org/cldr) má být údajně spolehlivý průmyslový standard pro lokalizaci.
+
+Soubor [**territoryInfo.json**](https://github.com/unicode-cldr/cldr-core/blob/master/supplemental/territoryInfo.json) obsahuje „trochu zvláštní“ hodnoty`"16"` a `"47"`. Pokud bych z něj vycházel, tak by systém nabízel čechovi jako náhradu angličtinu, Slovákovi češtinu, ale naopak ne.  
+
+Odráží realitu jazykové vybavenosti, nikoliv vzájemné srozumitelnosti.
+
+```json
+  ...
+},
+"CZ": {
+  "_gdp": "375900000000",
+  "_literacyPercent": "99",
+  "_population": "10686300",
+  "languagePopulation": {
+    "cs": {
+      "_populationPercent": "98",
+      "_officialStatus": "official"
+    },
+    "de": {
+      "_populationPercent": "15"
+    },
+    "en": {
+      "_populationPercent": "27"
+    },
+    "pl": {
+      "_populationPercent": "0.49"
+    },
+    "sk": {
+      "_populationPercent": "16"
+    }
+  }
+},
+  ...
+},
+"SK": {
+  "_gdp": "179700000000",
+  "_literacyPercent": "99.6",
+  "_population": "5445040",
+  "languagePopulation": {
+    "cs": {
+      "_populationPercent": "47"
+    },
+    "de": {
+      "_populationPercent": "22"
+    },
+    "en": {
+      "_populationPercent": "26"
+    },
+    "hu": {
+      "_populationPercent": "11"
+    },
+    "pl": {
+      "_populationPercent": "0.93"
+    },
+    "sk": {
+      "_populationPercent": "90",
+      "_officialStatus": "official"
+    },
+    "uk": {
+      "_populationPercent": "1.9"
+    }
+  }
+}, ...
+```
+
+Soubor [**likelySubtags.json**](https://github.com/unicode-org/cldr-core/blob/master/supplemental/likelySubtags.json) obsahuje např. pro češtinu a slovenštinu tyto náhrady:
+
+- `"cs": "cs-Latn-CZ",` zpřesní
+- `"und-CZ": "cs-Latn-CZ",` Undefined jazyk v ČR nastaví češtinu.
+- `"czk": "czk-Hebr-CZ",` Kód `czk` v ISO 639-3 patří kenaanskému jazyku, což je vymřelý středověký žido-slovanský jazyk. Pro e-shop nepoužitelné, pro historiky svatý grál.
+
+- `"sk": "sk-Latn-SK",` zpřesní
+- `"und-SK": "sk-Latn-SK",` Undefined jazyk na Slovensku nastaví slovenštinu.
+- `"rmc": "rmc-Latn-SK",` severocentrální romština (ang.*Carpathian Romani*)
+- `"und-Cyrl-SK": "uk-Cyrl-SK",` Kdokoliv čte cyrilici na Slovensku musí být ukrajinec?
+
+Romštinu v ČR zcela ignoruje a olašskou nebo obecnou neřeší. Slovákovi češtinu nenabídne ani naopak. Pár tisíc romů nebude velká byznys ztráta, ale různá regionální etnika v Indii a Číně mívají desítky milionů mluvčích. To už by se projevit mohlo.
+
+## Vlastní mapování náhrad
+
+- kombinace technických dat z CLDR s vaší byznys logikou
+
+```json
+{
+  "fallbacks": {
+    "sk": ["cs", "en"],
+    "cs": ["sk", "en"],
+    "sr": ["hr", "bs", "en"],
+    "nn": ["nb", "da", "en"],
+    "de-CH": ["de-DE", "en"]
+  }
+}
+```
+
+Standardy se bojí definovat, že „Slovák rozumí Čechovi“, protože je to politicky ošemetné a asymetrické (mladší Slováci rozumí češtině lépe než mladí Češi slovenštině).
+
+**Pro TMS můžete mapu rozšířit o "Business Context".**
+
+- Pokud prodáváte luxusní módu, může být fallbackem pro všechny evropské jazyky angličtina.
+- Pokud prodáváte náhradní díly pro traktory na venkově, je fallback sk -> cs kritický.
+
+Tento přístup využívá například **i18next**, kde můžete definovat pole fallbacků pro každý klíč.
+
+## Data o podílech návštěvnosti jsou např. na
+
+- [**W3Techs**](https://w3techs.com/technologies/overview/content_language)
+- [**Wikimedia Statistics**](https://stats.wikimedia.org/#/all-projects/reading/page-views-by-country/normal|table|last-month|(access)~desktop*mobile-app*mobile-web|monthly)
 
 Pro zákazníka/firmu z EU a ČR bude Slovenština a Maďarština důležitější než jazyky s více mluvčími na druhém konci světa. Pro mezinárodní organizaci bude cíl maximalizovat pokrytí, atd.
 
-Cíl je oddělit segment (identitu textu) od verze (zdroje pravdy) a překladu (výstupu).
-Pro vyřešení priorit, kvality a ochrany před přepsáním musíme zavést koncept „zdroje pravdy“ a úrovně kvality.
+## Text-to-speech
+
+- **Google Chrome** na **Androidu** má krásné srozumitelné hlasy pro desítky jazyků.
+- **Google Chrome** na **PC** (Windows, Mac, Linux) jich nabízí výrazně méně.
+- **Microsoft** má slušné použitelné hlasy, ale asi je poskytuje pouze v primárním jazyce instalace.
+- **Firefox** na **Linuxu** generuje desetitisíce syntetyckých „plechových“ hlasů, kterým je stěží rozumět.
+
+Vzhledem k popularitě mobilních Android telefonů bych se soustředil na jazyky, které podporují.
 
 ## Návrh DB schéma (PostgreSQL)
+
+Cíl je oddělit segment (identitu textu) od verze (zdroje pravdy) a překladu (výstupu).
+Pro vyřešení priorit, kvality a ochrany před přepsáním musíme zavést koncept „zdroje pravdy“ a úrovně kvality.
 
 ```sql
 -- 1. Evidence jazyků s prioritou
