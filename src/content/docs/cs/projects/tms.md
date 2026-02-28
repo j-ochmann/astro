@@ -1,7 +1,9 @@
 ---
-layout: default
-title: 'Translation Management System'
-translation_status: original
+title: 'TMS - Translation Management System'
+sidebar:
+  label: TMS - Úvod
+  order: 1
+translation_status: original  
 ---
 
 Existují tisíce jazyků, ale některé jsou si vzájemně podobné nebo pouhé dialekty a mluvčí bývají bilingvidní. Z pohledu webu a ekonomičnosti se liší v počtu mluvčích a podpoře API třetích stran (např. Google text-to-speech).
@@ -339,3 +341,75 @@ CREATE INDEX idx_languages_fallbacks ON languages USING GIN (fallbacks);
 **Source of Truth:** Příznak `is_source_of_truth` v tabulce translations jasně definuje, ze kterého textu se vycházelo. Pokud se změní "source" text, systém může automaticky degradovat statusy ostatních překladů zpět na `draft` nebo `needs_update`.
 
 **Auditabilita:** Díky `updated_at` a ENUMu můžete snadno reportovat: *„Máme 80% webu v 'approved' kvalitě, 20% je zatím 'machine_translated'.“*
+
+```sql
+--- v3
+CREATE TYPE translation_status AS ENUM ('draft', 'machine_translated', 'human_reviewed', 'approved');
+
+-- 1. Evidence jazyků (beze změny, s JSONB fallbacky)
+CREATE TABLE languages (
+    code VARCHAR(15) PRIMARY KEY,
+    iso_639_3 CHAR(3) NOT NULL,
+    fallbacks JSONB DEFAULT '[]', -- Např. ["cs", "en"]
+    is_active BOOLEAN DEFAULT true
+);
+
+-- 2. Segmenty jako verze zdrojového textu
+CREATE TABLE segments (
+    id SERIAL PRIMARY KEY,
+    source_hash VARCHAR(64) UNIQUE NOT NULL, -- SHA-256 originálního MD bloku
+    raw_content TEXT NOT NULL,               -- Původní znění (zdroj pravdy)
+    file_path TEXT,                          -- Kde se v MD souboru nachází (pro kontext)
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 3. Překlady vázané na konkrétní verzi (hash) segmentu
+CREATE TABLE translations (
+    id SERIAL PRIMARY KEY,
+    segment_id INTEGER REFERENCES segments(id) ON DELETE CASCADE,
+    language_code VARCHAR(15) REFERENCES languages(code),
+    content TEXT NOT NULL,                   -- Přeložený Markdown blok
+    status translation_status DEFAULT 'draft',
+    is_outdated BOOLEAN DEFAULT false,       -- Příznak, pokud se změnil zdrojový hash
+    updated_at TIMESTAMP DEFAULT NOW(),
+    
+    CONSTRAINT unique_trans_per_hash UNIQUE(segment_id, language_code)
+);
+
+-- 1. Evidence dokumentů (souborů)
+CREATE TABLE documents (
+    id SERIAL PRIMARY KEY,
+    file_path TEXT UNIQUE NOT NULL,    -- Cesta k souboru (např. 'blog/tms-system.md')
+    title TEXT,                        -- Meta název dokumentu
+    source_language VARCHAR(15) REFERENCES languages(code),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 2. Vazební tabulka (M:N) mezi dokumenty a segmenty
+-- Dokument se skládá z mnoha segmentů, segment může být v mnoha dokumentech.
+CREATE TABLE document_segments (
+    document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE,
+    segment_id INTEGER REFERENCES segments(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,          -- Pořadí odstavce v daném souboru
+    PRIMARY KEY (document_id, segment_id, position)
+);
+
+-- 3. Pomocný pohled (VIEW) pro sledování progresu
+-- Spočítá, kolik % segmentů v dokumentu má schválený překlad pro daný jazyk.
+CREATE VIEW document_translation_progress AS
+SELECT 
+    d.id AS document_id,
+    d.file_path,
+    l.code AS target_language,
+    COUNT(ds.segment_id) AS total_segments,
+    COUNT(t.id) FILTER (WHERE t.status = 'approved') AS approved_count,
+    ROUND(
+        (COUNT(t.id) FILTER (WHERE t.status = 'approved')::NUMERIC / 
+        NULLIF(COUNT(ds.segment_id), 0)) * 100, 2
+    ) AS progress_percentage
+FROM documents d
+CROSS JOIN languages l
+JOIN document_segments ds ON d.id = ds.document_id
+LEFT JOIN translations t ON ds.segment_id = t.segment_id AND t.language_code = l.code
+GROUP BY d.id, d.file_path, l.code;

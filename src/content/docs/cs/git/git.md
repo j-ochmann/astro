@@ -3,7 +3,6 @@ title: "Git na Linuxu: Od instalace po propojení s GitHubem"
 sidebar:
   label: Git (Linux)
   order: 1
-content_hash: 4b292a895a9d5dd88aba53e8d3ff85cc
 translation_status: original
 ---
 
