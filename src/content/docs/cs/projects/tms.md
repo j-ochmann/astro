@@ -2,7 +2,7 @@
 title: 'TMS - Translation Management System'
 sidebar:
   label: TMS - Úvod
-  order: 1
+  order: 3
 translation_status: original  
 ---
 

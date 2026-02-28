@@ -1,6 +1,8 @@
 ---
-layout: default
 title: 'Market Aggregator'
+sidebar:
+  label: Market Aggregator
+  order: 5
 translation_status: original
 ---
 Cíl je propojit informaci o ceně/kurzu aktiva na různých trzích a z různých zdrojů.

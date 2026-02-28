@@ -2,7 +2,7 @@
 title: 'TMS - PostgreSQL DB'
 sidebar:
   label: TMS - SQL
-  order: 1
+  order: 4
 translation_status: original  
 ---
 
