@@ -9,7 +9,6 @@ translation_status: original
 mkdir dockerized-ts-pg   # Vytvoří složku projektu
 cd dockerized-ts-pg      # Přesunete se do složky projektu
 
-git rm -r --cached .
 git init    # Inicializuje Git v projektu
 
 cat << 'EOF' > .gitignore
