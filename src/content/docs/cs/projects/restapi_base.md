@@ -9,6 +9,9 @@ translation_status: original
 mkdir dockerized-ts-pg   # Vytvoří složku projektu
 cd dockerized-ts-pg      # Přesunete se do složky projektu
 
+git rm -r --cached .
+git init    # Inicializuje Git v projektu
+
 cat << 'EOF' > .gitignore 
 # Jazyky a frameworky
 node_modules/            # Závislosti pro JavaScript/Node.js
@@ -56,9 +59,6 @@ EOF
 cat .gitignore
 cat .dockerignore
 ls -la
-
-git rm -r --cached .
-git init    # Inicializuje Git v projektu
 npm init -y # Nastavení package.json
 npm pkg set type="module"
 npm pkg set scripts.build="tsc"
@@ -66,8 +66,8 @@ npm pkg set scripts.start="node dist/index.js"
 npm pkg set scripts.dev="nodemon src/index.ts"
 # Instalace TypeScriptu a vývojových nástrojů
 npm install typescript ts-node nodemon @types/node --save-dev
-npm install fastify @prisma/client@latest
-npm install prisma@latest --save-dev
+npm install fastify @prisma/client@6
+npm install prisma@6 --save-dev #6 nevyžaduje prisma.config.ts
 npm audit fix --force
 npx tsc --init #vytvoří tsconfig.json
 npx prisma init --datasource-provider postgresql
@@ -225,12 +225,20 @@ cat compose.yml
 cat src/index.ts
 cat prisma/schema.prisma
 
+code .
+
+# docker compose up -d --build
+docker compose up -d db
+
+echo "Čekám na dostupnost DB portu..."
+while ! nc -z localhost 5432; do   
+  sleep 0.5
+done
+echo "DB je online!"
 npx prisma migrate dev --name init
+docker compose up -d --build api
+xdg-open http://localhost:3000/todos
 
 git add .            # Přidá všechny soubory do "staging" oblasti
 git commit -m "init" # Počáteční commit projektu
-
-code .
-
-docker compose up -d --build
 ```
