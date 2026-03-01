@@ -105,6 +105,7 @@ npm init -y          #vytvoří package.json
 npm pkg set scripts.build="tsc"
 npm pkg set scripts.start="node dist/index.js"
 npm pkg set scripts.dev="nodemon src/index.ts"
+npm pkg set type="module"
 
 # Instalace TypeScriptu a vývojových nástrojů
 npm install typescript ts-node nodemon @types/node fastify prisma --save-dev
@@ -117,10 +118,23 @@ git add .            # Přidá všechny soubory do "staging" oblasti
 git commit -m "init" # Počáteční commit projektu
 ```
 
+## Heslo
+
+⚠️ Změňte uživatelské jméno a heslo!
+
+**.env** již máte v **.gitignore**.
+
+```bash
+echo "POSTGRES_USER=johndoe
+POSTGRES_PASSWORD=top-secret-pwd
+POSTGRES_DB=dockerized_db
+DATABASE_URL=postgresql://johndoe:top-secret-pwd@db:5432/dockerized_db?schema=public" > .env
+```
+
 ## Dockerfile & compose.yml
 
 ```bash
-echo "
+echo '
 # 1. Build fáze (zkompiluje TS do JS)
 FROM node:20-slim AS builder
 WORKDIR /app
@@ -130,7 +144,6 @@ RUN npm install
 COPY . .
 RUN npx prisma generate
 RUN npm run build
-
 # 2. Produkční fáze (lehký obraz pro běh)
 FROM node:20-slim
 WORKDIR /app
@@ -138,101 +151,67 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma
-
 EXPOSE 3000
-CMD ["npm", "run", "start"]" > Dockerfile
-echo "services:
+CMD ["npm", "run", "start"]' > Dockerfile
+echo 'services:
   # Tvé TypeScript API
   api:
     build: .
     container_name: dockerized-ts-api
     restart: always
     environment:
-      # 'db' je název služby níže, Docker si to přeloží na správnou IP
-      - DATABASE_URL=postgresql://user:password@db:5432/mydb?schema=public
+      # db je název služby níže, Docker si to přeloží na správnou IP
+      - DATABASE_URL=${DATABASE_URL}
     ports:
       - "3000:3000"
     depends_on:
       - db
-
   # PostgreSQL Databáze
   db:
     image: postgres:16-alpine
     container_name: dockerized-ts-db
     restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       # Persistentní úložiště pro data (jinak by se při smazání kontejneru smazala i data)
       - pgdata:/var/lib/postgresql/data
-
 volumes:
   pgdata:
-" > compose.yml
+' > compose.yml
+mkdir -p src
+echo "import Fastify from 'fastify';
+const fastify = Fastify({ logger: true });
+fastify.get('/', async () => {
+  return { status: 'API is running' };
+});
+const start = async () => {
+  try {
+    await fastify.listen({ port: 3000, host: '0.0.0.0' });
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+};
+start();" > src/index.ts
 cat Dockerfile
 cat compose.yml
+cat src/index.ts
 code .
 ```
 
 ## Dockerfile
 
 ```dockerfile
-# 1. Build fáze (zkompiluje TS do JS)
-FROM node:20-slim AS builder
-WORKDIR /app
-COPY package*.json ./
-COPY prisma ./prisma/
-RUN npm install
-COPY . .
-RUN npx prisma generate
-RUN npm run build
 
-# 2. Produkční fáze (lehký obraz pro běh)
-FROM node:20-slim
-WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/prisma ./prisma
-
-EXPOSE 3000
-CMD ["npm", "run", "start"]
 ```
 
 ## Docker compose.yml
 
 ```yaml
-services:
-  # Tvé TypeScript API
-  api:
-    build: .
-    container_name: dockerized-ts-api
-    restart: always
-    environment:
-      # 'db' je název služby níže, Docker si to přeloží na správnou IP
-      - DATABASE_URL=postgresql://user:password@db:5432/mydb?schema=public
-    ports:
-      - "3000:3000"
-    depends_on:
-      - db
 
-  # PostgreSQL Databáze
-  db:
-    image: postgres:16-alpine
-    container_name: dockerized-ts-db
-    restart: always
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydb
-    volumes:
-      # Persistentní úložiště pro data (jinak by se při smazání kontejneru smazala i data)
-      - pgdata:/var/lib/postgresql/data
-
-volumes:
-  pgdata:
 ```
 
 ## Poslední kontrola před spuštěním
@@ -264,4 +243,78 @@ V terminálu ve složce projektu stačí zadat:
 ```bash
 # Sestaví obraz a spustí vše na pozadí
 docker compose up -d --build
+```
+
+Pokud se objeví hláška:
+
+```bash
+unable to get image 'dockerized-ts-pg-api': permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+```
+
+Znamená, že Docker **daemon** běží pod **rootem** a nemáte přístup k **docker.sock**.
+
+```bash
+# rychlá oprava (přidání sudo)
+docker compose up -d --build
+```
+
+```bash
+# trvalá oprava (přidání uživatele do skupiny)
+sudo groupadd docker          # Vytvoří docker skupinu.
+sudo usermod -aG docker $USER # Přidá uževatele.
+newgrp docker                 # Aktivuje okamžitě.
+docker ps                     # Otestuje.
+```
+
+## Oprava `tsconfig.json`
+
+```json
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    // Environment Settings
+    // See also https://aka.ms/tsconfig/module
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "esnext",
+    "types": [],
+    // For nodejs:
+    // "lib": ["esnext"],
+    // "types": ["node"],
+    // and npm install -D @types/node
+
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+
+    // Recommended Options
+    "strict": true,
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
 ```
