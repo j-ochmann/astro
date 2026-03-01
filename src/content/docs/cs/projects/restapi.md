@@ -102,19 +102,23 @@ pnpm-debug.log*
 /prisma/migrations/
 EOF
 
-cat << 'EOF' >  'node_modules
+cat << 'EOF' > .dockerignore
+node_modules/
 dist
 .git
-.env' > .dockerignore
+.env
+EOF
+
 cat .gitignore
+cat .dockerignore
 ls -la
-git rm -r --cached .
-git init             # Inicializuje Git v projektu
 ```
 
 > **Tip:** Zkontrolujte, že se `.gitignore` vytvořil.
 
 ```bash
+git rm -r --cached .
+git init    # Inicializuje Git v projektu
 npm init -y # Nastavení package.json
 npm pkg set type="module"
 npm pkg set scripts.build="tsc"
