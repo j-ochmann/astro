@@ -64,7 +64,9 @@ Tam, kde chcete složku projektu, zadejte:
 ```bash
 mkdir dockerized-ts-pg   # Vytvoří složku projektu
 cd dockerized-ts-pg      # Přesunete se do složky projektu
-echo '# Jazyky a frameworky
+
+cat << 'EOF' > .gitignore 
+# Jazyky a frameworky
 node_modules/            # Závislosti pro JavaScript/Node.js
 __pycache__/             # Kompilovaný Python kód
 *.py[cod]                # Python soubory
@@ -97,8 +99,10 @@ pnpm-debug.log*
 .DS_Store
 
 # Prisma (vygenerované soubory, které se tvoří při buildu)
-/prisma/migrations/' > .gitignore
-echo 'node_modules
+/prisma/migrations/
+EOF
+
+cat << 'EOF' >  'node_modules
 dist
 .git
 .env' > .dockerignore
@@ -128,8 +132,8 @@ npx prisma init --datasource-provider postgresql
 ## Oprava `tsconfig.json`
 
 ```bash
-# laděno pro Node 20+
-echo '{
+cat << 'EOF' > tsconfig.json
+{ /* laděno pro Node 20+ */
   "compilerOptions": {
     "target": "ESNext",
     "module": "NodeNext",
@@ -145,11 +149,13 @@ echo '{
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.test.ts"]
-}' > tsconfig.json
+}
+EOF
 ```
 
 <!-- ```bash
-echo '{
+cat << 'EOF' > tsconfig.json
+{
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
@@ -196,7 +202,8 @@ echo '{
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]
-}' > tsconfig.json
+}
+EOF
 ``` -->
 
 ## Kontrola
@@ -218,22 +225,27 @@ Aby `docker-compose up` neselhal, ujistěte se, že v package.json máte definov
 **.env** již máte v **.gitignore**.
 
 ```bash
-echo 'POSTGRES_USER=johndoe
+cat << 'EOF' > .env
+POSTGRES_USER=johndoe
 POSTGRES_PASSWORD=top-secret-pwd
 POSTGRES_DB=dockerized_db
-DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public' > .env
+DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+EOF
 ```
 <!-- ```bash
-echo 'POSTGRES_USER=johndoe
+cat << 'EOF' > .env
+POSTGRES_USER=johndoe
 POSTGRES_PASSWORD=top-secret-pwd
 POSTGRES_DB=dockerized_db
-DATABASE_URL=postgresql://johndoe:top-secret-pwd@db:5432/dockerized_db?schema=public' > .env
+DATABASE_URL=postgresql://johndoe:top-secret-pwd@db:5432/dockerized_db?schema=public
+EOF
 ``` -->
 
 ## Dockerfile & compose.yml
 
 ```bash
-echo '# Build fáze
+cat << 'EOF' > Dockerfile
+# Build fáze
 FROM node:20-slim AS builder
 WORKDIR /app
 # Instalace systémových závislostí pro Prismu
@@ -255,8 +267,10 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma
 EXPOSE 3000
 CMD ["npm", "run", "start"]
-' > Dockerfile
-echo 'services:
+EOF
+
+cat << 'EOF' > compose.yml
+services:
   api:
     build: .
     container_name: dockerized-ts-api
@@ -281,9 +295,12 @@ echo 'services:
       - pgdata:/var/lib/postgresql/data
 volumes:
   pgdata:
-' > compose.yml
+EOF
+
 mkdir -p src
-echo "import Fastify from 'fastify';
+
+cat << 'EOF' > src/index.ts
+import Fastify from 'fastify';
 import { PrismaClient } from '@prisma/client';
 
 const fastify = Fastify({ logger: true });
@@ -324,13 +341,16 @@ const start = async () => {
 };
 
 start();
-" > src/index.ts
-echo 'generator client {
+EOF
+
+cat << 'EOF' > prisma/schema.prisma
+generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Todo {
@@ -338,14 +358,18 @@ model Todo {
   title     String
   completed Boolean  @default(false)
   createdAt DateTime @default(now())
-}' > prisma/schema.prisma
-echo "import { defineConfig } from '@prisma/config';
+}
+EOF
+
+cat << 'EOF' > prisma.config.ts
+mport { defineConfig } from '@prisma/config';
 
 export default defineConfig({
   datasource: {
     url: process.env.DATABASE_URL,
   },
-});" > prisma.config.ts
+});
+EOF
 
 cat Dockerfile
 cat compose.yml
@@ -475,8 +499,10 @@ Open a terminal and type: `cd /path/to/your/workspace`
 
 ```bash
 ...
-echo '' > Dockerfile
-echo '' > compose.yml
+cat << 'EOF' > Dockerfile
+EOF
+cat << 'EOF' > compose.yml
+EOF
 ...
 cat Dockerfile
 cat compose.yml
