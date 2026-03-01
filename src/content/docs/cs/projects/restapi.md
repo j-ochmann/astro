@@ -100,30 +100,110 @@ pnpm-debug.log*
 /prisma/migrations/' > .gitignore
 cat .gitignore
 ls -la
+git rm -r --cached .
+git init             # Inicializuje Git v projektu
 ```
 
 > **Tip:** Zkontrolujte, že se `.gitignore` vytvořil.
 
 ```bash
-npm init -y          #vytvoří package.json
-# Nastavení jednotlivých skriptů
+npm init -y # Nastavení package.json
+npm pkg set type="module"
 npm pkg set scripts.build="tsc"
 npm pkg set scripts.start="node dist/index.js"
 npm pkg set scripts.dev="nodemon src/index.ts"
-npm pkg set type="module"
-
 # Instalace TypeScriptu a vývojových nástrojů
-npm install typescript ts-node nodemon @types/node fastify prisma --save-dev
+npm install typescript ts-node nodemon @types/node --save-dev
+npm install fastify @prisma/client
+npm install prisma --save-dev
 npm audit fix --force
 npx tsc --init       #vytvoří tsconfig.json
 npx prisma init --datasource-provider postgresql
-npm install @prisma/client
-npx prisma generate
+```
 
-git rm -r --cached .
-git init             # Inicializuje Git v projektu
-git add .            # Přidá všechny soubory do "staging" oblasti
-git commit -m "init" # Počáteční commit projektu
+## Oprava `tsconfig.json`
+
+```bash
+echo '{ # laděno pro Node 20+
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "sourceMap": true,
+    "declaration": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.test.ts"]
+}' > tsconfig.json
+```
+
+<!-- ```bash
+echo '{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    // Environment Settings
+    // See also https://aka.ms/tsconfig/module
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "esnext",
+    "types": [],
+    // For nodejs:
+    // "lib": ["esnext"],
+    // "types": ["node"],
+    // and npm install -D @types/node
+
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+
+    // Recommended Options
+    "strict": true,
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}' > tsconfig.json
+``` -->
+
+## Kontrola
+
+Aby docker-compose up neselhal, ujistěte se, že v package.json máte definované tyto skripty, které Dockerfile volá:
+
+```json
+"scripts": {
+  "build": "tsc",
+  "start": "node dist/index.js",
+  "dev": "nodemon src/index.ts"
+}
 ```
 
 ## Heslo
@@ -142,9 +222,7 @@ DATABASE_URL=postgresql://johndoe:top-secret-pwd@db:5432/dockerized_db?schema=pu
 ## Dockerfile & compose.yml
 
 ```bash
-echo '
-# 1. Build fáze (zkompiluje TS do JS)
-FROM node:20-slim AS builder
+echo 'FROM node:20-slim AS builder # Build fáze
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
@@ -152,8 +230,7 @@ RUN npm install
 COPY . .
 RUN npx prisma generate
 RUN npm run build
-# 2. Produkční fáze (lehký obraz pro běh)
-FROM node:20-slim
+FROM node:20-slim # Produkční fáze
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
@@ -231,6 +308,10 @@ start();
 cat Dockerfile
 cat compose.yml
 cat src/index.ts
+
+git add .            # Přidá všechny soubory do "staging" oblasti
+git commit -m "init" # Počáteční commit projektu
+
 code .
 ```
 
@@ -244,71 +325,6 @@ code .
 
 ```yaml
 
-```
-
-## Oprava `tsconfig.json`
-
-```bash
-echo '{
-  // Visit https://aka.ms/tsconfig to read more about this file
-  "compilerOptions": {
-    // File Layout
-    "rootDir": "./src",
-    "outDir": "./dist",
-
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "target": "esnext",
-    "types": [],
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
-
-    // Other Outputs
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-
-    // Stricter Typechecking Options
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-
-    // Style Options
-    // "noImplicitReturns": true,
-    // "noImplicitOverride": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
-
-    // Recommended Options
-    "strict": true,
-    "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
-    "skipLibCheck": true,
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
-}' > tsconfig.json
-```
-
-## Poslední kontrola před spuštěním
-
-Aby docker-compose up neselhal, ujistěte se, že v package.json máte definované tyto skripty, které Dockerfile volá:
-
-```json
-"scripts": {
-  "build": "tsc",
-  "start": "node dist/index.js",
-  "dev": "nodemon src/index.ts"
-}
 ```
 
 ## Jak to propojit s Nginx Proxy Managerem (NPM)
