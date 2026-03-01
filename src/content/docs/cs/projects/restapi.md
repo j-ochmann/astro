@@ -98,6 +98,10 @@ pnpm-debug.log*
 
 # Prisma (vygenerované soubory, které se tvoří při buildu)
 /prisma/migrations/' > .gitignore
+echo 'node_modules
+dist
+.git
+.env' > .dockerignore
 cat .gitignore
 ls -la
 git rm -r --cached .
@@ -114,8 +118,8 @@ npm pkg set scripts.start="node dist/index.js"
 npm pkg set scripts.dev="nodemon src/index.ts"
 # Instalace TypeScriptu a vývojových nástrojů
 npm install typescript ts-node nodemon @types/node --save-dev
-npm install fastify @prisma/client
-npm install prisma --save-dev
+npm install fastify @prisma/client@latest
+npm install prisma@latest --save-dev
 npm audit fix --force
 npx tsc --init       #vytvoří tsconfig.json
 npx prisma init --datasource-provider postgresql
@@ -124,7 +128,8 @@ npx prisma init --datasource-provider postgresql
 ## Oprava `tsconfig.json`
 
 ```bash
-echo '{ # laděno pro Node 20+
+# laděno pro Node 20+
+echo '{
   "compilerOptions": {
     "target": "ESNext",
     "module": "NodeNext",
@@ -196,7 +201,7 @@ echo '{
 
 ## Kontrola
 
-Aby docker-compose up neselhal, ujistěte se, že v package.json máte definované tyto skripty, které Dockerfile volá:
+Aby `docker-compose up` neselhal, ujistěte se, že v package.json máte definované tyto skripty, které Dockerfile volá:
 
 ```json
 "scripts": {
@@ -216,28 +221,41 @@ Aby docker-compose up neselhal, ujistěte se, že v package.json máte definovan
 echo 'POSTGRES_USER=johndoe
 POSTGRES_PASSWORD=top-secret-pwd
 POSTGRES_DB=dockerized_db
-DATABASE_URL=postgresql://johndoe:top-secret-pwd@db:5432/dockerized_db?schema=public' > .env
+DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public' > .env
 ```
+<!-- ```bash
+echo 'POSTGRES_USER=johndoe
+POSTGRES_PASSWORD=top-secret-pwd
+POSTGRES_DB=dockerized_db
+DATABASE_URL=postgresql://johndoe:top-secret-pwd@db:5432/dockerized_db?schema=public' > .env
+``` -->
 
 ## Dockerfile & compose.yml
 
 ```bash
-echo 'FROM node:20-slim AS builder # Build fáze
+echo '# Build fáze
+FROM node:20-slim AS builder
 WORKDIR /app
+# Instalace systémových závislostí pro Prismu
+RUN apt-get update -y && apt-get install -y openssl ca-certificates
 COPY package*.json ./
 COPY prisma ./prisma/
 RUN npm install
-COPY . .
 RUN npx prisma generate
+COPY . .
 RUN npm run build
-FROM node:20-slim # Produkční fáze
+# Produkční fáze
+FROM node:20-slim
 WORKDIR /app
+# I v produkci je potřeba openssl pro běh binárky Prismy
+RUN apt-get update -y && apt-get install -y openssl ca-certificates
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma
 EXPOSE 3000
-CMD ["npm", "run", "start"]' > Dockerfile
+CMD ["npm", "run", "start"]
+' > Dockerfile
 echo 'services:
   api:
     build: .
@@ -265,11 +283,13 @@ volumes:
   pgdata:
 ' > compose.yml
 mkdir -p src
-echo "import Fastify from 'fastify';
+echo 'import Fastify from 'fastify';
 import { PrismaClient } from '@prisma/client';
 
 const fastify = Fastify({ logger: true });
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasourceUrl: process.env.DATABASE_URL,
+});
 
 // 1. Získání všech úkolů (GET)
 fastify.get('/todos', async () => {
@@ -304,10 +324,36 @@ const start = async () => {
 };
 
 start();
-" > src/index.ts
+' > src/index.ts
+echo 'generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Todo {
+  id        Int      @id @default(autoincrement())
+  title     String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+}' > prisma/schema.prisma
+echo 'import { defineConfig } from '@prisma/config';
+
+export default defineConfig({
+  datasource: {
+    url: process.env.DATABASE_URL,
+  },
+});' > prisma.config.ts
+
 cat Dockerfile
 cat compose.yml
 cat src/index.ts
+cat prisma/schema.prisma
+cat prisma.config.ts
+
+npx prisma migrate dev --name init
 
 git add .            # Přidá všechny soubory do "staging" oblasti
 git commit -m "init" # Počáteční commit projektu
@@ -356,7 +402,7 @@ Znamená, že Docker **daemon** běží pod **rootem** a nemáte přístup k **d
 
 ```bash
 # rychlá oprava (přidání sudo)
-docker compose up -d --build
+sudo docker compose up -d --build
 ```
 
 ```bash
