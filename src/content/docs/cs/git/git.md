@@ -8,7 +8,7 @@ translation_status: original
 
 ## Instalace (Debian)
 
-```txt
+```bash
 sudo apt update
 sudo apt install git
 
@@ -17,7 +17,7 @@ sudo apt install git
 - Git se pokusí odhadnout Váš e-mail podle hostname systému (např. uzivatel@linux-pc), což asi nechcete, protože se Vám pak commit nespáruje s profilem.
 opravte to:
   
-```txt
+```bash
 git config --global user.name "vaše jméno"
 git config --global user.email "vas@email.com"
 ```
@@ -26,14 +26,14 @@ git config --global user.email "vas@email.com"
 
 Přejděte do adresáře vašeho projektu:
 
-```txt
+```bash
 cd /cesta/k/vasemu/projektu
 git init  # Inicializuje Git v projektu
 ```
 
 > **Tip:** Tenhle kousek kódu doporučuji vložit hned po `git init`, ještě než poprvé napíšete `git add .`. V terminálu zadejte ve složce repozitáře `nano .gitignore`, vložte tento obsah a uložte `(Ctrl+O, Enter, Ctrl+X)`:
 
-```txt
+```bash
 ### Jazyky a frameworky ###
 node_modules/            # Závislosti pro JavaScript/Node.js
 __pycache__/             # Kompilovaný Python kód
@@ -69,7 +69,7 @@ build/
 
 ## Můžete pokračovat tvorbou lokálního repozitáře
 
-```txt
+```bash
 git add . # Přidá všechny soubory do "staging" oblasti
 git commit -m "Počáteční commit projektu"
 ```
@@ -82,7 +82,7 @@ Přihlaste se na GitHub. Klikněte na nový repozitář „New repository“ a p
 
 Vygenerujte SSH klíč:
 
-```txt
+```bash
 ssh-keygen -t ed25519 -C "váš@email.com"
 cat ~/.ssh/id_ed25519.pub
 ```
@@ -95,25 +95,25 @@ cat ~/.ssh/id_ed25519.pub
 
 Zkopírujte a přidejte URL vašeho GitHub repozitáře.
 
-```txt
+```bash
 git remote add origin git@github.com:uživatel/repozitář.git
 ```
 
 Přejmenujte aktuální větev master na main:
 
-```txt
+```bash
 git branch -M main
 ```
 
 Pushněte (nahrajte) lokální kód na GitHub:
 
-```txt
+```bash
 git push -u origin main # nebo master, záleží na názvu hlavní větve
 ```
 
 ### YOLO workflow
 
-```txt
+```bash
 clear &&
 git add . &&
 git commit -m "gc" &&

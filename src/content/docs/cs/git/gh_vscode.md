@@ -11,9 +11,9 @@ Je nejrychlejší způsob, jak vytvořit nový repozitář přímo z prostředí
 
 1. Ve VS Code otevřete složku se svým projektem.
 
-2. Přejděte do sekce Source Control (ikona větvení v levém panelu nebo zkratka Ctrl + Shift + G).
+2. Přejděte do sekce Source Control (ikona větvení v levém panelu nebo zkratka `Ctrl + Shift + G`).
 
-3. Klikněte na modré tlačítko Publish to GitHub.
+3. Klikněte na modré tlačítko `Publish to GitHub`.
 
     >**Tip:** Pokud tlačítko nevidíte, stiskněte `F1` (nebo `Ctrl + Shift + P`) a napište příkaz `Publish to GitHub`.
 
