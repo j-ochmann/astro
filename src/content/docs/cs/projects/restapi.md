@@ -129,7 +129,7 @@ npm install typescript ts-node nodemon @types/node --save-dev
 npm install fastify @prisma/client@latest
 npm install prisma@latest --save-dev
 npm audit fix --force
-npx tsc --init       #vytvoří tsconfig.json
+npx tsc --init #vytvoří tsconfig.json
 npx prisma init --datasource-provider postgresql
 ```
 
@@ -228,22 +228,22 @@ Aby `docker-compose up` neselhal, ujistěte se, že v package.json máte definov
 
 **.env** již máte v **.gitignore**.
 
-```bash
+<!-- ```bash
 cat << 'EOF' > .env
 POSTGRES_USER=johndoe
 POSTGRES_PASSWORD=top-secret-pwd
 POSTGRES_DB=dockerized_db
 DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
 EOF
-```
-<!-- ```bash
+``` -->
+```bash
 cat << 'EOF' > .env
 POSTGRES_USER=johndoe
 POSTGRES_PASSWORD=top-secret-pwd
 POSTGRES_DB=dockerized_db
 DATABASE_URL=postgresql://johndoe:top-secret-pwd@db:5432/dockerized_db?schema=public
 EOF
-``` -->
+```
 
 ## Dockerfile & compose.yml
 
@@ -373,7 +373,6 @@ cat Dockerfile
 cat compose.yml
 cat src/index.ts
 cat prisma/schema.prisma
-cat prisma.config.ts
 
 npx prisma migrate dev --name init
 
