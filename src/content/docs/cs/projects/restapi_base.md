@@ -9,7 +9,7 @@ translation_status: original
 mkdir dockerized-ts-pg   # Vytvoří složku projektu
 cd dockerized-ts-pg      # Přesunete se do složky projektu
 
-git init    # Inicializuje Git v projektu
+git init
 
 cat << 'EOF' > .gitignore
 node_modules/
