@@ -140,4 +140,120 @@ INSERT INTO languages (code, iso_639_3, name_local, fallbacks, priority) VALUES
 ('en', 'eng', 'English', '[]', 1),
 ('cs', 'ces', 'Čeština', '["sk", "en"]', 2),
 ('sk', 'slk', 'Slovenčina', '["cs", "en"]', 3);
+
+WITH target_fallback_config AS (
+    -- 1. Připravíme si seznam prioritních jazyků pro cílový jazyk 'sk'
+    -- Výsledek bude: 1. 'sk', 2. 'cs', 3. 'en' (podle dat v tabulce languages)
+    SELECT 'sk' AS lang_code, 0 AS priority
+    UNION ALL
+    SELECT f.val, f.ordinality
+    FROM languages l, jsonb_array_elements_text(l.fallbacks) WITH ORDINALITY f(val, ordinality)
+    WHERE l.code = 'sk'
+),
+available_translations AS (
+    -- 2. Najdeme všechny existující překlady pro daný dokument a seřadíme je dle priority
+    SELECT 
+        ds.position,
+        t.content,
+        t.status,
+        t.language_code,
+        tf.priority,
+        ROW_NUMBER() OVER (PARTITION BY ds.position ORDER BY tf.priority ASC) as rank
+    FROM document_segments ds
+    JOIN target_fallback_config tf ON true
+    JOIN translations t ON ds.segment_id = t.segment_id AND t.language_code = tf.lang_code
+    WHERE ds.document_id = 1  -- ID vašeho dokumentu
+)
+-- 3. Vybereme pro každou pozici v Markdownu tu s nejvyšší prioritou (rank = 1)
+SELECT position, content, status, language_code
+FROM available_translations
+WHERE rank = 1
+ORDER BY position ASC;
+
+```
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Číselník jazyků a jejich priorit
+model Language {
+  code         String         @id @db.VarChar(10)
+  priority     Int            @default(100)
+  isActive     Boolean        @default(true)
+  translations Translation[]
+  documents    Document[]     @relation("SourceLanguage")
+}
+
+// Unikátní kousky textu identifikované hashem
+model Segment {
+  hash             String            @id @db.VarChar(64)
+  createdAt        DateTime          @default(now())
+  translations     Translation[]
+  documentSegments DocumentSegment[]
+}
+
+// Jádro systému: konkrétní překlady a originály
+model Translation {
+  id             Int          @id @default(autoincrement())
+  segmentHash    String       @db.VarChar(64)
+  languageCode   String       @db.VarChar(10)
+  content        String       @db.Text
+  
+  isOriginal     Boolean      @default(false)
+  isLocked       Boolean      @default(false)
+  qualityLevel   Int          @default(0) // 0: Raw, 1: Premium, 2: Human
+  authorType     AuthorType   @default(PARSER)
+  
+  updatedAt      DateTime     @updatedAt
+  
+  segment        Segment      @relation(fields: [segmentHash], references: [hash], onDelete: Cascade)
+  language       Language     @relation(fields: [languageCode], references: [code])
+
+  @@unique([segmentHash, languageCode])
+}
+
+// Zastřešující dokument
+model Document {
+  id                 Int               @id @default(autoincrement())
+  filePath           String            @unique
+  sourceLanguageCode String            @db.VarChar(10)
+  fullHash           String?           @db.VarChar(64)
+  createdAt          DateTime          @default(now())
+  
+  sourceLanguage     Language          @relation("SourceLanguage", fields: [sourceLanguageCode], references: [code])
+  segments           DocumentSegment[]
+}
+
+// Vazební tabulka pro pořadí segmentů v dokumentu
+model DocumentSegment {
+  documentId  Int
+  segmentHash String @db.VarChar(64)
+  position    Int
+
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  segment     Segment  @relation(fields: [segmentHash], references: [hash])
+
+  @@id([documentId, position])
+}
+
+enum AuthorType {
+  PARSER
+  INTERNAL_MT
+  EXTERNAL_API
+  HUMAN
+}
+```
+
+```yaml
+networks:
+  default:
+    external:
+      name: nginx-proxy-manager-network # Název sítě, kde běží váš NPM
 ```

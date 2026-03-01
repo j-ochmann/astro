@@ -111,8 +111,10 @@ npm pkg set type="module"
 npm install typescript ts-node nodemon @types/node fastify prisma --save-dev
 npm audit fix --force
 npx tsc --init       #vytvoří tsconfig.json
-# npx prisma init    #vytvoří schema.prisma
 npx prisma init --datasource-provider postgresql
+npm install @prisma/client
+npx prisma generate
+
 git init             # Inicializuje Git v projektu
 git add .            # Přidá všechny soubory do "staging" oblasti
 git commit -m "init" # Počáteční commit projektu

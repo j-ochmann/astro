@@ -4,7 +4,7 @@ services:
   lingva:
     container_name: lingva
     image: thedaviddelta/lingva-translate:latest
-    restart: unless-stopped
+    restart: on-failure:5 # unless-stopped
     environment:
       - site_domain=${SITE_DOMAIN}
       - force_default_theme=dark
