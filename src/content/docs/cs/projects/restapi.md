@@ -100,7 +100,7 @@ ls
 > **Tip:** Zkontrolujte, že se `.gitignore` vytvořil.
 
 ```bash
-git init                 # Inicializuje Git v projektu
+git init       # Inicializuje Git v projektu
 git add .      # Přidá všechny soubory do "staging" oblasti
 git commit -m "Počáteční commit projektu"
 
