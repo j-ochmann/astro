@@ -154,31 +154,27 @@ COPY --from=builder /app/prisma ./prisma
 EXPOSE 3000
 CMD ["npm", "run", "start"]' > Dockerfile
 echo 'services:
-  # TypeScript API
   api:
     build: .
     container_name: dockerized-ts-api
     restart: always
     environment:
-      # db je název služby níže, Docker si to přeloží na správnou IP
       - DATABASE_URL=${DATABASE_URL}
     ports:
       - "3000:3000"
     depends_on:
       - db
-  # PostgreSQL Databáze
   db:
     image: postgres:16-alpine
     container_name: dockerized-ts-db
     restart: always
     ports:
-      - "5432:5432" # V produkci zavřete tento port!!!
+      - "5432:5432" # V produkci zavřete!!!
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      # Persistentní úložiště pro data (jinak by se při smazání kontejneru smazala i data)
+    volumes: # Persistentní úložiště
       - pgdata:/var/lib/postgresql/data
 volumes:
   pgdata:
