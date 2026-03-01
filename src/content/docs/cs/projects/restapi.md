@@ -64,7 +64,7 @@ Tam, kde chcete složku projektu, zadejte:
 ```bash
 mkdir dockerized-ts-pg   # Vytvoří složku projektu
 cd dockerized-ts-pg      # Přesunete se do složky projektu
-echo "### Jazyky a frameworky ###
+echo '# Jazyky a frameworky
 node_modules/            # Závislosti pro JavaScript/Node.js
 __pycache__/             # Kompilovaný Python kód
 *.py[cod]                # Python soubory
@@ -72,27 +72,32 @@ __pycache__/             # Kompilovaný Python kód
 venv/
 target/                  # Buildy pro Rust/Java
 
-### Bezpečnost (NEPUSHLOVAT!) ###
+# Bezpečnost (NEPUSHLOVAT!)
 .env                     # API klíče, hesla a tajné proměnné
 *.env
+.env.*
+!.env.example
 *.pem                    # Soukromé klíče
 auth.json                # Autentizační tokeny
 
-### Operační systém a IDE ###
+# Operační systém a IDE
 .DS_Store                # MacOS smetí
 Thumbs.db                # Windows smetí
 .vscode/                 # Nastavení VS Code (pokud ho nechcete sdílet)
 .idea/                   # Nastavení JetBrains (PyCharm, IntelliJ)
 *.swp                    # Dočasné soubory editoru Vim
+.astro/
 dist/                    # Výsledné buildy
 build/
 *.log                    # Logy aplikací
 npm-debug.log*
+yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 .DS_Store
 
 # Prisma (vygenerované soubory, které se tvoří při buildu)
-/prisma/migrations/" > .gitignore
+/prisma/migrations/' > .gitignore
 cat .gitignore
 ls -la
 ```
@@ -115,6 +120,7 @@ npx prisma init --datasource-provider postgresql
 npm install @prisma/client
 npx prisma generate
 
+git rm -r --cached .
 git init             # Inicializuje Git v projektu
 git add .            # Přidá všechny soubory do "staging" oblasti
 git commit -m "init" # Počáteční commit projektu
