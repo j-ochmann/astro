@@ -154,7 +154,7 @@ COPY --from=builder /app/prisma ./prisma
 EXPOSE 3000
 CMD ["npm", "run", "start"]' > Dockerfile
 echo 'services:
-  # Tvé TypeScript API
+  # TypeScript API
   api:
     build: .
     container_name: dockerized-ts-api
@@ -171,6 +171,8 @@ echo 'services:
     image: postgres:16-alpine
     container_name: dockerized-ts-db
     restart: always
+    ports:
+      - "5432:5432" # V produkci zavřete tento port!!!
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -183,19 +185,45 @@ volumes:
 ' > compose.yml
 mkdir -p src
 echo "import Fastify from 'fastify';
+import { PrismaClient } from '@prisma/client';
+
 const fastify = Fastify({ logger: true });
-fastify.get('/', async () => {
-  return { status: 'API is running' };
+const prisma = new PrismaClient();
+
+// 1. Získání všech úkolů (GET)
+fastify.get('/todos', async () => {
+  return await prisma.todo.findMany({
+    orderBy: { createdAt: 'desc' }
+  });
 });
+
+// 2. Vytvoření nového úkolu (POST)
+fastify.post('/todos', async (request, reply) => {
+  const { title } = request.body as { title: string };
+  
+  if (!title) {
+    return reply.status(400).send({ error: 'Title is required' });
+  }
+
+  const newTodo = await prisma.todo.create({
+    data: { title }
+  });
+
+  return newTodo;
+});
+
 const start = async () => {
   try {
     await fastify.listen({ port: 3000, host: '0.0.0.0' });
+    console.log("API běží 🏃‍♂️ na portu 3000");
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
   }
 };
-start();" > src/index.ts
+
+start();
+" > src/index.ts
 cat Dockerfile
 cat compose.yml
 cat src/index.ts
@@ -317,4 +345,42 @@ sudo groupadd docker          # Vytvoří docker skupinu.
 sudo usermod -aG docker $USER # Přidá uževatele.
 newgrp docker                 # Aktivuje okamžitě.
 docker ps                     # Otestuje.
+```
+
+## Co dále? (The Real Fun Begins)
+
+Teď, když „trubky“ fungují, je čas jimi prohnat data. Další logický krok je:
+
+1. **Definice modelu:** Upravit prisma/schema.prisma (např. přidat tabulku Note nebo User).
+2. **Migrace:** Spustit npx prisma migrate dev, aby se tabulky fyzicky vytvořily v tom běžícím Postgres kontejneru.
+3. **CRUD operace:** Přepsat src/index.ts tak, aby uměl data ukládat (POST) a číst (GET).
+
+### 1. Definice modelu
+
+Upravte soubor prisma/schema.prisma takto:
+
+```prisma
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tady definujeme naši tabulku
+model Todo {
+  id        Int      @id @default(autoincrement())
+  title     String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+```
+
+V terminálu (mimo kontejner) spusťte příkaz, který vytvoří tabulku v databázi:
+
+```bash
+npx prisma migrate dev --name init_todos
 ```
