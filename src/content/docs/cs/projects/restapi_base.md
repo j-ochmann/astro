@@ -12,41 +12,34 @@ cd dockerized-ts-pg      # Přesunete se do složky projektu
 git rm -r --cached .
 git init    # Inicializuje Git v projektu
 
-cat << 'EOF' > .gitignore 
-# Jazyky a frameworky
-node_modules/            # Závislosti pro JavaScript/Node.js
-__pycache__/             # Kompilovaný Python kód
-*.py[cod]                # Python soubory
-.venv/                   # Virtuální prostředí Pythonu
+cat << 'EOF' > .gitignore
+node_modules/
+dist/
+build/
+/prisma/migrations/
+target/
 venv/
-target/                  # Buildy pro Rust/Java
-
-# Bezpečnost (NEPUSHLOVAT!)
-.env                     # API klíče, hesla a tajné proměnné
+.venv/
+__pycache__/
+*.py[cod]
 *.env
+.env
 .env.*
 !.env.example
-*.pem                    # Soukromé klíče
-auth.json                # Autentizační tokeny
-
-# Operační systém a IDE
-.DS_Store                # MacOS smetí
-Thumbs.db                # Windows smetí
-.vscode/                 # Nastavení VS Code (pokud ho nechcete sdílet)
-.idea/                   # Nastavení JetBrains (PyCharm, IntelliJ)
-*.swp                    # Dočasné soubory editoru Vim
+*.pem
+auth.json
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
 .astro/
-dist/                    # Výsledné buildy
-build/
-*.log                    # Logy aplikací
+*.swp
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .DS_Store
-
-# Prisma (vygenerované soubory, které se tvoří při buildu)
-/prisma/migrations/
 EOF
 
 cat << 'EOF' > .dockerignore
@@ -245,4 +238,16 @@ xdg-open http://localhost:3000/todos
 
 git add .            # Přidá všechny soubory do "staging" oblasti
 git commit -m "init" # Počáteční commit projektu
+```
+
+```bash
+DATABASE_URL="postgresql://johndoe:top-secret-pwd@localhost:5432/dockerized_db?schema=public" npx prisma migrate dev --name init
+```
+
+```bash
+EOF i po git rm -r --cached .
+
+git add .
+
+git commit --amend -m "fix gitignore"
 ```
