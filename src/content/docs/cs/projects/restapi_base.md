@@ -91,14 +91,18 @@ cat << 'EOF' > tsconfig.json
   "exclude": ["node_modules", "**/*.test.ts"]
 }
 EOF
+```
 
+```bash
 cat << 'EOF' > .env
 POSTGRES_USER=johndoe
 POSTGRES_PASSWORD=top-secret-pwd
 POSTGRES_DB=dockerized_db
-DATABASE_URL=postgresql://johndoe:top-secret-pwd@db:5432/dockerized_db?schema=public
+DATABASE_URL=postgresql://johndoe:top-secret-pwd@localhost:5432/dockerized_db?schema=public
 EOF
+```
 
+```bash
 cat << 'EOF' > Dockerfile
 # Build fáze
 FROM node:20-slim AS builder
