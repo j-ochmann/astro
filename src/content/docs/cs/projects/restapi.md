@@ -365,16 +365,6 @@ model Todo {
 }
 EOF
 
-cat << 'EOF' > prisma.config.ts
-mport { defineConfig } from '@prisma/config';
-
-export default defineConfig({
-  datasource: {
-    url: process.env.DATABASE_URL,
-  },
-});
-EOF
-
 cat Dockerfile
 cat compose.yml
 cat src/index.ts
@@ -392,7 +382,19 @@ code .
 ## Dockerfile
 
 ```dockerfile
+# cat << 'EOF' > prisma.config.ts
+# import { defineConfig } from '@prisma/config';
 
+# const dbUrl = process.env.DATABASE_URL;
+# if (!dbUrl) throw new Error("DATABASE_URL missing in .env!");
+
+# export default defineConfig({
+#   engine: 'classic', 
+#   datasource: {
+#     url: dbUrl,
+#   },
+# });
+# EOF
 ```
 
 ## Docker compose.yml
