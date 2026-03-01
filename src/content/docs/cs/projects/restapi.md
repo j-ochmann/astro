@@ -283,7 +283,7 @@ volumes:
   pgdata:
 ' > compose.yml
 mkdir -p src
-echo 'import Fastify from 'fastify';
+echo "import Fastify from 'fastify';
 import { PrismaClient } from '@prisma/client';
 
 const fastify = Fastify({ logger: true });
@@ -324,7 +324,7 @@ const start = async () => {
 };
 
 start();
-' > src/index.ts
+" > src/index.ts
 echo 'generator client {
   provider = "prisma-client-js"
 }
@@ -339,13 +339,13 @@ model Todo {
   completed Boolean  @default(false)
   createdAt DateTime @default(now())
 }' > prisma/schema.prisma
-echo 'import { defineConfig } from '@prisma/config';
+echo "import { defineConfig } from '@prisma/config';
 
 export default defineConfig({
   datasource: {
     url: process.env.DATABASE_URL,
   },
-});' > prisma.config.ts
+});" > prisma.config.ts
 
 cat Dockerfile
 cat compose.yml
