@@ -64,7 +64,6 @@ Tam, kde chcete složku projektu, zadejte:
 ```bash
 mkdir dockerized-ts-pg   # Vytvoří složku projektu
 cd dockerized-ts-pg      # Přesunete se do složky projektu
-git init                 # Inicializuje Git v projektu
 echo "### Jazyky a frameworky ###
 node_modules/            # Závislosti pro JavaScript/Node.js
 __pycache__/             # Kompilovaný Python kód
@@ -95,11 +94,13 @@ yarn-error.log*
 # Prisma (vygenerované soubory, které se tvoří při buildu)
 /prisma/migrations/" > .gitignore
 cat .gitignore
+ls
 ```
 
 > **Tip:** Zkontrolujte, že se `.gitignore` vytvořil.
 
 ```bash
+git init                 # Inicializuje Git v projektu
 git add .      # Přidá všechny soubory do "staging" oblasti
 git commit -m "Počáteční commit projektu"
 
@@ -107,7 +108,7 @@ npm init -y    #vytvoří package.json
 
 # Instalace TypeScriptu a vývojových nástrojů
 npm install typescript ts-node nodemon @types/node fastify prisma --save-dev
-
+npm audit fix --force
 npx tsc --init  #vytvoří tsconfig.json
 # npx prisma init #vytvoří schema.prisma
 npx prisma init --datasource-provider postgresql
