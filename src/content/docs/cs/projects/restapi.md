@@ -125,10 +125,10 @@ git commit -m "init" # Počáteční commit projektu
 **.env** již máte v **.gitignore**.
 
 ```bash
-echo "POSTGRES_USER=johndoe
+echo 'POSTGRES_USER=johndoe
 POSTGRES_PASSWORD=top-secret-pwd
 POSTGRES_DB=dockerized_db
-DATABASE_URL=postgresql://johndoe:top-secret-pwd@db:5432/dockerized_db?schema=public" > .env
+DATABASE_URL=postgresql://johndoe:top-secret-pwd@db:5432/dockerized_db?schema=public' > .env
 ```
 
 ## Dockerfile & compose.yml
