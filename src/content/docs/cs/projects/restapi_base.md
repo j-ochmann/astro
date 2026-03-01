@@ -48,9 +48,8 @@ dist
 .env
 EOF
 
-cat .gitignore
-cat .dockerignore
 ls -la
+
 npm init -y # Nastavení package.json
 npm pkg set type="module"
 npm pkg set scripts.build="tsc"
@@ -90,6 +89,7 @@ cat << 'EOF' > .env
 POSTGRES_USER=johndoe
 POSTGRES_PASSWORD=top-secret-pwd
 POSTGRES_DB=dockerized_db
+COMPOSE_URL=postgresql://johndoe:top-secret-pwd@db:5432/dockerized_db?schema=public
 DATABASE_URL=postgresql://johndoe:top-secret-pwd@localhost:5432/dockerized_db?schema=public
 EOF
 ```
@@ -127,7 +127,7 @@ services:
     container_name: dockerized-ts-api
     restart: always
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=${COMPOSE_URL}
     ports:
       - "3000:3000"
     depends_on:
@@ -244,9 +244,8 @@ DATABASE_URL="postgresql://johndoe:top-secret-pwd@localhost:5432/dockerized_db?s
 ```
 
 ```bash
-EOF i po git rm -r --cached .
-
+docker compose down -v
+git rm -r --cached .
 git add .
-
-git commit --amend -m "fix gitignore"
+git commit --amend -m "fix"
 ```
