@@ -94,24 +94,27 @@ yarn-error.log*
 # Prisma (vygenerované soubory, které se tvoří při buildu)
 /prisma/migrations/" > .gitignore
 cat .gitignore
-ls
+ls -la
 ```
 
 > **Tip:** Zkontrolujte, že se `.gitignore` vytvořil.
 
 ```bash
-git init       # Inicializuje Git v projektu
-git add .      # Přidá všechny soubory do "staging" oblasti
-git commit -m "Počáteční commit projektu"
-
-npm init -y    #vytvoří package.json
+npm init -y          #vytvoří package.json
+# Nastavení jednotlivých skriptů
+npm pkg set scripts.build="tsc"
+npm pkg set scripts.start="node dist/index.js"
+npm pkg set scripts.dev="nodemon src/index.ts"
 
 # Instalace TypeScriptu a vývojových nástrojů
 npm install typescript ts-node nodemon @types/node fastify prisma --save-dev
 npm audit fix --force
-npx tsc --init  #vytvoří tsconfig.json
-# npx prisma init #vytvoří schema.prisma
+npx tsc --init       #vytvoří tsconfig.json
+# npx prisma init    #vytvoří schema.prisma
 npx prisma init --datasource-provider postgresql
+git init             # Inicializuje Git v projektu
+git add .            # Přidá všechny soubory do "staging" oblasti
+git commit -m "init" # Počáteční commit projektu
 ```
 
 ## Dockerfile & compose.yml
@@ -234,7 +237,7 @@ volumes:
 
 ## Poslední kontrola před spuštěním
 
-Aby ti docker-compose up neselhal, ujistěte se, že v package.json máte definované tyto skripty, které Dockerfile volá:
+Aby docker-compose up neselhal, ujistěte se, že v package.json máte definované tyto skripty, které Dockerfile volá:
 
 ```json
 "scripts": {
