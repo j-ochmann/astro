@@ -245,7 +245,11 @@ DATABASE_URL="postgresql://johndoe:top-secret-pwd@localhost:5432/dockerized_db?s
 
 ```bash
 docker compose down -v
+
 git rm -r --cached .
 git add .
 git commit --amend -m "fix"
+
+jindrich@z570:~/Workspace$ sudo rm -rf dockerized-ts-pg
+ls -la
 ```
