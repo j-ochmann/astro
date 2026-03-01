@@ -341,7 +341,7 @@ const start = async () => {
   try {
     // Fastify v3/4 vyžaduje objekt v listen
     await fastify.listen({ port: 3000, host: '0.0.0.0' });
-    console.log("API běží 🏃‍♂️ na portu 3000");
+    console.log("API běží na portu 3000");
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
