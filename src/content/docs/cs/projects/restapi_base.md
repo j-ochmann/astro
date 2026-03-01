@@ -237,6 +237,10 @@ xdg-open http://localhost:3000/todos
 
 git add .            # Přidá všechny soubory do "staging" oblasti
 git commit -m "init" # Počáteční commit projektu
+
+curl -X POST http://localhost:3000/todos \  curl -X POST http://localhost:3000/todos \
+     -H "Content-Type: application/json" \
+     -d '{"title": "Dokončit Docker tutoriál"}'
 ```
 
 ```bash
