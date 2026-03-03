@@ -74,7 +74,22 @@ cat <<EOF > biome.json
   },
   "linter": { "enabled": true, "rules": { "recommended": true } },
   "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100 },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } }
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "css": { "parser": { "allowWrongLineComments": true, "cssModules": true },
+    "linter": { "enabled": true } },
+  "javascript": { "formatter": { "quoteStyle": "single" } },
+  "overrides": [
+    {
+      "include": ["*.css"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnknownAtRule": "off"
+          }
+        }
+      }
+    }
+  ]
 }
 EOF
 
@@ -184,7 +199,7 @@ export type AppRouter = typeof appRouter;
 EOF
 
 # --- 7. DOCKER COMPOSE ---
-cat <<EOF > compose.yml
+cat <<'EOF' > compose.yml
 services:
   postgres-db-main:
     image: postgres:16-alpine
@@ -198,7 +213,7 @@ services:
     volumes:
       - postgres_main_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \$\${POSTGRES_USER} -d \$\${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -215,7 +230,7 @@ services:
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \$\${POSTGRES_USER} -d \$\${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
