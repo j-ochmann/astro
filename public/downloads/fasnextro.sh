@@ -6,6 +6,16 @@ DB_USER="johndoe"
 DB_PASS="secretpassword"
 DB_MAIN="main_db"
 DB_TEST="test_db"
+NEXT_PUBLIC_API_URL=http://localhost:3000
+
+cat <<EOF > .env
+PROJECT_NAME=${PROJECT_NAME}
+DB_USER=${DB_USER}
+DB_PASS=${DB_PASS}
+DB_MAIN=${DB_MAIN}
+DB_TEST=${DB_TEST}
+NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+EOF
 
 mkdir -p $PROJECT_NAME && cd $PROJECT_NAME
 
@@ -337,7 +347,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     trpc.createClient({
       links: [
         httpBatchLink({
-          url: 'http://localhost:3000/trpc',
+          url: process.env.NEXT_PUBLIC_API_URL + '/trpc'
         }),
       ],
     }),
