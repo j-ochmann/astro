@@ -8,6 +8,8 @@ DB_MAIN="main_db"
 DB_TEST="test_db"
 NEXT_PUBLIC_API_URL=http://localhost:3000
 
+mkdir -p $PROJECT_NAME && cd $PROJECT_NAME
+
 cat <<EOF > .env
 PROJECT_NAME=${PROJECT_NAME}
 DB_USER=${DB_USER}
@@ -17,9 +19,6 @@ DB_TEST=${DB_TEST}
 NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 EOF
 
-mkdir -p $PROJECT_NAME && cd $PROJECT_NAME
-
-# --- 1. PNPM & WORKSPACE CONFIG ---
 cat <<EOF > pnpm-workspace.yaml
 packages:
   - 'apps/*'
