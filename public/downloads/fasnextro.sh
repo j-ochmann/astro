@@ -66,9 +66,11 @@ cat <<EOF > biome.json
     "includes": ["**"],
     "experimentalScannerIgnores": [
       "**/node_modules/**",
-      "**/docker/**",
       "**/.next/**",
-      "**/dist/**"
+      "**/dist/**",
+      "**/generated/**",
+      "**/prisma/generated/**",
+      "**/docker/**"
     ]
   },
   "linter": { "enabled": true, "rules": { "recommended": true } },
@@ -192,8 +194,10 @@ services:
       POSTGRES_DB: ${DB_MAIN}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
-    ports: ["5432:5432"]
-    volumes: ["./docker/postgres/prod_data:/var/lib/postgresql/data"]
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_main_data:/var/lib/postgresql/data
   postgres-db-test:
     image: postgres:16-alpine
     container_name: postgres-db-test
@@ -201,13 +205,19 @@ services:
       POSTGRES_DB: ${DB_TEST}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
-    ports: ["5433:5432"]
-    volumes: ["./docker/postgres/test_data:/var/lib/postgresql/data"]
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
   inngest:
     image: inngest/inngest
     container_name: ${PROJECT_NAME}-inngest
-    ports: ["8288:8288"]
+    restart: unless-stopped
+    ports:
+      - "8288:8288"
     command: ["inngest", "dev", "-u", "http://fastify-api:3000/api/inngest"]
+    depends_on:
+      - fastify-api
   fastify-api:
     container_name: ${PROJECT_NAME}-fastify-api
     build: { context: ., dockerfile: apps/fastify-api/Dockerfile }
@@ -215,6 +225,9 @@ services:
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASS}@postgres-db-main:5432/${DB_MAIN}
     depends_on: [postgres-db-main]
+  volumes:
+  postgres_main_data:
+  postgres_test_data:
 EOF
 
 # --- 8. FASTIFY APP ---
