@@ -15,6 +15,7 @@ bash <(curl -sSL http://localhost:4321/downloads/monorepo.sh)
 ## Soubor [fasnextro.sh](/downloads/fasnextro.sh)
 
 ```bash
+# pnpm approve-builds sharp
 bash <(curl -sSL http://localhost:4321/downloads/fasnextro.sh)
 ```
 

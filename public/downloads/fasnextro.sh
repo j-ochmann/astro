@@ -21,6 +21,7 @@ side-effects-cache=true
 only-built-dependencies[]=@prisma/engines
 only-built-dependencies[]=esbuild
 only-built-dependencies[]=prisma
+only-built-dependencies[]=sharp
 EOF
 
 # --- 2. ROOT PACKAGE.JSON ---
@@ -28,6 +29,7 @@ cat <<EOF > package.json
 {
   "name": "fasnextro",
   "private": true,
+  "packageManager": "pnpm@10.30.3",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -50,9 +52,7 @@ EOF
 cat <<EOF > biome.json
 {
   "\$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
-  "files": {
-    "ignore": ["**/node_modules/**", "**/dist/**", "**/docker/**", "**/.next/**"]
-  },
+  "files": { "includes": ["**"], "ignoreUnknown": true },
   "linter": { "enabled": true, "rules": { "recommended": true } },
   "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100 },
   "assist": { "actions": { "source": { "organizeImports": "on" } } }
