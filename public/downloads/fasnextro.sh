@@ -507,9 +507,9 @@ sudo chown -R $USER:$USER .
 
 echo "---------------------------------------------------"
 echo "Fasnextro (Full Monorepo) READY!"
-echo "Next.js: http://localhost:3001"
-echo "Astro:   http://localhost:3002"
 echo "Fastify: http://localhost:3000"
+echo "Next.js: http://localhost:3001"
+echo "Astro:   http://localhost:4322"
 echo "---------------------------------------------------"
 
 # Smažeme lokální lockfile v aplikaci (pokud se tam vytvořil)
