@@ -72,7 +72,7 @@ EOF
 cat <<EOF > turbo.json
 {
   "\$schema": "https://turbo.build/schema.json",
-  "pipeline": {
+  "tasks": {
     "db:generate": { "cache": false },
     "db:push": { "cache": false },
     "build": {
