@@ -10,14 +10,20 @@ NEXT_PUBLIC_API_URL=http://localhost:3000
 
 mkdir -p $PROJECT_NAME && cd $PROJECT_NAME
 
-cat <<'EOF' > .env
+cat <<EOF > .env
 PROJECT_NAME=${PROJECT_NAME}
 DB_USER=${DB_USER}
 DB_PASS=${DB_PASS}
 DB_MAIN=${DB_MAIN}
 DB_TEST=${DB_TEST}
+DB_MAIN_URL=postgresql://${DB_USER}:${DB_PASS}@db:5432/${DB_MAIN}?schema=public
+DB_TEST_URL=postgresql://${DB_USER}:${DB_PASS}@db:5433/${DB_TEST}?schema=public
+DB_MAIN_YML=postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_MAIN}?schema=public
+DB_TEST_YML=postgresql://${DB_USER}:${DB_PASS}@localhost:5433/${DB_TEST}?schema=public
 NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 EOF
+
+export PROJECT_NAME DB_USER DB_PASS DB_MAIN DB_TEST DB_MAIN_URL DB_TEST_URL DB_MAIN_YML DB_TEST_YML NEXT_PUBLIC_API_URL
 
 cat <<'EOF' > pnpm-workspace.yaml
 packages:
@@ -46,7 +52,7 @@ cat <<'EOF' > package.json
     "lint:apply": "biome check --write --unsafe .",
     "db:generate": "turbo run db:generate --filter=@repo/database",
     "db:push": "turbo run db:push --filter=@repo/database",
-    "db:up": "docker compose up -d postgres-db-main inngest",
+    "db:up": "docker compose up -d postgres-db-main postgres-db-test inngest",
     "db:studio": "pnpm --filter @repo/database exec prisma studio"
   },
   "devDependencies": {
@@ -60,7 +66,7 @@ EOF
 # --- 3. TOOLS CONFIG (BIOME & TURBO) ---
 cat <<'EOF' > biome.json
 {
-  "\$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
   "files": {
     "ignoreUnknown": true,
     "includes": [
@@ -73,10 +79,13 @@ cat <<'EOF' > biome.json
     ]
   },
   "linter": { "enabled": true, "rules": { "recommended": true } },
-  "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100 },
+  "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100, "formatWithErrors": true },
   "css": {
-    "parser": { "allowWrongLineComments": true },
-    "linter": { "enabled": false } 
+    "parser": { 
+      "allowWrongLineComments": true,
+      "tailwindDirectives": true 
+    },
+    "linter": { "enabled": false }
   },
   "overrides": [
     {
@@ -89,7 +98,7 @@ EOF
 
 cat <<'EOF' > turbo.json
 {
-  "\$schema": "https://turbo.build/schema.json",
+  "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "db:generate": { "cache": false },
     "db:push": { "cache": false },
@@ -128,7 +137,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 export default {
   datasource: {
-    url: process.env.DATABASE_URL
+    url: process.env.DB_MAIN_URL
   }
 };
 EOF
@@ -238,7 +247,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASS}@postgres-db-main:5432/${DB_MAIN}
+      DATABASE_URL: ${DB_TEST_YML}
+      
       INNGEST_EVENT_KEY: v1_your_key
     depends_on:
       postgres-db-main:
@@ -455,16 +465,22 @@ EOF
 # --- 11. FINAL INSTALL & INIT ---
 pnpm install
 
-docker compose up -d postgres-db-main inngest
-echo "DATABASE_URL=\"postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_MAIN}\"" > packages/database/.env
-echo "Čekám na DB..." && sleep 5
-# pnpm --filter @repo/database run db:generate
-# pnpm --filter @repo/database run db:push
-cd packages/database
-npx prisma db push
-npx prisma generate
-cd ../..
-npx @biomejs/biome check --write --unsafe .
+docker compose up -d postgres-db-main postgres-db-test inngest
+
+echo "Čekám, až se DB proberou..."
+until docker exec postgres-db-main pg_isready -U postgres; do
+  echo "postgres-db-main se ještě protahuje..."
+  sleep 2
+done
+
+until docker exec postgres-db-test pg_isready -U postgres; do
+  echo "postgres-db-test se ještě protahuje..."
+  sleep 2
+done
+
+pnpm --filter @repo/database exec prisma db push
+pnpm --filter @repo/database exec prisma generate
+pnpm biome check --write --unsafe . || true
 
 echo "---------------------------------------------------"
 echo "Fasnextro (Full Monorepo) READY!"
