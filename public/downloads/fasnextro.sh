@@ -21,7 +21,7 @@ DB_TEST_URL=postgresql://${DB_USER}:${DB_PASS}@postgres-db-main:5433/${DB_TEST}?
 DB_MAIN_YML=postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_MAIN}?schema=public
 DB_TEST_YML=postgresql://${DB_USER}:${DB_PASS}@localhost:5433/${DB_TEST}?schema=public
 DATABASE_URL="${DB_URL_LOCAL}"
-NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:3005
 EOF
 
 export PROJECT_NAME DB_USER DB_PASS DB_MAIN DB_TEST DB_MAIN_URL DB_TEST_URL DB_MAIN_YML DB_TEST_YML NEXT_PUBLIC_API_URL
@@ -268,7 +268,7 @@ services:
     command: npx tsx watch apps/fastify-api/src/index.ts
     restart: on-failure
     ports:
-      - "3000:3000"
+      - "3005:3000"
     environment:
       DATABASE_URL: ${DB_MAIN_URL}
       
@@ -288,7 +288,7 @@ services:
     restart: unless-stopped
     ports:
       - "8288:8288"
-    command: ["inngest", "dev", "-u", "http://fastify-api:3000/api/inngest"]
+    command: ["inngest", "dev", "-u", "http://fastify-api:3005/api/inngest"]
     depends_on:
       - fastify-api
 
@@ -341,13 +341,13 @@ async function start() {
   });
 
   try {
-    const port = Number(process.env.PORT) || 3000;
+    const port = Number(process.env.PORT) || 3005;
     await server.listen({ port, host: '0.0.0.0' });
   } catch (err) {
     server.log.error(err);
     if ((err as any).code === 'EADDRINUSE') {
-      console.log('Port 3000 obsazen, zkouším 3005...');
-      await server.listen({ port: 3005, host: '0.0.0.0' });
+      console.log('Port 3005 obsazen, zkouším 3006...');
+      await server.listen({ port: 3006, host: '0.0.0.0' });
     } else {
       process.exit(1);
     }
@@ -373,7 +373,7 @@ RUN pnpm install --frozen-lockfile
 COPY --from=builder /app/out/full/ .
 RUN npx turbo run db:generate
 RUN npx turbo run build --filter=fastify-api
-EXPOSE 3000
+EXPOSE 3005
 CMD ["node", "apps/fastify-api/dist/index.js"]
 # FROM node:20-alpine AS builder
 # RUN apk add --no-cache libc6-compat
@@ -390,7 +390,7 @@ CMD ["node", "apps/fastify-api/dist/index.js"]
 # COPY --from=builder /app/out/full/ .
 # RUN npx turbo run db:generate
 # RUN npx turbo run build --filter=fastify-api
-# EXPOSE 3000
+# EXPOSE 3005
 # CMD ["node", "apps/fastify-api/dist/index.js"]
 EOF
 
@@ -526,7 +526,7 @@ pnpm --filter @repo/database exec prisma db push --accept-data-loss
 pnpm --filter @repo/database exec prisma generate
 
 # Důležité: Prisma potřebuje vidět URL přímo při pushi
-# export DATABASE_URL=$DB_MAIN_YML
+npx dotenv-cli -e .env -- pnpm --filter @repo/database exec prisma db push
 cd packages/database
 npx prisma db push --accept-data-loss
 npx prisma generate
@@ -540,7 +540,7 @@ sudo chown -R $USER:$USER .
 
 echo "---------------------------------------------------"
 echo "Fasnextro (Full Monorepo) READY!"
-echo "Fastify: http://localhost:3000"
+echo "Fastify: http://localhost:3005"
 echo "Next.js: http://localhost:3001"
 echo "Astro:   http://localhost:4322"
 echo "---------------------------------------------------"
@@ -559,3 +559,36 @@ pnpm add -D @tailwindcss/postcss postcss tailwindcss -w
 
 pnpm install
 pnpm dev
+
+
+cat <<'EOF' > apps/astro-web/src/lib/trpc.ts
+import { createTRPCClient, httpBatchLink } from '@trpc/client';
+import type { AppRouter } from '@repo/trpc';
+
+export const trpc = createTRPCClient<AppRouter>({
+  links: [
+    // Všimni si portu 3005, kam nám Fastify uteklo
+    httpBatchLink({ url: 'http://localhost:3005/trpc' }),
+  ],
+});
+EOF
+cat <<'EOF' > apps/astro-web/src/content/docs/index.mdx
+
+---
+title: Fasnextro Dokumentace
+description: Moje tRPC data v Astru.
+template: splash
+---
+
+import { trpc } from '../../lib/trpc';
+
+## Data z API (tRPC)
+
+{ /* Toto poběží na serveru při buildu nebo v SSR mode */ }
+export const users = await trpc.user.list.query(); 
+
+<ul>
+  {users.map(user => (
+    <li key={user.id}>{user.name} ({user.email})</li>
+  ))}
+</ul>
