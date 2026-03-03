@@ -2,7 +2,7 @@
 title: 'REST API & PostgreSQL'
 sidebar:
   label: BASE
-  order: 0
+  order: 40
 translation_status: original
 ---
 ```bash
@@ -257,3 +257,24 @@ git commit --amend -m "fix"
 jindrich@z570:~/Workspace$ sudo rm -rf dockerized-ts-pg
 ls -la
 ```
+
+`package.json`
+
+```bash
+"scripts": {
+  "build": "tsc",
+  "start": "node dist/index.js",
+  "dev": "nodemon src/index.ts",
+  "db:migrate": "npx prisma migrate dev",
+  "db:studio": "npx prisma studio",
+  "docker:up": "docker compose up -d",
+  "docker:down": "docker compose down",
+  "docker:build": "docker compose up -d --build api"
+}
+```
+
+Jak to používat?
+
+- **npm run db:migrate** Vytvoří migraci a tabulky v Dockeru po změně modelu v schema.prisma.
+- **npm run db:studio** Otevře v prohlížeči grafické rozhraní pro prohlížení a editaci dat.
+- **npm run docker:build** Když změníš kód v src/index.ts a chceš ho hned vidět běžet v Dockeru.

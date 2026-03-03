@@ -520,3 +520,14 @@ docker compose up -d --build
 code .
 ```
 ````
+
+```sh
+PROJECT_NAME=$1
+if [ -z "$PROJECT_NAME" ]; then
+  echo "Musíš zadat název projektu! (např. ./init.sh muj-web)"
+  exit 1
+fi
+mkdir $PROJECT_NAME
+cd $PROJECT_NAME
+# ... zbytek skriptu ...
+```

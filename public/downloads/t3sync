@@ -1,0 +1,119 @@
+#!/bin/bash
+exec < /dev/tty
+
+read -p "Enter a project name: " PROJECT_NAME
+read -p "Enter a user name: " USER_NAME
+
+while true; do
+    read -s -p "Enter password for DB: " PASSWORD
+    echo ""
+    read -s -p "Enter password again: " PASS2
+    echo ""
+    if [ "$PASSWORD" == "$PASS2" ] && [ ! -z "$PASSWORD" ]; then
+        break
+    else
+        echo "Error: Passwords do not match!"
+    fi
+done
+
+npx create-t3-app@latest "$PROJECT_NAME" \
+  --CI --noGit --noInstall --appRouter true --tailwind true --trpc true \
+  --prisma true --auth better-auth --dbProvider postgres --importAlias "~/"
+
+cd "$PROJECT_NAME" || exit
+
+cp .env.example .env
+sed -i "s|:password@|:$PASSWORD@|g" .env
+{
+    echo "POSTGRES_PASSWORD=\"$PASSWORD\""
+    echo "POSTGRES_USER=\"$USER_NAME\""
+    echo "POSTGRES_DB=\"$PROJECT_NAME\""
+    echo "BETTER_AUTH_SECRET=\"$(openssl rand -base64 32)\""
+    echo "BETTER_AUTH_URL=\"http://localhost:3000\""
+} >> .env
+
+# 3. Dockerfile (Standalone build)
+cat <<EOF > Dockerfile
+FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY package.json package-lock.json* ./
+COPY prisma ./prisma/
+RUN npm ci
+
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV SKIP_ENV_VALIDATION=1
+RUN npm run build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+USER nextjs
+EXPOSE 3000
+CMD ["node", "server.js"]
+EOF
+
+# 4. Docker Compose (Prod + Test DB)
+cat <<EOF > compose.yml
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: t3-db-prod
+    environment:
+      POSTGRES_USER: \${POSTGRES_USER}
+      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
+      POSTGRES_DB: \${POSTGRES_DB}
+    ports: ["5432:5432"]
+    volumes: ["prod_data:/var/lib/postgresql/data"]
+
+  db-test:
+    image: postgres:15-alpine
+    container_name: t3-db-test
+    environment:
+      POSTGRES_USER: \${POSTGRES_USER}
+      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
+      POSTGRES_DB: \${POSTGRES_DB}_test
+    ports: ["5433:5432"]
+
+  app:
+    build: .
+    ports: ["3000:3000"]
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@db:5432/\${POSTGRES_DB}
+    depends_on: [db]
+
+volumes:
+  prod_data:
+EOF
+
+# 5. Sync & Anonymize Skript
+cat <<EOF > sync-test-db.sh
+#!/bin/bash
+echo "🔄 Sychronizace a anonymizace dat..."
+docker exec -t t3-db-prod pg_dump -U $USER_NAME $PROJECT_NAME | \\
+docker exec -i t3-db-test psql -U $USER_NAME -d ${PROJECT_NAME}_test
+
+# Anonymizace e-mailů uživatelů pro BetterAuth/Prisma
+docker exec -i t3-db-test psql -U $USER_NAME -d ${PROJECT_NAME}_test -c \\
+"UPDATE \\"user\\" SET email = 'user_' || id || '@example.com';"
+echo "✅ Testovací DB připravena."
+EOF
+chmod +x sync-test-db.sh
+
+# 6. Finální inicializace
+npm install
+docker compose up db db-test -d
+sleep 5
+npx prisma db push
+docker build -t "$PROJECT_NAME-app" .
+
+echo "Hotovo! Spusťte produkci pomocí 'docker compose up app -d'."
