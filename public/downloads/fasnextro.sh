@@ -10,7 +10,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3000
 
 mkdir -p $PROJECT_NAME && cd $PROJECT_NAME
 
-cat <<EOF > .env
+cat <<'EOF' > .env
 PROJECT_NAME=${PROJECT_NAME}
 DB_USER=${DB_USER}
 DB_PASS=${DB_PASS}
@@ -19,13 +19,13 @@ DB_TEST=${DB_TEST}
 NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 EOF
 
-cat <<EOF > pnpm-workspace.yaml
+cat <<'EOF' > pnpm-workspace.yaml
 packages:
   - 'apps/*'
   - 'packages/*'
 EOF
 
-cat <<EOF > .npmrc
+cat <<'EOF' > .npmrc
 side-effects-cache=true
 only-built-dependencies[]=@prisma/engines
 only-built-dependencies[]=esbuild
@@ -34,7 +34,7 @@ only-built-dependencies[]=sharp
 EOF
 
 # --- 2. ROOT PACKAGE.JSON ---
-cat <<EOF > package.json
+cat <<'EOF' > package.json
 {
   "name": "fasnextro",
   "private": true,
@@ -58,10 +58,10 @@ cat <<EOF > package.json
 EOF
 
 # --- 3. TOOLS CONFIG (BIOME & TURBO) ---
-cat <<EOF > biome.json
+cat <<'EOF' > biome.json
 {
   "\$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
-    "files": {
+  "files": {
     "ignoreUnknown": true,
     "includes": [
       "**",
@@ -74,26 +74,20 @@ cat <<EOF > biome.json
   },
   "linter": { "enabled": true, "rules": { "recommended": true } },
   "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100 },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
-  "css": { "parser": { "allowWrongLineComments": true, "cssModules": true },
-    "linter": { "enabled": true } },
-  "javascript": { "formatter": { "quoteStyle": "single" } },
+  "css": {
+    "parser": { "allowWrongLineComments": true },
+    "linter": { "enabled": false } 
+  },
   "overrides": [
     {
-      "include": ["*.css"],
-      "linter": {
-        "rules": {
-          "correctness": {
-            "noUnknownAtRule": "off"
-          }
-        }
-      }
+      "includes": ["*.css"],
+      "linter": { "enabled": false }
     }
   ]
 }
 EOF
 
-cat <<EOF > turbo.json
+cat <<'EOF' > turbo.json
 {
   "\$schema": "https://turbo.build/schema.json",
   "tasks": {
@@ -112,7 +106,7 @@ EOF
 mkdir -p apps/fastify-api/src packages/database/prisma packages/database/src packages/trpc/src docker/postgres
 
 # --- 5. DATABASE PACKAGE (@repo/database) ---
-cat <<EOF > packages/database/package.json
+cat <<'EOF' > packages/database/package.json
 {
   "name": "@repo/database",
   "version": "0.0.0",
@@ -127,7 +121,7 @@ cat <<EOF > packages/database/package.json
 }
 EOF
 
-cat <<EOF > packages/database/prisma.config.mjs
+cat <<'EOF' > packages/database/prisma.config.mjs
 import dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -139,7 +133,7 @@ export default {
 };
 EOF
 
-cat <<EOF > packages/database/prisma/schema.prisma
+cat <<'EOF' > packages/database/prisma/schema.prisma
 datasource db {
   provider = "postgresql"
 }
@@ -160,7 +154,7 @@ model User {
 }
 EOF
 
-cat <<EOF > packages/database/src/index.ts
+cat <<'EOF' > packages/database/src/index.ts
 import { PrismaClient } from '@prisma/client';
 export * from '@prisma/client';
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
@@ -169,7 +163,7 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
 EOF
 
 # --- 6. TRPC PACKAGE (@repo/trpc) ---
-cat <<EOF > packages/trpc/package.json
+cat <<'EOF' > packages/trpc/package.json
 {
   "name": "@repo/trpc",
   "version": "0.0.0",
@@ -182,7 +176,7 @@ cat <<EOF > packages/trpc/package.json
 }
 EOF
 
-cat <<EOF > packages/trpc/src/index.ts
+cat <<'EOF' > packages/trpc/src/index.ts
 import { initTRPC } from '@trpc/server';
 import { db } from '@repo/database';
 
@@ -271,7 +265,7 @@ volumes:
 EOF
 
 # --- 8. FASTIFY APP ---
-cat <<EOF > apps/fastify-api/package.json
+cat <<'EOF' > apps/fastify-api/package.json
 {
   "name": "fastify-api",
   "version": "0.0.0",
@@ -290,7 +284,7 @@ cat <<EOF > apps/fastify-api/package.json
 }
 EOF
 
-cat <<EOF > apps/fastify-api/src/index.ts
+cat <<'EOF' > apps/fastify-api/src/index.ts
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
@@ -313,7 +307,7 @@ server.listen({ port: 3000, host: '0.0.0.0' }).catch(err => {
 });
 EOF
 
-cat <<EOF > apps/fastify-api/Dockerfile
+cat <<'EOF' > apps/fastify-api/Dockerfile
 FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -354,7 +348,7 @@ EOF
 echo "Instaluji Next.js..."
 npx create-next-app@latest apps/next-app --ts --tailwind --no-eslint --app --src-dir --import-alias "@/*" --use-pnpm --skip-install --no-git
 
-cat <<EOF > apps/next-app/package.json
+cat <<'EOF' > apps/next-app/package.json
 {
   "name": "next-app",
   "version": "0.1.0",
@@ -380,7 +374,7 @@ EOF
 
 # Vytvoření tRPC klienta pro Next.js
 mkdir -p apps/next-app/src/lib/trpc
-cat <<EOF > apps/next-app/src/lib/trpc/client.ts
+cat <<'EOF' > apps/next-app/src/lib/trpc/client.ts
 'use client';
 import { createTRPCReact } from '@trpc/react-query';
 import type { AppRouter } from '@repo/trpc';
@@ -391,7 +385,7 @@ EOF
 echo "Instaluji Astro..."
 pnpm create astro@latest apps/astro-web --template starlight --no-install --no-git --typescript strict --skip-houston
 
-cat <<EOF > apps/astro-web/package.json
+cat <<'EOF' > apps/astro-web/package.json
 {
   "name": "astro-web",
   "type": "module",
@@ -412,7 +406,7 @@ cat <<EOF > apps/astro-web/package.json
 }
 EOF
 
-cat <<EOF > apps/next-app/src/lib/trpc/Provider.tsx
+cat <<'EOF' > apps/next-app/src/lib/trpc/Provider.tsx
 'use client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { httpBatchLink } from '@trpc/client';
@@ -439,7 +433,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
 }
 EOF
 
-cat <<EOF > apps/next-app/src/app/layout.tsx
+cat <<'EOF' > apps/next-app/src/app/layout.tsx
 import { TRPCProvider } from '@/lib/trpc/Provider';
 import './globals.css';
 
