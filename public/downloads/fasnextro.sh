@@ -260,7 +260,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: ${DB_TEST_YML}
+      DATABASE_URL: ${DB_MAIN_URL}
       
       INNGEST_EVENT_KEY: v1_your_key
     depends_on:
@@ -482,17 +482,18 @@ docker compose up -d postgres-db-main postgres-db-test inngest
 sudo chown -R $USER:$USER .
 
 echo "Čekám, až se DB proberou..."
-until docker exec postgres-db-main pg_isready -U postgres; do
+until docker exec postgres-db-main pg_isready -U ${DB_USER}; do
   echo "postgres-db-main se ještě protahuje..."
   sleep 2
 done
 
-until docker exec postgres-db-test pg_isready -U postgres; do
+until docker exec postgres-db-test pg_isready -U ${DB_USER}; do
   echo "postgres-db-test se ještě protahuje..."
   sleep 2
 done
 
 # Důležité: Prisma potřebuje vidět URL přímo při pushi
+export DATABASE_URL=$DB_MAIN_YML
 cd packages/database
 npx prisma db push --accept-data-loss
 npx prisma generate
