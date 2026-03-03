@@ -26,13 +26,13 @@ packages:
   - 'packages/*'
 EOF
 
-# cat <<EOF > .npmrc
-# side-effects-cache=true
-# only-built-dependencies[]=@prisma/engines
-# only-built-dependencies[]=esbuild
-# only-built-dependencies[]=prisma
-# only-built-dependencies[]=sharp
-# EOF
+cat <<EOF > .npmrc
+side-effects-cache=true
+only-built-dependencies[]=@prisma/engines
+only-built-dependencies[]=esbuild
+only-built-dependencies[]=prisma
+only-built-dependencies[]=sharp
+EOF
 
 # --- 2. ROOT PACKAGE.JSON ---
 cat <<EOF > package.json
@@ -63,14 +63,14 @@ cat <<EOF > biome.json
 {
   "\$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
     "files": {
-    "includes": ["**"],
-    "experimentalScannerIgnores": [
-      "**/node_modules/**",
-      "**/.next/**",
-      "**/dist/**",
-      "**/generated/**",
-      "**/prisma/generated/**",
-      "**/docker/**"
+    "ignoreUnknown": true,
+    "includes": [
+      "**",
+      "!!**/node_modules/**",
+      "!!**/.next/**",
+      "!!**/dist/**",
+      "!!**/generated/**",
+      "!!**/docker/**"
     ]
   },
   "linter": { "enabled": true, "rules": { "recommended": true } },
@@ -198,6 +198,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_main_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-user} -d ${DB_MAIN:-main_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   postgres-db-test:
     image: postgres:16-alpine
     container_name: postgres-db-test
@@ -209,6 +214,11 @@ services:
       - "5433:5432"
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-user} -d ${DB_MAIN:-main_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   inngest:
     image: inngest/inngest
     container_name: ${PROJECT_NAME}-inngest
@@ -220,14 +230,22 @@ services:
       - fastify-api
   fastify-api:
     container_name: ${PROJECT_NAME}-fastify-api
-    build: { context: ., dockerfile: apps/fastify-api/Dockerfile }
-    ports: ["3000:3000"]
+    build: 
+      context: .
+      dockerfile: apps/fastify-api/Dockerfile
+    ports:
+      - "3000:3000"
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASS}@postgres-db-main:5432/${DB_MAIN}
-    depends_on: [postgres-db-main]
-  volumes:
-  postgres_main_data:
-  postgres_test_data:
+      INNGEST_EVENT_KEY: v1_your_key
+    depends_on:
+      - postgres-db-main
+    volumes:
+      - .:/app # Namapuje lokální soubory pro live-reload
+      - /app/node_modules
+volumes:
+  postgres_main_data: {}
+  postgres_test_data: {}
 EOF
 
 # --- 8. FASTIFY APP ---
@@ -280,17 +298,34 @@ WORKDIR /app
 RUN npm install -g pnpm turbo
 COPY . .
 RUN turbo prune fastify-api --docker
-
 FROM node:20-alpine AS runner
 WORKDIR /app
+RUN npm install -g pnpm
 COPY --from=builder /app/out/json/ .
 COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 COPY --from=builder /app/out/full/ .
 RUN npx turbo run db:generate
 RUN npx turbo run build --filter=fastify-api
 EXPOSE 3000
 CMD ["node", "apps/fastify-api/dist/index.js"]
+# FROM node:20-alpine AS builder
+# RUN apk add --no-cache libc6-compat
+# WORKDIR /app
+# RUN npm install -g pnpm turbo
+# COPY . .
+# RUN turbo prune fastify-api --docker
+
+# FROM node:20-alpine AS runner
+# WORKDIR /app
+# COPY --from=builder /app/out/json/ .
+# COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+# RUN pnpm install
+# COPY --from=builder /app/out/full/ .
+# RUN npx turbo run db:generate
+# RUN npx turbo run build --filter=fastify-api
+# EXPOSE 3000
+# CMD ["node", "apps/fastify-api/dist/index.js"]
 EOF
 
 # --- 9. NEXT.JS SETUP ---
@@ -422,6 +457,17 @@ echo "Astro:   http://localhost:3002"
 echo "Fastify: http://localhost:3000"
 echo "---------------------------------------------------"
 
+# Smažeme lokální lockfile v aplikaci (pokud se tam vytvořil)
+rm apps/next-app/pnpm-lock.yaml 2>/dev/null
+
+# Instalace kompilátoru přes filtr z rootu
+pnpm add -D babel-plugin-react-compiler --filter next-app
+
+# A pak celková instalace a linkování
+pnpm approve-builds @prisma/engines esbuild prisma sharp
+pnpm --filter next-app add -D tailwindcss postcss autoprefixer @tailwindcss/forms @tailwindcss/typography
+pnpm add -D @tailwindcss/postcss postcss tailwindcss --filter next-app
+pnpm add -D @tailwindcss/postcss postcss tailwindcss -w
+
+pnpm install
 pnpm dev
-xdg-open http://localhost:3000
-xdg-open http://localhost:3001
