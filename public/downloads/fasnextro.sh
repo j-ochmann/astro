@@ -2,6 +2,11 @@
 export CI=true
 
 PROJECT_NAME="fasnextro"
+DB_USER="johndoe"
+DB_PASS="secretpassword"
+DB_MAIN="main_db"
+DB_TEST="test_db"
+
 mkdir -p $PROJECT_NAME && cd $PROJECT_NAME
 
 # --- 1. PNPM & WORKSPACE CONFIG ---
@@ -30,7 +35,7 @@ cat <<EOF > package.json
     "lint:apply": "biome check --write --unsafe .",
     "db:generate": "turbo run db:generate --filter=@repo/database",
     "db:push": "turbo run db:push --filter=@repo/database",
-    "db:up": "docker compose up -d postgres-db-prod inngest",
+    "db:up": "docker compose up -d postgres-db-main inngest",
     "db:studio": "pnpm --filter @repo/database exec prisma studio"
   },
   "devDependencies": {
@@ -45,6 +50,9 @@ EOF
 cat <<EOF > biome.json
 {
   "\$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
+  "files": {
+    "ignore": ["**/node_modules/**", "**/dist/**", "**/docker/**", "**/.next/**"]
+  },
   "linter": { "enabled": true, "rules": { "recommended": true } },
   "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100 },
   "assist": { "actions": { "source": { "organizeImports": "on" } } }
@@ -85,25 +93,21 @@ cat <<EOF > packages/database/package.json
 }
 EOF
 
-cat <<EOF > packages/database/package.json
-{
-  "name": "@repo/database",
-  "version": "0.0.0",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "scripts": {
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push"
-  },
-  "dependencies": { "@prisma/client": "7.4.2" },
-  "devDependencies": { "prisma": "7.4.2", "zod": "latest", "zod-prisma-types": "latest" }
-}
+cat <<EOF > packages/database/prisma.config.mjs
+import dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+export default {
+  datasource: {
+    url: process.env.DATABASE_URL
+  }
+};
 EOF
 
 cat <<EOF > packages/database/prisma/schema.prisma
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -163,25 +167,36 @@ EOF
 # --- 7. DOCKER COMPOSE ---
 cat <<EOF > compose.yml
 services:
-  postgres-db-prod:
+  postgres-db-main:
     image: postgres:16-alpine
-    container_name: postgres-db-prod
+    container_name: postgres-db-main
     environment:
-      POSTGRES_DB: main_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${DB_MAIN}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
     ports: ["5432:5432"]
     volumes: ["./docker/postgres/prod_data:/var/lib/postgresql/data"]
+  postgres-db-test:
+    image: postgres:16-alpine
+    container_name: postgres-db-test
+    environment:
+      POSTGRES_DB: ${DB_TEST}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    ports: ["5433:5432"]
+    volumes: ["./docker/postgres/test_data:/var/lib/postgresql/data"]
   inngest:
     image: inngest/inngest
+    container_name: ${PROJECT_NAME}-inngest
     ports: ["8288:8288"]
     command: ["inngest", "dev", "-u", "http://fastify-api:3000/api/inngest"]
   fastify-api:
+    container_name: ${PROJECT_NAME}-fastify-api
     build: { context: ., dockerfile: apps/fastify-api/Dockerfile }
     ports: ["3000:3000"]
     environment:
-      DATABASE_URL: postgresql://user:password@postgres-db-prod:5432/main_db
-    depends_on: [postgres-db-prod]
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASS}@postgres-db-main:5432/${DB_MAIN}
+    depends_on: [postgres-db-main]
 EOF
 
 # --- 8. FASTIFY APP ---
@@ -309,15 +324,64 @@ cat <<EOF > apps/astro-web/package.json
 }
 EOF
 
+cat <<EOF > apps/next-app/src/lib/trpc/Provider.tsx
+'use client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { httpBatchLink } from '@trpc/client';
+import React, { useState } from 'react';
+import { trpc } from './client';
+
+export function TRPCProvider({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient());
+  const [trpcClient] = useState(() =>
+    trpc.createClient({
+      links: [
+        httpBatchLink({
+          url: 'http://localhost:3000/trpc',
+        }),
+      ],
+    }),
+  );
+
+  return (
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </trpc.Provider>
+  );
+}
+EOF
+
+cat <<EOF > apps/next-app/src/app/layout.tsx
+import { TRPCProvider } from '@/lib/trpc/Provider';
+import './globals.css';
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <TRPCProvider>{children}</TRPCProvider>
+      </body>
+    </html>
+  );
+}
+EOF
+
 # --- 11. FINAL INSTALL & INIT ---
 pnpm install
 
-docker compose up -d postgres-db-prod inngest
-echo "DATABASE_URL=\"postgresql://user:password@localhost:5432/main_db\"" > .env
-echo "DATABASE_URL=\"postgresql://user:password@localhost:5432/main_db\"" > packages/database/.env
+docker compose up -d postgres-db-main inngest
+echo "DATABASE_URL=\"postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_MAIN}\"" > packages/database/.env
 echo "Čekám na DB..." && sleep 5
-pnpm --filter @repo/database run db:generate
-pnpm --filter @repo/database run db:push
+# pnpm --filter @repo/database run db:generate
+# pnpm --filter @repo/database run db:push
+cd packages/database
+npx prisma db push
+npx prisma generate
+cd ../..
 npx @biomejs/biome check --write --unsafe .
 
 echo "---------------------------------------------------"
@@ -326,3 +390,7 @@ echo "Next.js: http://localhost:3001"
 echo "Astro:   http://localhost:3002"
 echo "Fastify: http://localhost:3000"
 echo "---------------------------------------------------"
+
+pnpm dev
+xdg-open http://localhost:3000
+xdg-open http://localhost:3001
