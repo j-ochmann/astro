@@ -40,6 +40,8 @@ only-built-dependencies[]=prisma
 only-built-dependencies[]=sharp
 EOF
 
+pnpm approve-builds @prisma/engines esbuild prisma sharp
+
 # --- 2. ROOT PACKAGE.JSON ---
 cat <<'EOF' > package.json
 {
@@ -126,8 +128,8 @@ cat <<'EOF' > packages/database/package.json
     "db:generate": "prisma generate",
     "db:push": "prisma db push"
   },
-  "dependencies": { "@prisma/client": "7.4.2", "dotenv": "latest", "zod": "latest" },
-  "devDependencies": { "prisma": "7.4.2", "zod-prisma-types": "latest" }
+  "dependencies": { "@prisma/client": "6.4.1", "dotenv": "latest", "zod": "latest" },
+  "devDependencies": { "prisma": "6.4.1", "zod-prisma-types": "latest" }
 }
 EOF
 
@@ -146,6 +148,7 @@ EOF
 cat <<'EOF' > packages/database/prisma/schema.prisma
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -476,6 +479,7 @@ export default function RootLayout({
 EOF
 
 # --- 11. FINAL INSTALL & INIT ---
+pnpm add -D @types/react @types/react-dom @types/node -w
 pnpm install
 
 docker compose up -d postgres-db-main postgres-db-test inngest
@@ -493,7 +497,7 @@ until docker exec postgres-db-test pg_isready -U ${DB_USER}; do
 done
 
 # Důležité: Prisma potřebuje vidět URL přímo při pushi
-export DATABASE_URL=$DB_MAIN_YML
+# export DATABASE_URL=$DB_MAIN_YML
 cd packages/database
 npx prisma db push --accept-data-loss
 npx prisma generate
@@ -519,7 +523,7 @@ rm apps/next-app/pnpm-lock.yaml 2>/dev/null
 pnpm add -D babel-plugin-react-compiler --filter next-app
 
 # A pak celková instalace a linkování
-pnpm approve-builds @prisma/engines esbuild prisma sharp
+# pnpm approve-builds @prisma/engines esbuild prisma sharp
 pnpm --filter next-app add -D tailwindcss postcss autoprefixer @tailwindcss/forms @tailwindcss/typography
 pnpm add -D @tailwindcss/postcss postcss tailwindcss --filter next-app
 pnpm add -D @tailwindcss/postcss postcss tailwindcss -w
