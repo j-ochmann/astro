@@ -6,7 +6,7 @@ DB_USER="johndoe"
 DB_PASS="secretpassword"
 DB_MAIN="main_db"
 DB_TEST="test_db"
-NEXT_PUBLIC_API_URL=http://localhost:3000
+DB_URL_LOCAL="postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_MAIN}?schema=public"
 
 mkdir -p $PROJECT_NAME && cd $PROJECT_NAME
 
@@ -20,11 +20,12 @@ DB_MAIN_URL=postgresql://${DB_USER}:${DB_PASS}@postgres-db-main:5432/${DB_MAIN}?
 DB_TEST_URL=postgresql://${DB_USER}:${DB_PASS}@postgres-db-main:5433/${DB_TEST}?schema=public
 DB_MAIN_YML=postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_MAIN}?schema=public
 DB_TEST_YML=postgresql://${DB_USER}:${DB_PASS}@localhost:5433/${DB_TEST}?schema=public
-NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+DATABASE_URL="${DB_URL_LOCAL}"
+NEXT_PUBLIC_API_URL=http://localhost:3000
 EOF
 
 export PROJECT_NAME DB_USER DB_PASS DB_MAIN DB_TEST DB_MAIN_URL DB_TEST_URL DB_MAIN_YML DB_TEST_YML NEXT_PUBLIC_API_URL
-export DATABASE_URL=$DB_MAIN_YML
+# export DATABASE_URL=$DB_MAIN_YML
 
 cat <<'EOF' > pnpm-workspace.yaml
 packages:
@@ -169,20 +170,26 @@ EOF
 
 cat <<'EOF' > packages/database/src/index.ts
 import { PrismaClient } from '@prisma/client';
+import path from 'node:path';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
 export * from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 
-const connectionString = process.env.DATABASE_URL || process.env.DB_MAIN_URL;
-
+const dbUrl = process.env.DATABASE_URL || 
+              process.env.DB_MAIN_YML || 
+              `postgresql://${process.env.DB_USER}:${process.env.DB_PASS}@localhost:5432/${process.env.DB_MAIN}?schema=public`;
 export const db = globalForPrisma.prisma ?? new PrismaClient({
   datasources: {
     db: {
-      url: connectionString,
+      url: dbUrl,
     },
   },
 });
-
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
 EOF
 
@@ -315,22 +322,39 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 import { appRouter } from '@repo/trpc';
-import { db } from '@repo/database';
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 
 const server = Fastify({ logger: true });
-server.register(cors, { origin: true });
-server.register(fastifyTRPCPlugin, {
-  prefix: '/trpc',
-  trpcOptions: { 
-    router: appRouter,
-    createContext: () => ({ db })
-  },
-});
 
-server.listen({ port: 3000, host: '0.0.0.0' }).catch(err => {
-  server.log.error(err);
-  process.exit(1);
-});
+async function start() {
+  await server.register(cors, { origin: true });
+  
+  await server.register(fastifyTRPCPlugin, {
+    prefix: '/trpc',
+    trpcOptions: { 
+      router: appRouter,
+      createContext: () => ({}) 
+    }
+  });
+
+  try {
+    const port = Number(process.env.PORT) || 3000;
+    await server.listen({ port, host: '0.0.0.0' });
+  } catch (err) {
+    server.log.error(err);
+    if ((err as any).code === 'EADDRINUSE') {
+      console.log('Port 3000 obsazen, zkouším 3005...');
+      await server.listen({ port: 3005, host: '0.0.0.0' });
+    } else {
+      process.exit(1);
+    }
+  }
+}
+
+start();
 EOF
 
 cat <<'EOF' > apps/fastify-api/Dockerfile
@@ -479,6 +503,7 @@ export default function RootLayout({
 EOF
 
 # --- 11. FINAL INSTALL & INIT ---
+pnpm add -D dotenv-cli -w
 pnpm add -D @types/react @types/react-dom @types/node -w
 pnpm install
 
@@ -495,6 +520,10 @@ until docker exec postgres-db-test pg_isready -U ${DB_USER}; do
   echo "postgres-db-test se ještě protahuje..."
   sleep 2
 done
+
+pnpm --filter @repo/database db:push
+pnpm --filter @repo/database exec prisma db push --accept-data-loss
+pnpm --filter @repo/database exec prisma generate
 
 # Důležité: Prisma potřebuje vidět URL přímo při pushi
 # export DATABASE_URL=$DB_MAIN_YML
