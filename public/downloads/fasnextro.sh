@@ -191,9 +191,9 @@ services:
     image: postgres:16-alpine
     container_name: postgres-db-main
     environment:
-      POSTGRES_DB: \${DB_MAIN}
-      POSTGRES_USER: \${DB_USER}
-      POSTGRES_PASSWORD: \${DB_PASS}
+      POSTGRES_DB: ${DB_MAIN}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
     ports:
       - "5432:5432"
     volumes:
@@ -208,9 +208,9 @@ services:
     image: postgres:16-alpine
     container_name: postgres-db-test
     environment:
-      POSTGRES_DB: \${DB_TEST}
-      POSTGRES_USER: \${DB_USER}
-      POSTGRES_PASSWORD: \${DB_PASS}
+      POSTGRES_DB: ${DB_TEST}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
     ports:
       - "5433:5432"
     volumes:
@@ -222,7 +222,7 @@ services:
       retries: 5
 
   fastify-api:
-    container_name: \${PROJECT_NAME}-fastify-api
+    container_name: ${PROJECT_NAME}-fastify-api
     build: 
       context: .
       dockerfile: apps/fastify-api/Dockerfile
@@ -230,7 +230,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://\${DB_USER}:\${DB_PASS}@postgres-db-main:5432/\${DB_MAIN}
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASS}@postgres-db-main:5432/${DB_MAIN}
       INNGEST_EVENT_KEY: v1_your_key
     depends_on:
       postgres-db-main:
@@ -243,7 +243,7 @@ services:
 
   inngest:
     image: inngest/inngest
-    container_name: \${PROJECT_NAME}-inngest
+    container_name: ${PROJECT_NAME}-inngest
     restart: unless-stopped
     ports:
       - "8288:8288"
