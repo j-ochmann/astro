@@ -47,7 +47,7 @@ cat <<EOF > biome.json
   "\$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
   "linter": { "enabled": true, "rules": { "recommended": true } },
   "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100 },
-  "assist": { "actions": { "source": { "organizeImports": { "enabled": true } } } }
+  "assist": { "actions": { "source": { "organizeImports": "on" } } }
 }
 EOF
 
@@ -85,23 +85,25 @@ cat <<EOF > packages/database/package.json
 }
 EOF
 
-cat <<EOF > packages/database/prisma.config.mjs
-import { defineConfig } from 'prisma';
-import dotenv from 'dotenv';
-import path from 'path';
-
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-
-export default defineConfig({
-  datasource: {
-    url: process.env.DATABASE_URL
-  }
-});
+cat <<EOF > packages/database/package.json
+{
+  "name": "@repo/database",
+  "version": "0.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push"
+  },
+  "dependencies": { "@prisma/client": "7.4.2" },
+  "devDependencies": { "prisma": "7.4.2", "zod": "latest", "zod-prisma-types": "latest" }
+}
 EOF
 
 cat <<EOF > packages/database/prisma/schema.prisma
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -311,6 +313,7 @@ EOF
 pnpm install
 
 docker compose up -d postgres-db-prod inngest
+echo "DATABASE_URL=\"postgresql://user:password@localhost:5432/main_db\"" > .env
 echo "DATABASE_URL=\"postgresql://user:password@localhost:5432/main_db\"" > packages/database/.env
 echo "Čekám na DB..." && sleep 5
 pnpm --filter @repo/database run db:generate
