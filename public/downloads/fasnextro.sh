@@ -127,8 +127,8 @@ cat <<'EOF' > packages/database/package.json
   "types": "./src/index.ts",
   "scripts": {
     "db:push": "dotenv -e ../../.env -- prisma db push",
-    "db:generate": "dotenv -e ../../.env -- prisma generate"
-  },
+    "db:generate": "dotenv -e ../../.env -- prisma generate",
+    "db:seed": "dotenv -e ../../.env -- tsx src/seed.ts"  },
   "dependencies": { "@prisma/client": "6.4.1", "dotenv": "latest", "zod": "latest" },
   "devDependencies": { "prisma": "6.4.1", "zod-prisma-types": "latest" }
 }
@@ -278,9 +278,6 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-      - /app/node_modules
-      - /app/apps/next-app/.next
-      - /app/apps/fastify-api/dist
 
   inngest:
     image: inngest/inngest
@@ -345,7 +342,7 @@ async function start() {
     await server.listen({ port, host: '0.0.0.0' });
   } catch (err) {
     server.log.error(err);
-    if ((err as any).code === 'EADDRINUSE') {
+    if (err instanceof Error && (err as any).code === 'EADDRINUSE') {
       console.log('Port 3005 obsazen, zkouším 3006...');
       await server.listen({ port: 3006, host: '0.0.0.0' });
     } else {
@@ -504,12 +501,14 @@ until docker exec postgres-db-test pg_isready -U ${DB_USER}; do
   sleep 2
 done
 
+pnpm --filter @repo/database add -D tsx
 pnpm --filter @repo/database db:push
 pnpm --filter @repo/database exec prisma db push --accept-data-loss
 pnpm --filter @repo/database exec prisma generate
 
 # Důležité: Prisma potřebuje vidět URL přímo při pushi
 npx dotenv-cli -e .env -- pnpm --filter @repo/database exec prisma db push
+npx dotenv-cli -e .env -- pnpm --filter @repo/database db:seed
 cd packages/database
 npx prisma db push --accept-data-loss
 npx prisma generate
@@ -555,6 +554,7 @@ export const trpc = createTRPCClient<AppRouter>({
   ],
 });
 EOF
+
 cat <<'EOF' > apps/astro-web/src/content/docs/index.mdx
 
 ---
@@ -575,3 +575,83 @@ export const users = await trpc.getUsers.query()
     <li key={user.id}>{user.name} ({user.email})</li>
   ))}
 </ul>
+EOF
+
+cat <<'EOF' > apps/fastify-api/src/index.ts
+import path from "node:path";
+import cors from "@fastify/cors";
+import { appRouter } from "@repo/trpc";
+import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
+import dotenv from "dotenv";
+import Fastify from "fastify";
+
+dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
+
+const server = Fastify({ logger: true });
+
+server.get('/', async () => {
+  return { status: 'OK', message: 'Fasnextro API is running' };
+});
+
+async function start() {
+  await server.register(cors, { origin: true });
+
+  await server.register(fastifyTRPCPlugin, {
+    prefix: "/trpc",
+    trpcOptions: {
+      router: appRouter,
+      createContext: () => ({}),
+    },
+  });
+
+  try {
+    const port = Number(process.env.PORT) || 3005;
+    await server.listen({ port, host: "0.0.0.0" });
+  } catch (err) {
+    server.log.error(err);
+  if (err && typeof err === 'object' && 'code' in err && err.code === 'EADDRINUSE') {
+      console.log('Port 3005 obsazen, zkouším 3006...');
+      await server.listen({ port: 3006, host: '0.0.0.0' });
+    } else {
+      process.exit(1);
+    }
+  }
+}
+
+start();
+EOF
+
+cat <<'EOF' > packages/database/src/seed.ts
+import { db } from "./index";
+
+async function main() {
+  console.log("🌱 Startuji seedování databáze...");
+
+  // Vyčistíme stávající data (volitelné)
+  await db.user.deleteMany();
+
+  const users = [
+    { name: "Jindřich", email: "jindrich@example.com" },
+    { name: "Jan", email: "jan@example.com" },
+    { name: "Gemini", email: "gemini@ai.local" },
+  ];
+
+  for (const u of users) {
+    const user = await db.user.create({
+      data: u,
+    });
+    console.log(`✅ Vytvořen uživatel: ${user.name} (${user.id})`);
+  }
+
+  console.log("🏁 Seedování dokončeno!");
+}
+
+main()
+  .catch((e) => {
+    console.error("❌ Chyba při seedování:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await db.$disconnect();
+  });
+EOF
