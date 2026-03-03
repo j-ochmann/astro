@@ -6,16 +6,19 @@ sidebar:
 translation_status: original
 ---
 
-## Soubor [monorepo.sh](/downloads/monorepo.sh)
-
-```bash
-bash <(curl -sSL http://localhost:4321/downloads/monorepo.sh)
-```
-
 ## Soubor [fasnextro.sh](/downloads/fasnextro.sh)
 
 ```bash
 bash <(curl -sSL http://localhost:4321/downloads/fasnextro.sh)
+```
+
+```bash
+cd fasnextro
+docker compose down -v
+cd ..
+sudo rm -rf fasnextro
+clear
+ls -la
 ```
 
 monorepo.sh 925,3MB
@@ -89,11 +92,8 @@ cat <<EOF > apps/astro-web/package.json
 EOF
 ```
 
+## Soubor [monorepo.sh](/downloads/monorepo.sh)
+
 ```bash
-cd fasnextro
-docker compose down -v
-cd ..
-sudo rm -rf fasnextro
-clear
-ls -la
+bash <(curl -sSL http://localhost:4321/downloads/monorepo.sh)
 ```
