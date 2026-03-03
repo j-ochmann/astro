@@ -26,13 +26,13 @@ packages:
   - 'packages/*'
 EOF
 
-cat <<EOF > .npmrc
-side-effects-cache=true
-only-built-dependencies[]=@prisma/engines
-only-built-dependencies[]=esbuild
-only-built-dependencies[]=prisma
-only-built-dependencies[]=sharp
-EOF
+# cat <<EOF > .npmrc
+# side-effects-cache=true
+# only-built-dependencies[]=@prisma/engines
+# only-built-dependencies[]=esbuild
+# only-built-dependencies[]=prisma
+# only-built-dependencies[]=sharp
+# EOF
 
 # --- 2. ROOT PACKAGE.JSON ---
 cat <<EOF > package.json
@@ -62,7 +62,15 @@ EOF
 cat <<EOF > biome.json
 {
   "\$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
-  "files": { "includes": ["**"], "ignoreUnknown": true },
+    "files": {
+    "includes": ["**"],
+    "experimentalScannerIgnores": [
+      "**/node_modules/**",
+      "**/docker/**",
+      "**/.next/**",
+      "**/dist/**"
+    ]
+  },
   "linter": { "enabled": true, "rules": { "recommended": true } },
   "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100 },
   "assist": { "actions": { "source": { "organizeImports": "on" } } }
@@ -98,8 +106,8 @@ cat <<EOF > packages/database/package.json
     "db:generate": "prisma generate",
     "db:push": "prisma db push"
   },
-  "dependencies": { "@prisma/client": "7.4.2", "dotenv": "latest" },
-  "devDependencies": { "prisma": "7.4.2", "zod": "latest", "zod-prisma-types": "latest" }
+  "dependencies": { "@prisma/client": "7.4.2", "dotenv": "latest", "zod": "latest" },
+  "devDependencies": { "prisma": "7.4.2", "zod-prisma-types": "latest" }
 }
 EOF
 
