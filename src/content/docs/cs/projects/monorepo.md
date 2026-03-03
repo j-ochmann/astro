@@ -88,3 +88,12 @@ cat <<EOF > apps/astro-web/package.json
 }
 EOF
 ```
+
+```bash
+cd fasnextro
+docker compose down -v
+cd ..
+sudo rm -rf fasnextro
+clear
+ls -la
+```
