@@ -126,8 +126,8 @@ cat <<'EOF' > packages/database/package.json
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push"
+    "db:push": "dotenv -e ../../.env -- prisma db push",
+    "db:generate": "dotenv -e ../../.env -- prisma generate"
   },
   "dependencies": { "@prisma/client": "6.4.1", "dotenv": "latest", "zod": "latest" },
   "devDependencies": { "prisma": "6.4.1", "zod-prisma-types": "latest" }
@@ -560,7 +560,7 @@ pnpm add -D @tailwindcss/postcss postcss tailwindcss -w
 pnpm install
 pnpm dev
 
-
+mkdir -p apps/astro-web/src/lib
 cat <<'EOF' > apps/astro-web/src/lib/trpc.ts
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import type { AppRouter } from '@repo/trpc';
@@ -585,7 +585,7 @@ import { trpc } from '../../lib/trpc';
 ## Data z API (tRPC)
 
 { /* Toto poběží na serveru při buildu nebo v SSR mode */ }
-export const users = await trpc.user.list.query(); 
+export const users = await trpc.getUsers.query()
 
 <ul>
   {users.map(user => (
