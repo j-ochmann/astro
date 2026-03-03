@@ -128,6 +128,23 @@ cat <<EOF > packages/trpc/package.json
 }
 EOF
 
+cat <<EOF > packages/trpc/src/index.ts
+import { initTRPC } from '@trpc/server';
+import { z } from 'zod';
+import { db } from '@repo/database';
+
+const t = initTRPC.create();
+export const router = t.router;
+export const publicProcedure = t.procedure;
+
+export const appRouter = router({
+  getUsers: publicProcedure.query(async () => {
+    return await db.user.findMany();
+  }),
+});
+export type AppRouter = typeof appRouter;
+EOF
+
 # 6. Docker Compose (Opraveno: přidána Test DB)
 cat <<EOF > compose.yml
 services:
@@ -224,7 +241,17 @@ sleep 5
 echo "Provádím Prisma DB Push..."
 npm run db:push
 npm create astro@latest apps/astro-web -- --template starlight
-npx create-next-app@latest apps/next-app --ts --tailwind --eslint --app --src-dir=false
+mkdir -p apps/astro-web
+npx create-astro@latest apps/astro-web \
+  --template starlight --no-install --no-git \
+  --typescript strict --skip-houston
+mkdir -p apps/next-app
+npx create-next-app@latest apps/next-app \
+  --ts --tailwind --no-eslint --app --src-dir \
+  --import-alias "@/*" --use-npm --skip-install
+rm -rf apps/next-app/.git
+npm install
+npx @biomejs/biome check --apply-unsafe .
 
 cat <<EOF > apps/fastify-api/src/index.ts
 import Fastify from 'fastify';
