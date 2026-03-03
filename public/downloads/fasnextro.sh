@@ -47,7 +47,7 @@ cat <<EOF > biome.json
   "\$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
   "linter": { "enabled": true, "rules": { "recommended": true } },
   "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100 },
-  "assist": { "actions": { "organizeImports": { "enabled": true } } }
+  "assist": { "actions": { "source": { "organizeImports": { "enabled": true } } } }
 }
 EOF
 
@@ -309,13 +309,12 @@ EOF
 
 # --- 11. FINAL INSTALL & INIT ---
 pnpm install
-pnpm approve-builds --yes
 
 docker compose up -d postgres-db-prod inngest
 echo "DATABASE_URL=\"postgresql://user:password@localhost:5432/main_db\"" > packages/database/.env
 echo "Čekám na DB..." && sleep 5
+pnpm --filter @repo/database run db:generate
 pnpm --filter @repo/database run db:push
-
 npx @biomejs/biome check --write --unsafe .
 
 echo "---------------------------------------------------"
