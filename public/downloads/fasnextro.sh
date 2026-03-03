@@ -191,58 +191,66 @@ services:
     image: postgres:16-alpine
     container_name: postgres-db-main
     environment:
-      POSTGRES_DB: ${DB_MAIN}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: \${DB_MAIN}
+      POSTGRES_USER: \${DB_USER}
+      POSTGRES_PASSWORD: \${DB_PASS}
     ports:
       - "5432:5432"
     volumes:
       - postgres_main_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-user} -d ${DB_MAIN:-main_db}"]
+      test: ["CMD-SHELL", "pg_isready -U \$\${POSTGRES_USER} -d \$\${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
+
   postgres-db-test:
     image: postgres:16-alpine
     container_name: postgres-db-test
     environment:
-      POSTGRES_DB: ${DB_TEST}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: \${DB_TEST}
+      POSTGRES_USER: \${DB_USER}
+      POSTGRES_PASSWORD: \${DB_PASS}
     ports:
       - "5433:5432"
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-user} -d ${DB_MAIN:-main_db}"]
+      test: ["CMD-SHELL", "pg_isready -U \$\${POSTGRES_USER} -d \$\${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  fastify-api:
+    container_name: \${PROJECT_NAME}-fastify-api
+    build: 
+      context: .
+      dockerfile: apps/fastify-api/Dockerfile
+    command: npx tsx watch apps/fastify-api/src/index.ts
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://\${DB_USER}:\${DB_PASS}@postgres-db-main:5432/\${DB_MAIN}
+      INNGEST_EVENT_KEY: v1_your_key
+    depends_on:
+      postgres-db-main:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/next-app/.next
+      - /app/apps/fastify-api/dist
+
   inngest:
     image: inngest/inngest
-    container_name: ${PROJECT_NAME}-inngest
+    container_name: \${PROJECT_NAME}-inngest
     restart: unless-stopped
     ports:
       - "8288:8288"
     command: ["inngest", "dev", "-u", "http://fastify-api:3000/api/inngest"]
     depends_on:
       - fastify-api
-  fastify-api:
-    container_name: ${PROJECT_NAME}-fastify-api
-    build: 
-      context: .
-      dockerfile: apps/fastify-api/Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASS}@postgres-db-main:5432/${DB_MAIN}
-      INNGEST_EVENT_KEY: v1_your_key
-    depends_on:
-      - postgres-db-main
-    volumes:
-      - .:/app # Namapuje lokální soubory pro live-reload
-      - /app/node_modules
+
 volumes:
   postgres_main_data: {}
   postgres_test_data: {}
