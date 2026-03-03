@@ -16,8 +16,8 @@ DB_USER=${DB_USER}
 DB_PASS=${DB_PASS}
 DB_MAIN=${DB_MAIN}
 DB_TEST=${DB_TEST}
-DB_MAIN_URL=postgresql://${DB_USER}:${DB_PASS}@db:5432/${DB_MAIN}?schema=public
-DB_TEST_URL=postgresql://${DB_USER}:${DB_PASS}@db:5433/${DB_TEST}?schema=public
+DB_MAIN_URL=postgresql://${DB_USER}:${DB_PASS}@postgres-db-main:5432/${DB_MAIN}?schema=public
+DB_TEST_URL=postgresql://${DB_USER}:${DB_PASS}@postgres-db-main:5433/${DB_TEST}?schema=public
 DB_MAIN_YML=postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_MAIN}?schema=public
 DB_TEST_YML=postgresql://${DB_USER}:${DB_PASS}@localhost:5433/${DB_TEST}?schema=public
 NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
@@ -414,7 +414,7 @@ cat <<'EOF' > apps/astro-web/package.json
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev -p 3002",
+    "dev": "astro dev -p 4322",
     "build": "astro build",
     "preview": "astro preview"
   },
