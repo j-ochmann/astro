@@ -24,6 +24,7 @@ NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 EOF
 
 export PROJECT_NAME DB_USER DB_PASS DB_MAIN DB_TEST DB_MAIN_URL DB_TEST_URL DB_MAIN_YML DB_TEST_YML NEXT_PUBLIC_API_URL
+export DATABASE_URL=$DB_MAIN_YML
 
 cat <<'EOF' > pnpm-workspace.yaml
 packages:
@@ -166,8 +167,19 @@ EOF
 cat <<'EOF' > packages/database/src/index.ts
 import { PrismaClient } from '@prisma/client';
 export * from '@prisma/client';
+
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
-export const db = globalForPrisma.prisma ?? new PrismaClient();
+
+const connectionString = process.env.DATABASE_URL || process.env.DB_MAIN_URL;
+
+export const db = globalForPrisma.prisma ?? new PrismaClient({
+  datasources: {
+    db: {
+      url: connectionString,
+    },
+  },
+});
+
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
 EOF
 
@@ -216,7 +228,7 @@ services:
     volumes:
       - postgres_main_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_MAIN}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -233,7 +245,7 @@ services:
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_TEST}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -244,6 +256,7 @@ services:
       context: .
       dockerfile: apps/fastify-api/Dockerfile
     command: npx tsx watch apps/fastify-api/src/index.ts
+    restart: on-failure
     ports:
       - "3000:3000"
     environment:
@@ -466,6 +479,7 @@ EOF
 pnpm install
 
 docker compose up -d postgres-db-main postgres-db-test inngest
+sudo chown -R $USER:$USER .
 
 echo "Čekám, až se DB proberou..."
 until docker exec postgres-db-main pg_isready -U postgres; do
@@ -478,9 +492,17 @@ until docker exec postgres-db-test pg_isready -U postgres; do
   sleep 2
 done
 
-pnpm --filter @repo/database exec prisma db push
-pnpm --filter @repo/database exec prisma generate
-pnpm biome check --write --unsafe . || true
+# Důležité: Prisma potřebuje vidět URL přímo při pushi
+cd packages/database
+npx prisma db push --accept-data-loss
+npx prisma generate
+cd ../..
+
+# Biome check - s ignorováním chyb v CSS (aby skript pokračoval)
+npx @biomejs/biome check --write --unsafe . || true
+
+# Finální fix práv před startem devu
+sudo chown -R $USER:$USER .
 
 echo "---------------------------------------------------"
 echo "Fasnextro (Full Monorepo) READY!"
