@@ -1,0 +1,20 @@
+{
+  "name": "fasnextro",
+  "private": true,
+  "packageManager": "pnpm@10.30.3",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "biome check .",
+    "lint:apply": "biome check --write --unsafe .",
+    "db:generate": "turbo run db:generate --filter=@repo/database",
+    "db:push": "turbo run db:push --filter=@repo/database",
+    "db:up": "docker compose up -d postgres-db-main postgres-db-test inngest",
+    "db:studio": "pnpm --filter @repo/database exec prisma studio"
+  },
+  "devDependencies": {
+    "turbo": "latest",
+    "@biomejs/biome": "latest",
+    "typescript": "latest"
+  }
+}

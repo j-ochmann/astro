@@ -9,6 +9,10 @@ translation_status: original
 ## Soubor [fasnextro.sh](/downloads/fasnextro.sh)
 
 ```bash
+curl -sSL http://localhost:4321/downloads/fasnextro.tar.gz | tar -xz && ./setup.sh
+```
+
+```bash
 bash <(curl -sSL http://localhost:4321/downloads/fasnextro.sh)
 ```
 

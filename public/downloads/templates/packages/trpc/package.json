@@ -1,0 +1,10 @@
+{
+  "name": "@repo/trpc",
+  "version": "0.0.0",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@trpc/server": "latest",
+    "@repo/database": "workspace:*",
+    "zod": "latest"
+  }
+}

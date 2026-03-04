@@ -1,0 +1,29 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "**",
+      "!!**/node_modules/**",
+      "!!**/.next/**",
+      "!!**/dist/**",
+      "!!**/generated/**",
+      "!!**/docker/**"
+    ]
+  },
+  "linter": { "enabled": true, "rules": { "recommended": true } },
+  "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100, "formatWithErrors": true },
+  "css": {
+    "parser": { 
+      "allowWrongLineComments": true,
+      "tailwindDirectives": true 
+    },
+    "linter": { "enabled": false }
+  },
+  "overrides": [
+    {
+      "includes": ["*.css"],
+      "linter": { "enabled": false }
+    }
+  ]
+}

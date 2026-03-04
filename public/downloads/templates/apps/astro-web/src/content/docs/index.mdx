@@ -1,0 +1,16 @@
+---
+title: Fasnextro Dokumentace
+description: Moje tRPC data v Astru.
+template: splash
+---
+import { trpc } from "../../../lib/trpc";
+
+## Data z API (tRPC)
+
+export const users = await trpc.getUsers.query()
+
+<ul>
+  {users.map(user => (
+    <li key={user.id}>{user.name} ({user.email})</li>
+  ))}
+</ul>

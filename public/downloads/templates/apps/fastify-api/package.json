@@ -1,0 +1,16 @@
+{
+  "name": "fastify-api",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts"
+  },
+  "dependencies": {
+    "fastify": "latest",
+    "@fastify/cors": "latest",
+    "@trpc/server": "latest",
+    "@repo/trpc": "workspace:*",
+    "@repo/database": "workspace:*"
+  },
+  "devDependencies": { "tsx": "latest", "tsup": "latest" }
+}
