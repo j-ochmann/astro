@@ -621,3 +621,36 @@ EOF
 npx dotenv-cli -e .env -- pnpm --filter @repo/database db:seed
 
 npx dotenv-cli -e .env -- pnpm --filter @repo/database exec prisma studio --port 5555
+
+cat <<'EOF' > .gitignore
+node_modules/
+.pnpm-store/
+.pnpm-debug.log
+.turbo/
+dist/
+build/
+.next/
+.astro/
+out/
+.env
+.env.local
+.env.*.local
+!*.example.env
+/packages/database/src/generated/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
+.direnv/
+.envrc
+.vscode/
+.idea/
+*.swp
+*.swo
+coverage/
+.nyc_output
+.inngest/
+EOF
