@@ -552,21 +552,23 @@ import type { AppRouter } from '@repo/trpc';
 
 export const trpc = createTRPCClient<AppRouter>({
   links: [
-    // Všimni si portu 3005, kam nám Fastify uteklo
-    httpBatchLink({ url: 'http://localhost:3005/trpc' }),
+    httpBatchLink({
+      url: 'http://localhost:3005/trpc',
+    }),
   ],
 });
 EOF
 
+mkdir -p apps/astro-web/src/content/docs
 cat <<'EOF' > apps/astro-web/src/content/docs/index.mdx
-
 ---
 title: Fasnextro Dokumentace
 description: Moje tRPC data v Astru.
 template: splash
 ---
 
-import { trpc } from '../../lib/trpc';
+import { trpc } from "../../../lib/trpc";
+# import { trpc } from '../../lib/trpc';
 
 ## Data z API (tRPC)
 
@@ -580,6 +582,7 @@ export const users = await trpc.getUsers.query()
 </ul>
 EOF
 
+mkdir -p packages/database/src
 cat <<'EOF' > packages/database/src/seed.ts
 import { db } from "./index";
 
@@ -614,3 +617,7 @@ main()
     await db.$disconnect();
   });
 EOF
+
+npx dotenv-cli -e .env -- pnpm --filter @repo/database db:seed
+
+npx dotenv-cli -e .env -- pnpm --filter @repo/database exec prisma studio --port 5555
