@@ -138,6 +138,11 @@ export default defineConfig({
             }
           ],
         },
+        { label: 'Electro',
+          translations: { cs: 'Elektro' },
+          autogenerate: { directory: 'electro/' },
+          collapsed: true
+        },
         {
           label: 'Market', 
           translations: { cs: 'Trh' },
