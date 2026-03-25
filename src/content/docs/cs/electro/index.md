@@ -1,50 +1,80 @@
 ---
-title: "Elektro základy"
+title: "⚡ Základy"
 description: "Moje poznámky k oprášení elektro – byty, rozvaděče, fotovoltaika"
 ---
+## 🏠 Síť (AC)
 
-## ⚡ Elektro ZÁKLADY
+- napětí: 230V / 400V  
+- frekvence: 50 Hz  
+- TN-C / TN-S soustavy  
 
-### Vodiče
+### ➰ Vodiče
 
 - **L (fáze)** → hnědá / černá → nebezpečné napětí  
 - **N (nulák)** → modrá → návrat proudu  
 - **PE (zem)** → žlutozelená → ochranný vodič  
 
-## 🏠 REKONSTRUKCE BYTŮ
-
 ### 🔌 Zásuvka
 
-- L → pravá svorka  
-- N → levá svorka  
-- PE → kolík  
-
-Poznámky:
-
-- dotáhnout spoje  
-- žádné odhalené vodiče  
-- zkontrolovat zapojení před zapnutím  
+- **L (fáze)** → pravá svorka  
+- **N (nulák)** → levá svorka  
+- **PE (zem)** → kolík
 
 ### 💡 Vypínač
 
-- přerušuje **fázi (L)**  
+- přerušuje **(L) fázi**  
 - nulák se nepřerušuje  
 
-### ⚡ Jistič / proudový chránič
+### ⚡ Rozvaděč (základní prvky)
 
-- **jistič** → ochrana proti přetížení / zkratu  
-- **proudový chránič (RCD)** → ochrana osob  
+- hlavní jistič  
+- **jističe okruhů** → ochrana proti přetížení / zkratu  
+- **proudový chránič (RCD)** → ochrana osob
+- sběrnice N a PE
+- N za chráničem nesmí být spojen s PE
+- každý okruh má vlastní jistič
 
-Poznámka:
+```txt
+ L  N  PE
+ |  |  |
+ |  |  +-------> PE sběrnice
+ |  +----------> RCD (chránič) ---> N sběrnice
+ +-------------> Jističe ---> okruhy (zásuvky, světla)
+```
 
-- vybavení = někde chyba (zkrat / únik proudu)
+#### Časté chyby
+
+- špatně zapojený N za chráničem
+- propojení N a PE za proudovým chráničem
+- nedotažené spoje
+- odhalené vodiče
 
 ## ☀️ FOTOVOLTAIKA (FVE)
 
+```txt
+[ PANELY ]
+     │ (DC)
+     ▼
+[ DC kabely + MC4 ]
+     │
+     ▼
+[ STŘÍDAČ ]
+     │ (AC)
+     ▼
+[ ROZVADĚČ ]
+     │
+     ▼
+[ DŮM / SÍŤ ]
+```
+
 ### 🔋 DC část
 
-- panely → **stejnosměrný proud (DC)**  
-- kabely → červená (+), černá (-)  
+- panely → **stejnosměrný proud (DC)**
+  - ⚠️ stále pod napětím i při slabém světle
+  - stringy (série)  
+  - napětí roste
+  - proud zůstává stejný
+- kabely → (+)červená, (-)černá  
 - konektory → MC4  
 
 ⚠️ Pozor:
@@ -54,12 +84,15 @@ Poznámka:
 ### 🔌 AC část
 
 - střídač → převod DC → AC  
-- napojení do rozvaděče  
+- napojení do rozvaděče
+- synchronizace se sítí
 
-### ⚠️ Bezpečnost
+## ⚠️ FVE bezpečnost
 
-- nerozpojovat pod zátěží  
-- hlídat polaritu  
+- DC nelze „vypnout“ jističem  
+- vždy pod napětím při světle  
+- pozor na polaritu  
+- oblouk při rozpojení, nerozpojovat pod zátěží
 - používat správné konektory  
 
 ## 🧰 PRAKTICKÉ VĚCI
@@ -68,7 +101,6 @@ Poznámka:
 - odizolování bez poškození vodiče  
 - práce se zkoušečkou  
 - označení vodičů  
-- úklid po práci  
 
 ## ⚠️ BEZPEČNOST
 
@@ -89,12 +121,16 @@ Poznámka:
 - Vyhláška 50/1978 Sb. → neplatí  
 - aktuálně: Nařízení vlády 194/2022 Sb.  
 
+Úrovně:
+
+- seznámená  
+- poučená  
+- znalá
+
 Poznámka:
 
 - bez kvalifikace práce pod dohledem  
 
 ## 🎯 CÍL
 
-- zopakovat základy  
-- orientovat se v zapojení  
-- postupně přejít na složitější práci  
+- zopakovat základy
