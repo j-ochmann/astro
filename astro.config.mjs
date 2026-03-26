@@ -138,9 +138,9 @@ export default defineConfig({
             }
           ],
         },
-        { label: 'Electro',
-          translations: { cs: 'Elektro' },
-          autogenerate: { directory: 'electro/' },
+        { label: 'Crafts',
+          translations: { cs: 'Řemesla' },
+          autogenerate: { directory: 'crafts/' },
           collapsed: true
         },
         {
